@@ -1,16 +1,15 @@
 import type { IndexedCatalog, RankedVideo } from "@/lib/catalog";
-import type { Course, Educator, Topic } from "@/lib/types";
+import type { Channel, Course, Topic } from "@/lib/types";
 
 /**
  * In-memory search over the catalog: field-weighted, prefix-aware, and tolerant
- * of small typos ("chian rule", "lhopital", "champa"). Postgres has matching
- * tsvector + trigram indexes for when the catalog outgrows memory.
+ * of small typos ("chian rule", "lhopital", "champa").
  */
 
 export type SearchHit =
   | { kind: "topic"; score: number; topic: Topic; course: Course; lessons: number }
-  | { kind: "video"; score: number; video: RankedVideo; topic: Topic; educator: Educator }
-  | { kind: "educator"; score: number; educator: Educator }
+  | { kind: "video"; score: number; video: RankedVideo; topic: Topic | undefined; course: Course | undefined }
+  | { kind: "channel"; score: number; channel: Channel; lessons: number }
   | { kind: "course"; score: number; course: Course };
 
 export function normalize(s: string) {
@@ -42,11 +41,9 @@ function editDistanceWithin(a: string, b: string, max: number) {
     for (let j = 1; j <= b.length; j++) {
       const tmp = prev[j];
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      // Treat adjacent transpositions ("chian" → "chain") as one edit.
       prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diagonal + cost);
-      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1] && cost) {
-        prev[j] = Math.min(prev[j], diagonal);
-      }
+      // Adjacent transpositions ("chian" → "chain") count as one edit.
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1] && cost) prev[j] = Math.min(prev[j], diagonal);
       diagonal = tmp;
       rowMin = Math.min(rowMin, prev[j]);
     }
@@ -62,9 +59,7 @@ function matchToken(q: string, field: Field): number {
   for (const t of field.tokens) {
     if (t === q) return 1;
     if (q.length >= 2 && t.startsWith(q)) best = Math.max(best, 0.85);
-    else if (q.length >= 4 && editDistanceWithin(q, t.slice(0, Math.max(q.length, t.length)), q.length >= 8 ? 2 : 1)) {
-      best = Math.max(best, 0.6);
-    }
+    else if (q.length >= 4 && editDistanceWithin(q, t.slice(0, Math.max(q.length, t.length)), q.length >= 8 ? 2 : 1)) best = Math.max(best, 0.6);
   }
   if (!best && q.length >= 3 && field.text.includes(q)) best = 0.5;
   return best;
@@ -88,77 +83,81 @@ function scoreDoc(qTokens: string[], qPhrase: string, fields: Field[]) {
   return (total + phraseBonus + exactBonus) * coverage * coverage;
 }
 
-const field = (text: string, weight: number): Field => ({ tokens: tokens(text), text: normalize(text), weight });
+const fieldCache = new WeakMap<object, Field[]>();
+function fieldsFor(key: object, build: () => [string, number][]) {
+  let f = fieldCache.get(key);
+  if (!f) {
+    f = build().map(([text, weight]) => ({ tokens: tokens(text), text: normalize(text), weight }));
+    fieldCache.set(key, f);
+  }
+  return f;
+}
 
-export type SearchFilters = { courseId?: string; exam?: "AP" | "SAT" };
+export type SearchFilters = { courseId?: string; kinds?: SearchHit["kind"][] };
 
-export function search(catalog: IndexedCatalog, query: string, filters: SearchFilters = {}, limit = 40): SearchHit[] {
+export function search(catalog: IndexedCatalog, query: string, filters: SearchFilters = {}, limit = 60): SearchHit[] {
   const qTokens = tokens(query);
   const qPhrase = normalize(query);
   if (!qTokens.length) return [];
-
-  const courseOk = (courseId: string) => {
-    if (filters.courseId && filters.courseId !== courseId) return false;
-    if (filters.exam && catalog.course(courseId)?.exam !== filters.exam) return false;
-    return true;
-  };
-
+  const want = (k: SearchHit["kind"]) => !filters.kinds || filters.kinds.includes(k);
+  const courseOk = (courseId: string) => !filters.courseId || filters.courseId === courseId;
   const hits: SearchHit[] = [];
 
-  for (const course of catalog.courses) {
-    if (!courseOk(course.id)) continue;
-    const score = scoreDoc(qTokens, qPhrase, [
-      field(course.title, 9),
-      field(course.shortTitle, 9),
-      field(`${course.exam} ${course.subject}`, 4),
-    ]);
-    if (score) hits.push({ kind: "course", score: score * 1.1, course });
-  }
+  if (want("course"))
+    for (const course of catalog.courses) {
+      if (!courseOk(course.id)) continue;
+      const score = scoreDoc(qTokens, qPhrase, fieldsFor(course, () => [[course.title, 9], [course.shortTitle, 9], [`${course.exam} ${course.subject}`, 4]]));
+      if (score) hits.push({ kind: "course", score: score * 1.1, course });
+    }
 
-  for (const topic of catalog.topics) {
-    if (!courseOk(topic.courseId)) continue;
-    const course = catalog.course(topic.courseId)!;
-    const unit = catalog.unit(topic.unitId);
-    const concept = catalog.concept(topic.conceptId);
-    const score = scoreDoc(qTokens, qPhrase, [
-      field(topic.title, 10),
-      field(topic.aliases.join(" "), 7),
-      field(`${concept?.title ?? ""} ${unit?.title ?? ""}`, 3.5),
-      field(`${course.shortTitle} ${course.title}`, 3),
-      field(topic.summary, 2),
-    ]);
-    if (score) hits.push({ kind: "topic", score: score * 1.25, topic, course, lessons: catalog.videosForTopic(topic.id).length });
-  }
+  if (want("topic"))
+    for (const topic of catalog.topics) {
+      if (!courseOk(topic.courseId)) continue;
+      const course = catalog.course(topic.courseId)!;
+      const score = scoreDoc(
+        qTokens,
+        qPhrase,
+        fieldsFor(topic, () => [
+          [topic.title, 10],
+          [topic.aliases.join(" "), 7],
+          [`${catalog.concept(topic.conceptId)?.title ?? ""} ${catalog.unit(topic.unitId)?.title ?? ""}`, 3.5],
+          [`${course.shortTitle} ${course.title}`, 3],
+          [topic.summary, 2],
+        ]),
+      );
+      if (score) hits.push({ kind: "topic", score: score * 1.3, topic, course, lessons: catalog.videosForTopic(topic.id).length });
+    }
 
-  for (const educator of catalog.educators) {
-    const score = scoreDoc(qTokens, qPhrase, [
-      field(educator.name, 10),
-      field(educator.subjects.join(" "), 4),
-      field(educator.headline, 2),
-    ]);
-    if (score) hits.push({ kind: "educator", score, educator });
-  }
+  if (want("channel"))
+    for (const channel of catalog.channels) {
+      const lessons = catalog.videosForChannel(channel.id).length;
+      if (lessons < 3) continue;
+      // Channels match on whole words or prefixes only; typo tolerance turns "chain" into "Cain".
+      const name = normalize(`${channel.title} ${channel.handle ?? ""}`).split(" ");
+      if (!qTokens.every((q) => name.some((t) => t === q || (q.length >= 3 && t.startsWith(q))))) continue;
+      const score = scoreDoc(qTokens, qPhrase, fieldsFor(channel, () => [[channel.title, 10], [channel.handle ?? "", 6]]));
+      if (score) hits.push({ kind: "channel", score: score * (1 + Math.log10(lessons) / 4), channel, lessons });
+    }
 
-  for (const video of catalog.videos) {
-    const topic = catalog.topic(video.topicId);
-    if (!topic || !courseOk(topic.courseId)) continue;
-    const educator = catalog.educator(video.educatorId)!;
-    const score = scoreDoc(qTokens, qPhrase, [
-      field(video.title, 8),
-      field(`${topic.title} ${topic.aliases.join(" ")}`, 6),
-      field(educator.name, 5),
-      field(video.style, 3),
-      field(video.description, 1.5),
-    ]);
-    // Quality nudges ordering among similarly relevant lessons.
-    if (score) hits.push({ kind: "video", score: score * (0.7 + video.rank.score / 250), video, topic, educator });
-  }
+  if (want("video"))
+    for (const video of catalog.videos) {
+      if (!courseOk(video.courseId)) continue;
+      const topic = video.topicId ? catalog.topic(video.topicId) : undefined;
+      const course = catalog.course(video.courseId);
+      const score = scoreDoc(
+        qTokens,
+        qPhrase,
+        fieldsFor(video, () => [
+          [video.title, 8],
+          [topic ? `${topic.title} ${topic.aliases.join(" ")}` : "", 6],
+          [video.channelTitle, 5],
+          [course ? `${course.shortTitle} ${course.title}` : "", 2.5],
+          [video.description, 1.5],
+        ]),
+      );
+      // Quality nudges ordering among similarly relevant lessons.
+      if (score) hits.push({ kind: "video", score: score * (0.65 + video.rank.score / 200), video, topic, course });
+    }
 
   return hits.sort((a, b) => b.score - a.score).slice(0, limit);
-}
-
-export function suggestFor(query: string) {
-  const q = normalize(query);
-  const fixes: Record<string, string> = { calc: "calculus", bio: "biology", chem: "chemistry", apush: "US history" };
-  return fixes[q];
 }

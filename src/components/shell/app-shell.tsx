@@ -1,0 +1,34 @@
+import type { ReactNode } from "react";
+import { getCatalog } from "@/lib/catalog";
+import { getViewer } from "@/lib/viewer";
+import { ViewerMarksProvider } from "../viewer-marks";
+import { ShellFrame, type ShellData } from "./shell-frame";
+
+/** YouTube-style chrome: top bar with search, collapsible sidebar, content area. */
+export async function AppShell({ children }: { children: ReactNode }) {
+  const [viewer, catalog] = await Promise.all([getViewer(), getCatalog()]);
+  const topChannels = [...catalog.channels]
+    .map((c) => ({ c, n: catalog.videosForChannel(c.id).filter((v) => !v.isShort).length }))
+    .filter((x) => x.n >= 3)
+    .sort((a, b) => b.n - a.n)
+    .slice(0, 7)
+    .map(({ c }) => ({ id: c.id, title: c.title, thumbnail: c.thumbnail }));
+
+  const data: ShellData = {
+    user: viewer ? { name: viewer.user.name, email: viewer.user.email } : null,
+    trialDaysLeft: viewer?.access.kind === "trial" ? viewer.access.daysLeft : null,
+    expired: viewer?.access.kind === "expired",
+    hasSchedule: Boolean(viewer?.state.schedule),
+    courses: catalog.courses.map((c) => ({ slug: c.slug, title: c.title, hue: c.hue })),
+    myCourses: viewer?.state.profile.courseIds ?? [],
+    channels: topChannels,
+  };
+
+  return (
+    <ViewerMarksProvider
+      value={{ signedIn: Boolean(viewer), saved: Object.keys(viewer?.state.saves ?? {}), votes: viewer?.state.votes ?? {} }}
+    >
+      <ShellFrame data={data}>{children}</ShellFrame>
+    </ViewerMarksProvider>
+  );
+}

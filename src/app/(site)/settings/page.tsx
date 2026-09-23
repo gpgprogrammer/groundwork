@@ -11,7 +11,7 @@ export default async function SettingsPage() {
   return (
     <ProfileForm
       email={p.email}
-      initial={{ name: p.name, courseIds: p.courseIds, examDate: p.examDate ?? "", goal: p.goal ?? "", dailyMinutes: p.dailyMinutes ?? 0 }}
+      initial={{ name: p.name, courseIds: p.courseIds, examDate: p.examDate ?? "", goal: p.goal ?? "" }}
       courses={catalog.courses.map((c) => ({ id: c.id, title: c.title, exam: c.exam }))}
     />
   );

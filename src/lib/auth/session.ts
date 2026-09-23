@@ -60,7 +60,7 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   }
   const userId = decodeDemoSession((await cookies()).get(DEMO_COOKIE)?.value);
   if (!userId) return null;
-  const { demoGetUser } = await import("@/lib/data/demo-store");
-  const u = await demoGetUser(userId);
+  const { localGetUser } = await import("@/lib/data/demo-store");
+  const u = await localGetUser(userId);
   return u ? { id: u.id, email: u.email, name: u.name } : null;
 });

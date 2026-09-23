@@ -3,14 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "playwright test",
-    "db:seed": "tsx scripts/generate-seed.ts",
     "typecheck": "next typegen && tsc --noEmit",
-    "stripe:setup": "tsx scripts/stripe-setup.ts"
+    "stripe:setup": "tsx scripts/stripe-setup.ts",
+    "ingest": "tsx scripts/ingest-youtube.ts",
+    "ingest:keyless": "tsx scripts/ingest-keyless.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

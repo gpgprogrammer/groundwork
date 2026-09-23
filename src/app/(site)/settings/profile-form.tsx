@@ -8,7 +8,7 @@ import { Button, cn } from "@/components/ui";
 
 type Props = {
   email: string;
-  initial: { name: string; courseIds: string[]; examDate: string; goal: string; dailyMinutes: number };
+  initial: { name: string; courseIds: string[]; examDate: string; goal: string };
   courses: { id: string; title: string; exam: string }[];
 };
 
@@ -45,12 +45,9 @@ export function ProfileForm({ email, initial, courses }: Props) {
             </label>
           ))}
         </div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <Field label="Exam date" hint="Optional">
             <input type="date" name="examDate" defaultValue={initial.examDate} className={inputClass} />
-          </Field>
-          <Field label="Daily goal (minutes)">
-            <input type="number" name="dailyMinutes" min={0} max={240} step={5} defaultValue={initial.dailyMinutes || ""} className={inputClass} />
           </Field>
           <Field label="Your goal" hint="Optional">
             <input name="goal" defaultValue={initial.goal} maxLength={120} placeholder="e.g. a 5 on Calc BC" className={inputClass} />

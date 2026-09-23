@@ -30,6 +30,7 @@ export async function requireViewer(next: string): Promise<Viewer> {
   return viewer;
 }
 
-export function canWatch(access: Access) {
+/** Plus features: calendar sync and the personalized feed. */
+export function hasPlus(access: Access) {
   return access.kind === "trial" || access.kind === "active";
 }

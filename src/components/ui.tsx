@@ -4,19 +4,20 @@ import type { ComponentProps, ReactNode } from "react";
 
 export const cn = (...v: ClassValue[]) => clsx(v);
 
-type Variant = "primary" | "secondary" | "ghost" | "accent";
+type Variant = "primary" | "secondary" | "ghost" | "accent" | "outline";
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-150 disabled:pointer-events-none disabled:opacity-50 active:translate-y-px";
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-150 disabled:pointer-events-none disabled:opacity-50 active:translate-y-px";
 const variants: Record<Variant, string> = {
-  primary: "bg-ink text-bg hover:bg-ink/85 shadow-[0_1px_0_rgb(255_255_255/0.12)_inset]",
-  secondary: "border border-line-strong bg-surface text-ink hover:border-faint hover:bg-bg-subtle shadow-soft",
-  ghost: "text-ink-2 hover:bg-bg-subtle hover:text-ink",
+  primary: "bg-ink text-bg hover:bg-ink/85",
+  secondary: "bg-bg-subtle text-ink hover:bg-line",
+  ghost: "text-ink hover:bg-bg-subtle",
   accent: "bg-accent text-white hover:bg-accent/90",
+  outline: "border border-line-strong text-accent hover:bg-accent-soft hover:border-transparent",
 };
 const sizes: Record<Size, string> = {
-  sm: "h-8 px-3 text-[13px]",
+  sm: "h-8 px-3.5 text-[13px]",
   md: "h-9 px-4 text-sm",
   lg: "h-11 px-5 text-[15px]",
 };
@@ -181,4 +182,32 @@ export function timeAgo(iso: string, now = Date.now()) {
   const mo = d / 30;
   if (mo < 12) return `${Math.floor(mo)}mo ago`;
   return `${Math.floor(mo / 12)}y ago`;
+}
+
+/** "1.2M views", like YouTube. */
+export function formatViews(n: number) {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1).replace(/\.0$/, "")}B`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1).replace(/\.0$/, "")}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(n >= 10_000 ? 0 : 1).replace(/\.0$/, "")}K`;
+  return String(n);
+}
+
+/** "3 years ago", like YouTube. */
+export function ago(iso: string, now = Date.now()) {
+  const t = new Date(iso).getTime();
+  if (!iso || Number.isNaN(t)) return "";
+  const s = Math.max(0, (now - t) / 1000);
+  const units: [number, string][] = [
+    [31536000, "year"],
+    [2592000, "month"],
+    [604800, "week"],
+    [86400, "day"],
+    [3600, "hour"],
+    [60, "minute"],
+  ];
+  for (const [secs, name] of units) {
+    const n = Math.floor(s / secs);
+    if (n >= 1) return `${n} ${name}${n > 1 ? "s" : ""} ago`;
+  }
+  return "just now";
 }

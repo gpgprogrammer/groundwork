@@ -21,3 +21,4 @@ export const PLAN = {
   priceMonthly: 10,
   trialDays: 30,
 } as const;
+

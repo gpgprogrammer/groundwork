@@ -1,160 +1,189 @@
-import { ArrowRight, Check } from "lucide-react";
+import { Check, Play } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Container, LinkButton, ProgressBar, cn } from "@/components/ui";
+import { Chips, FeedGrid, SortControls } from "@/components/feed";
+import { ProgressBar, cn, formatViews } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
+import { pageOf, queryFeed } from "@/lib/feed";
 import { courseProgress, nextTopicInCourse, topicStatus } from "@/lib/recommend";
 import { getViewer } from "@/lib/viewer";
 
 export async function generateMetadata({ params }: PageProps<"/courses/[course]">): Promise<Metadata> {
-  const catalog = await getCatalog();
-  const course = catalog.course((await params).course);
+  const course = (await getCatalog()).course((await params).course);
   return course ? { title: course.title, description: course.description } : {};
 }
 
-export default async function CoursePage({ params }: PageProps<"/courses/[course]">) {
-  const { course: slug } = await params;
-  const [catalog, viewer] = await Promise.all([getCatalog(), getViewer()]);
+export default async function CoursePage({ params, searchParams }: PageProps<"/courses/[course]">) {
+  const [{ course: slug }, sp, catalog, viewer] = await Promise.all([params, searchParams, getCatalog(), getViewer()]);
   const course = catalog.course(slug);
   if (!course) notFound();
 
+  const view = sp.view === "videos" ? "videos" : "units";
   const units = catalog.unitsForCourse(course.id);
-  const topics = catalog.topicsForCourse(course.id);
-  const lessonCount = topics.reduce((n, t) => n + catalog.videosForTopic(t.id).length, 0);
-  const minutes = Math.round(topics.reduce((n, t) => n + (catalog.videosForTopic(t.id)[0]?.durationSec ?? 0), 0) / 60);
+  const videos = catalog.videosForCourse(course.id);
   const prog = viewer ? courseProgress(catalog, viewer.state, course.id) : null;
-  const next = viewer ? nextTopicInCourse(catalog, viewer.state, course.id) : topics[0];
+  const next = viewer ? nextTopicInCourse(catalog, viewer.state, course.id) : catalog.topicsForCourse(course.id).find((t) => catalog.videosForTopic(t.id).length);
+  const status = (topicId: string) => (viewer ? topicStatus(catalog, viewer.state, topicId) : "new");
 
   return (
-    <div>
-      <section className="relative overflow-hidden border-b border-line">
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ background: `radial-gradient(60% 120% at 100% 0%, oklch(0.93 0.04 ${course.hue} / 0.45), transparent 60%)` }}
-        />
-        <Container size="xl" className="relative py-14">
-          <nav className="text-[13px] text-muted" aria-label="Breadcrumb">
-            <Link href="/courses" className="hover:text-ink">
-              Courses
-            </Link>
-            <span className="mx-2 text-faint">/</span>
-            <span className="text-ink-2">{course.shortTitle}</span>
-          </nav>
-          <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_340px] lg:items-end">
-            <div className="rise max-w-2xl">
-              <p className="eyebrow">
-                {course.exam} · {course.subject} · Exam in {course.examMonth}
-              </p>
-              <h1 className="display mt-3 text-4xl text-ink sm:text-5xl">{course.title}</h1>
-              <p className="mt-4 text-[16px] leading-relaxed text-muted">{course.description}</p>
-              <div className="tabular mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-2">
-                <span>
-                  <strong className="font-semibold text-ink">{units.length}</strong> units
-                </span>
-                <span>
-                  <strong className="font-semibold text-ink">{topics.length}</strong> topics
-                </span>
-                <span>
-                  <strong className="font-semibold text-ink">{lessonCount}</strong> lessons
-                </span>
-                <span>
-                  <strong className="font-semibold text-ink">~{Math.round(minutes / 60)}h</strong> to cover the top lesson in every topic
-                </span>
-              </div>
-            </div>
+    <div className="pb-16">
+      <header className="border-b border-line px-4 pb-0 pt-8 sm:px-6 lg:px-10" style={{ background: `linear-gradient(180deg, oklch(0.6 0.14 ${course.hue} / 0.08), transparent)` }}>
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <nav className="text-[13px] text-muted">
+              <Link href="/courses" className="hover:text-ink">Courses</Link> <span className="mx-1">›</span> {course.exam}
+            </nav>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink sm:text-4xl">{course.title}</h1>
+            <p className="mt-2 text-[15px] leading-relaxed text-muted">{course.description}</p>
+            <p className="tabular mt-3 text-sm text-ink-2">
+              {units.length} units · {catalog.topicsForCourse(course.id).length} topics · {formatViews(videos.length)} videos · Exam: {course.examMonth}
+            </p>
+          </div>
+          <div className="w-full max-w-sm shrink-0 rounded-xl bg-bg p-4 ring-1 ring-line">
+            {prog ? (
+              <>
+                <div className="flex items-baseline justify-between text-sm">
+                  <span className="font-medium text-ink">Course mastery</span>
+                  <span className="tabular text-muted">
+                    {prog.done}/{prog.total} topics
+                  </span>
+                </div>
+                <ProgressBar value={prog.done / prog.total} className="mt-2 h-1.5" />
+              </>
+            ) : (
+              <p className="text-sm font-medium text-ink">Start from the beginning</p>
+            )}
             {next ? (
-              <div className="rounded-2xl border border-line bg-surface p-5 shadow-soft">
-                {prog ? (
-                  <>
-                    <div className="flex items-baseline justify-between text-sm">
-                      <span className="font-medium text-ink">Your progress</span>
-                      <span className="tabular text-muted">
-                        {prog.done} / {prog.total} topics
-                      </span>
-                    </div>
-                    <ProgressBar value={prog.done / prog.total} className="mt-3" />
-                  </>
-                ) : (
-                  <p className="text-sm font-medium text-ink">Start at the beginning</p>
-                )}
-                <p className="mt-4 text-xs text-muted">{prog && prog.done > 0 ? "Up next" : "First topic"}</p>
-                <p className="mt-0.5 text-[15px] font-medium text-ink">{next.title}</p>
-                <LinkButton href={`/courses/${course.slug}/${next.slug}`} className="mt-4 w-full">
-                  {prog && prog.done > 0 ? "Continue" : "Start"} <ArrowRight className="size-4" />
-                </LinkButton>
-              </div>
+              <Link href={`/courses/${course.slug}/${next.slug}`} className="mt-3 flex items-center gap-3 rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-bg hover:bg-ink/85">
+                <Play className="size-4 fill-current" />
+                <span className="min-w-0 truncate">
+                  {prog && prog.done ? "Up next" : "Start"}: {next.title}
+                </span>
+              </Link>
             ) : null}
           </div>
-        </Container>
-      </section>
+        </div>
+        <div className="mt-6 flex gap-6">
+          {[
+            { key: "units", label: "Units" },
+            { key: "videos", label: "All videos" },
+          ].map((t) => (
+            <Link
+              key={t.key}
+              href={t.key === "units" ? `/courses/${course.slug}` : `/courses/${course.slug}?view=videos`}
+              className={cn("-mb-px border-b-2 pb-3 text-[15px] font-medium", view === t.key ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink")}
+            >
+              {t.label}
+            </Link>
+          ))}
+        </div>
+      </header>
 
-      <Container size="xl" className="grid gap-12 py-12 lg:grid-cols-[220px_1fr]">
-        <aside className="hidden lg:block">
-          <nav className="sticky top-24 space-y-1" aria-label="Units">
-            <p className="eyebrow mb-3">Units</p>
-            {units.map((u) => (
-              <a key={u.id} href={`#${u.slug}`} className="flex gap-3 rounded-md py-1.5 text-[13px] text-muted transition-colors hover:text-ink">
-                <span className="tabular w-4 shrink-0 text-faint">{u.order}</span>
-                <span className="leading-snug">{u.title}</span>
-              </a>
-            ))}
-          </nav>
-        </aside>
-
-        <div className="min-w-0 space-y-14">
-          {units.map((u) => (
-            <section key={u.id} id={u.slug} className="scroll-mt-24">
-              <div className="flex items-baseline gap-3">
-                <span className="tabular font-mono text-xs text-faint">Unit {u.order}</span>
-              </div>
-              <h2 className="headline mt-1 text-2xl text-ink">{u.title}</h2>
-              <p className="mt-1.5 text-sm text-muted">{u.summary}</p>
-
-              <div className="mt-6 space-y-6">
-                {catalog.conceptsForUnit(u.id).map((c) => (
-                  <div key={c.id}>
-                    <h3 className="mb-2 text-[13px] font-medium text-ink-2">{c.title}</h3>
-                    <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
-                      {catalog.topicsForConcept(c.id).map((t) => {
-                        const vids = catalog.videosForTopic(t.id);
-                        const status = viewer ? topicStatus(catalog, viewer.state, t.id) : "new";
+      {view === "videos" ? (
+        <CourseVideos courseId={course.id} sp={sp} catalogUnits={units.map((u) => ({ key: u.id, label: `Unit ${u.order}` }))} />
+      ) : (
+        <div className="grid gap-10 px-4 pt-8 sm:px-6 lg:grid-cols-[260px_1fr] lg:px-10">
+          <aside className="hidden lg:block">
+            <nav className="sticky top-20 space-y-0.5" aria-label="Units">
+              {units.map((u) => {
+                const ts = catalog.topicsForUnit(u.id);
+                const done = ts.filter((t) => status(t.id) === "done").length;
+                return (
+                  <a key={u.id} href={`#${u.slug}`} className="block rounded-lg px-3 py-2 hover:bg-bg-subtle">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted">Unit {u.order}</p>
+                    <p className="text-sm font-medium leading-snug text-ink">{u.title}</p>
+                    {viewer ? <ProgressBar value={done / ts.length} className="mt-1.5" /> : null}
+                  </a>
+                );
+              })}
+            </nav>
+          </aside>
+          <div className="min-w-0 space-y-6">
+            {units.map((u) => {
+              const ts = catalog.topicsForUnit(u.id);
+              return (
+                <section key={u.id} id={u.slug} className="scroll-mt-20 overflow-hidden rounded-xl ring-1 ring-line">
+                  <div className="flex flex-col gap-3 bg-bg-subtle/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted">Unit {u.order}</p>
+                      <h2 className="text-lg font-bold tracking-tight text-ink">{u.title}</h2>
+                      <p className="mt-0.5 text-sm text-muted">{u.summary}</p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap gap-1" aria-label="Topic mastery">
+                      {ts.map((t) => (
+                        <span
+                          key={t.id}
+                          title={t.title}
+                          className={cn(
+                            "size-4 rounded-[4px]",
+                            status(t.id) === "done" ? "bg-accent" : status(t.id) === "started" ? "bg-accent/35" : "bg-bg ring-1 ring-inset ring-line-strong",
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <ul className="divide-y divide-line">
+                    {catalog.conceptsForUnit(u.id).flatMap((c) =>
+                      catalog.topicsForConcept(c.id).map((t) => {
+                        const vids = catalog.videosForTopic(t.id).filter((v) => !v.isShort);
+                        const s = status(t.id);
                         return (
                           <li key={t.id}>
-                            <Link
-                              href={`/courses/${course.slug}/${t.slug}`}
-                              className="group flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-bg"
-                            >
+                            <Link href={`/courses/${course.slug}/${t.slug}`} className="group flex items-center gap-4 px-5 py-3 transition-colors hover:bg-bg-subtle/60">
                               <span
                                 className={cn(
-                                  "flex size-5 shrink-0 items-center justify-center rounded-full border",
-                                  status === "done" && "border-positive bg-positive text-white",
-                                  status === "started" && "border-accent",
-                                  status === "new" && "border-line-strong",
+                                  "flex size-6 shrink-0 items-center justify-center rounded-full",
+                                  s === "done" ? "bg-accent text-white" : s === "started" ? "ring-2 ring-accent" : "ring-1 ring-line-strong",
                                 )}
-                                aria-label={status === "done" ? "Completed" : status === "started" ? "In progress" : "Not started"}
                               >
-                                {status === "done" ? <Check className="size-3" strokeWidth={3} /> : null}
-                                {status === "started" ? <span className="size-2 rounded-full bg-accent" /> : null}
+                                {s === "done" ? <Check className="size-3.5" strokeWidth={3} /> : null}
                               </span>
                               <div className="min-w-0 flex-1">
-                                <p className="text-[15px] font-medium text-ink">{t.title}</p>
-                                <p className="mt-0.5 hidden truncate text-[13px] text-muted sm:block">{t.summary}</p>
+                                <p className="text-[15px] font-medium text-ink group-hover:text-accent">{t.title}</p>
+                                <p className="truncate text-[13px] text-muted">
+                                  {c.title} · {vids.length} videos
+                                </p>
                               </div>
-                              <span className="hidden max-w-32 shrink-0 truncate font-serif text-[15px] italic text-faint md:block">{t.glyph}</span>
-                              <span className="tabular w-20 shrink-0 text-right text-xs text-muted">{vids.length} lessons</span>
+                              {vids[0] ? (
+                                <img src={vids[0].thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" className="hidden aspect-video w-28 shrink-0 rounded-lg object-cover sm:block" />
+                              ) : null}
                             </Link>
                           </li>
                         );
-                      })}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
+                      }),
+                    )}
+                  </ul>
+                </section>
+              );
+            })}
+          </div>
         </div>
-      </Container>
+      )}
+    </div>
+  );
+}
+
+async function CourseVideos({ courseId, sp, catalogUnits }: { courseId: string; sp: Record<string, string | string[] | undefined>; catalogUnits: { key: string; label: string }[] }) {
+  const catalog = await getCatalog();
+  const str = (v: unknown) => (typeof v === "string" ? v : undefined);
+  const unit = str(sp.unit) && catalog.unit(str(sp.unit)!) ? str(sp.unit)! : undefined;
+  const result = queryFeed(catalog, null, { courseId, sort: str(sp.sort) ?? "helpful", length: str(sp.length) });
+  if (unit) {
+    const topicIds = new Set(catalog.topicsForUnit(unit).map((t) => t.id));
+    result.ordered = result.ordered.filter((v) => v.topicId && topicIds.has(v.topicId));
+  }
+  const page = pageOf(catalog, result, 0, unit ? 400 : 24);
+  const query = new URLSearchParams({ course: courseId, sort: result.sort, ...(result.length !== "any" ? { length: result.length } : {}) }).toString();
+  return (
+    <div className="px-4 sm:px-6 lg:px-10">
+      <div className="sticky top-14 z-20 -mx-4 flex items-center gap-3 bg-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+        <Chips chips={[{ key: "all", label: "All units" }, ...catalogUnits]} active={unit ?? "all"} param="unit" />
+        <SortControls sort={result.sort} length={result.length} defaultSort="helpful" />
+      </div>
+      <div className="pt-4">
+        <FeedGrid key={query + (unit ?? "")} initial={page.items} nextOffset={unit ? null : page.nextOffset} query={query} />
+      </div>
     </div>
   );
 }

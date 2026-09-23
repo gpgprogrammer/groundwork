@@ -1,7 +1,6 @@
-import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Container, ProgressBar } from "@/components/ui";
+import { ProgressBar, formatViews } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
 import { courseProgress } from "@/lib/recommend";
 import { getViewer } from "@/lib/viewer";
@@ -12,63 +11,57 @@ export default async function CoursesPage() {
   const [catalog, viewer] = await Promise.all([getCatalog(), getViewer()]);
   const mine = new Set(viewer?.state.profile.courseIds ?? []);
   const groups = [
-    { label: "AP", courses: catalog.courses.filter((c) => c.exam === "AP") },
+    { label: "Advanced Placement", courses: catalog.courses.filter((c) => c.exam === "AP") },
     { label: "SAT", courses: catalog.courses.filter((c) => c.exam === "SAT") },
   ];
 
   return (
-    <Container size="xl" className="py-14">
-      <header className="rise max-w-2xl">
-        <h1 className="headline text-4xl text-ink">Courses</h1>
-        <p className="mt-3 text-[16px] leading-relaxed text-muted">
-          Every course follows the exam&apos;s own structure: units, then concepts, then the specific topics you&apos;ll be tested on.
-        </p>
-      </header>
-
+    <div className="mx-auto max-w-[1280px] px-4 pb-16 pt-6 sm:px-6">
+      <h1 className="text-[28px] font-bold tracking-tight text-ink">Courses</h1>
+      <p className="mt-1 max-w-2xl text-[15px] text-muted">
+        Every course is organized the way the exam is: units, then concepts, then the exact topics you&apos;ll be tested on.
+      </p>
       {groups.map((g) => (
-        <section key={g.label} className="mt-14">
-          <h2 className="eyebrow mb-4">{g.label === "AP" ? "Advanced Placement" : "SAT"}</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <section key={g.label} className="mt-10">
+          <h2 className="mb-4 text-xl font-bold tracking-tight text-ink">{g.label}</h2>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {g.courses.map((c) => {
-              const units = catalog.unitsForCourse(c.id);
-              const topics = catalog.topicsForCourse(c.id);
-              const lessons = topics.reduce((n, t) => n + catalog.videosForTopic(t.id).length, 0);
+              const videos = catalog.videosForCourse(c.id);
+              const covered = catalog.topicsForCourse(c.id).filter((t) => catalog.videosForTopic(t.id).length).length;
+              const thumbs = videos.filter((v) => !v.isShort).slice(0, 3);
               const prog = viewer ? courseProgress(catalog, viewer.state, c.id) : null;
               return (
-                <Link
-                  key={c.id}
-                  href={`/courses/${c.slug}`}
-                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-surface p-6 transition-all hover:border-line-strong hover:shadow-soft"
-                >
-                  <div
-                    className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full opacity-60 blur-2xl"
-                    style={{ background: `oklch(0.9 0.05 ${c.hue} / 0.5)` }}
-                  />
-                  <div className="relative flex items-start justify-between">
-                    <span className="text-xs font-medium text-muted">
-                      {c.exam} · {c.subject}
-                    </span>
-                    <ArrowUpRight className="size-4 text-faint transition-colors group-hover:text-ink" />
+                <Link key={c.id} href={`/courses/${c.slug}`} className="group overflow-hidden rounded-xl bg-bg-subtle transition-colors hover:bg-line">
+                  <div className="grid aspect-[16/7] grid-cols-3 gap-0.5 overflow-hidden">
+                    {thumbs.map((v) => (
+                      <img key={v.id} src={v.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" className="size-full object-cover" />
+                    ))}
                   </div>
-                  <h3 className="headline relative mt-8 text-2xl text-ink">{c.title}</h3>
-                  <p className="relative mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-muted">{c.description}</p>
-                  <div className="tabular relative mt-6 flex items-center gap-4 text-xs text-muted">
-                    <span>{units.length} units</span>
-                    <span>{topics.length} topics</span>
-                    <span>{lessons} lessons</span>
-                    {mine.has(c.id) ? <span className="ml-auto font-medium text-accent">Studying</span> : null}
-                  </div>
-                  {prog && prog.done > 0 ? (
-                    <div className="relative mt-4">
-                      <ProgressBar value={prog.done / prog.total} />
+                  <div className="p-4">
+                    <div className="flex items-center gap-2">
+                      <span className="size-2.5 rounded-full" style={{ background: `oklch(0.6 0.14 ${c.hue})` }} />
+                      <span className="text-xs font-medium text-muted">{c.exam} · {c.subject}</span>
+                      {mine.has(c.id) ? <span className="ml-auto rounded bg-accent-soft px-1.5 py-0.5 text-[11px] font-medium text-accent">Studying</span> : null}
                     </div>
-                  ) : null}
+                    <h3 className="mt-2 text-lg font-bold tracking-tight text-ink">{c.title}</h3>
+                    <p className="tabular mt-1 text-[13px] text-muted">
+                      {catalog.unitsForCourse(c.id).length} units · {covered} topics · {formatViews(videos.length)} videos
+                    </p>
+                    {prog ? (
+                      <div className="mt-3">
+                        <ProgressBar value={prog.done / prog.total} />
+                        <p className="tabular mt-1 text-xs text-muted">
+                          {prog.done} of {prog.total} topics mastered
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
                 </Link>
               );
             })}
           </div>
         </section>
       ))}
-    </Container>
+    </div>
   );
 }

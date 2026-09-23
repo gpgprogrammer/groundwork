@@ -1,8 +1,8 @@
-import { GraduationCap, Presentation } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { signInAsDemo, signInWithGoogle } from "@/app/actions/auth";
+import { signInWithGoogle } from "@/app/actions/auth";
+import { LogoMark } from "@/components/logo";
 import { Button } from "@/components/ui";
 import { isSupabaseEnabled } from "@/lib/env";
 import { getViewer } from "@/lib/viewer";
@@ -13,17 +13,16 @@ export const metadata: Metadata = { title: "Sign in" };
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const sp = await searchParams;
   const next = typeof sp.next === "string" && sp.next.startsWith("/") && !sp.next.startsWith("//") ? sp.next : undefined;
-  if (await getViewer()) redirect(next ?? "/dashboard");
+  if (await getViewer()) redirect(next ?? "/");
 
   return (
-    <div className="flex flex-1 items-start justify-center px-5 pb-16 pt-[8vh]">
-      <div className="rise w-full max-w-sm">
-        <h1 className="headline text-center text-[28px] text-ink">Welcome back</h1>
-        <p className="mt-2 text-center text-sm text-muted">Sign in to pick up where you left off.</p>
+    <div className="flex flex-1 items-start justify-center px-4 pb-16 pt-[6vh]">
+      <div className="rise w-full max-w-[420px] rounded-3xl bg-bg p-8 shadow-soft sm:p-10">
+        <LogoMark className="size-10" />
+        <h1 className="mt-5 text-[26px] font-bold tracking-tight text-ink">Sign in</h1>
+        <p className="mt-1 text-[15px] text-muted">to continue to Groundwork</p>
 
-        {sp.error ? (
-          <p className="mt-6 rounded-lg bg-warn-soft px-3 py-2 text-center text-sm text-warn">That sign-in link didn&apos;t work. Please try again.</p>
-        ) : null}
+        {sp.error ? <p className="mt-6 rounded-lg bg-warn-soft px-3 py-2 text-sm text-warn">That sign-in link didn&apos;t work. Please try again.</p> : null}
 
         <div className="mt-8">
           {isSupabaseEnabled ? (
@@ -34,54 +33,21 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
                   <GoogleMark /> Continue with Google
                 </Button>
               </form>
-              <Divider />
+              <div className="my-6 flex items-center gap-3 text-xs text-faint">
+                <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
+              </div>
             </>
           ) : null}
           <SignInForm next={next} />
         </div>
 
-        <p className="mt-6 text-center text-sm text-muted">
-          New here?{" "}
-          <Link href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"} className="font-medium text-ink underline underline-offset-4">
-            Start your free month
+        <p className="mt-8 text-center text-sm text-muted">
+          New to Groundwork?{" "}
+          <Link href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"} className="font-medium text-accent hover:underline">
+            Create an account
           </Link>
         </p>
-
-        {!isSupabaseEnabled ? (
-          <div className="mt-10 rounded-2xl border border-dashed border-line-strong p-5">
-            <p className="text-[13px] font-medium text-ink">Explore with a demo account</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted">Accounts come pre-filled with history, saved lessons, and requests. Password: groundwork</p>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <form action={signInAsDemo}>
-                <input type="hidden" name="who" value="student" />
-                <Button variant="secondary" className="h-auto w-full flex-col items-start gap-0.5 py-2.5 text-left">
-                  <span className="flex items-center gap-1.5 text-[13px]">
-                    <GraduationCap className="size-3.5" /> Student
-                  </span>
-                  <span className="text-[11px] font-normal text-muted">Maya · Calc BC</span>
-                </Button>
-              </form>
-              <form action={signInAsDemo}>
-                <input type="hidden" name="who" value="creator" />
-                <Button variant="secondary" className="h-auto w-full flex-col items-start gap-0.5 py-2.5 text-left">
-                  <span className="flex items-center gap-1.5 text-[13px]">
-                    <Presentation className="size-3.5" /> Educator
-                  </span>
-                  <span className="text-[11px] font-normal text-muted">Sarah · Studio</span>
-                </Button>
-              </form>
-            </div>
-          </div>
-        ) : null}
       </div>
-    </div>
-  );
-}
-
-function Divider() {
-  return (
-    <div className="my-6 flex items-center gap-3 text-xs text-faint">
-      <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
     </div>
   );
 }

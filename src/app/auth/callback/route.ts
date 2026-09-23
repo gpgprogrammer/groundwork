@@ -5,8 +5,8 @@ import { isSupabaseEnabled } from "@/lib/env";
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = req.nextUrl;
   const code = searchParams.get("code");
-  const nextParam = searchParams.get("next") ?? "/dashboard";
-  const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/dashboard";
+  const nextParam = searchParams.get("next") ?? "/";
+  const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/";
 
   if (isSupabaseEnabled && code) {
     const { createSessionClient } = await import("@/lib/supabase/server");

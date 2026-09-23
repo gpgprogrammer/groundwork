@@ -3,20 +3,19 @@ import { cn } from "./ui";
 
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={cn("size-[22px]", className)} aria-hidden>
-      <rect x="1" y="1" width="22" height="22" rx="6.5" className="fill-ink" />
-      <rect x="6" y="13.5" width="12" height="2.2" rx="1.1" className="fill-bg" />
-      <rect x="6" y="17.3" width="12" height="2.2" rx="1.1" className="fill-bg" opacity="0.55" />
-      <circle cx="12" cy="8.6" r="2.6" className="fill-bg" />
+    <svg viewBox="0 0 28 28" className={cn("size-7", className)} aria-hidden>
+      <rect width="28" height="28" rx="7" fill="#1865f2" />
+      <path d="M11 8.6v10.8c0 .7.8 1.1 1.4.7l8.2-5.4a.8.8 0 0 0 0-1.4l-8.2-5.4c-.6-.4-1.4 0-1.4.7Z" fill="#fff" />
+      <rect x="6" y="21.5" width="16" height="1.8" rx=".9" fill="#fff" opacity=".55" />
     </svg>
   );
 }
 
 export function Logo({ href = "/", className }: { href?: string; className?: string }) {
   return (
-    <Link href={href} className={cn("group inline-flex items-center gap-2 text-ink", className)} aria-label="Groundwork home">
+    <Link href={href} className={cn("inline-flex items-center gap-1.5 text-ink", className)} aria-label="Groundwork home">
       <LogoMark />
-      <span className="text-[15px] font-semibold tracking-[-0.02em]">Groundwork</span>
+      <span className="text-[19px] font-bold tracking-[-0.04em]">Groundwork</span>
     </Link>
   );
 }

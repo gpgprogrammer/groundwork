@@ -44,9 +44,9 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
     if (error) return { error: error.message, fields };
     if (!data.session) return { message: `Check ${email} for a confirmation link to finish creating your account.` };
   } else {
-    const { demoCreateUser, demoFindUserByEmail } = await import("@/lib/data/demo-store");
-    if (await demoFindUserByEmail(email)) return { error: "An account with that email already exists. Sign in instead.", fields };
-    const user = await demoCreateUser(name, email, password);
+    const { localCreateUser, localFindUserByEmail } = await import("@/lib/data/demo-store");
+    if (await localFindUserByEmail(email)) return { error: "An account with that email already exists. Sign in instead.", fields };
+    const user = await localCreateUser(name, email, password);
     await (await getStore()).ensureProfile({ id: user.id, email: user.email, name: user.name });
     await setDemoSession(user.id);
   }
@@ -56,7 +56,7 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
 export async function signIn(_: AuthState, form: FormData): Promise<AuthState> {
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   const password = String(form.get("password") ?? "");
-  const next = safeNext(form.get("next"), "/dashboard");
+  const next = safeNext(form.get("next"), "/");
   if (!email || !password) return { error: "Enter your email and password.", fields: { email } };
 
   if (isSupabaseEnabled) {
@@ -65,29 +65,19 @@ export async function signIn(_: AuthState, form: FormData): Promise<AuthState> {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: "That email and password don't match.", fields: { email } };
   } else {
-    const { demoFindUserByEmail, verifyPassword } = await import("@/lib/data/demo-store");
-    const user = await demoFindUserByEmail(email);
+    const { localFindUserByEmail, verifyPassword } = await import("@/lib/data/demo-store");
+    const user = await localFindUserByEmail(email);
     if (!user || !verifyPassword(user, password)) return { error: "That email and password don't match.", fields: { email } };
     await setDemoSession(user.id);
   }
   redirect(next);
 }
 
-/** One-click entry to the seeded demo accounts (demo mode only). */
-export async function signInAsDemo(form: FormData) {
-  if (isSupabaseEnabled) redirect("/login");
-  const { DEMO_ACCOUNTS, demoFindUserByEmail } = await import("@/lib/data/demo-store");
-  const who = form.get("who") === "creator" ? "creator" : "student";
-  const user = await demoFindUserByEmail(DEMO_ACCOUNTS[who].email);
-  if (user) await setDemoSession(user.id);
-  redirect(who === "creator" ? "/creator" : "/dashboard");
-}
-
 export async function signInWithGoogle(form: FormData) {
   if (!isSupabaseEnabled) redirect("/login");
   const { createSessionClient } = await import("@/lib/supabase/server");
   const supabase = await createSessionClient();
-  const next = safeNext(form.get("next"), "/dashboard");
+  const next = safeNext(form.get("next"), "/");
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}` },

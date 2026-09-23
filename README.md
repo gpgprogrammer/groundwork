@@ -1,83 +1,59 @@
 # Groundwork
 
-Short, excellent lessons for AP and SAT, ranked by how well they teach.
-
-Students pick a course, drill down (course → unit → concept → topic), read a two-sentence explanation, and watch the lessons other students actually finish. Every lesson spotlights its educator, and tutoring is offered once, after the lesson: “Liked this lesson? Learn with Sarah.”
+The best AP and SAT lessons on YouTube, organized by course, unit, and topic, ranked by how well they teach, and matched to each student's class calendar. YouTube's feed meets Khan Academy's structure.
 
 ## Run it
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000
+npm run dev          # http://127.0.0.1:3000
 ```
 
-No setup required. With no env vars, the app runs in **demo mode**:
+## The video library
 
-- Data lives in `.data/demo-state.json` (delete it to reset; it reseeds itself).
-- Two seeded accounts (password `groundwork`), also available as one-click buttons on `/login`:
-  - **Student**: `maya@demo.groundwork.study`. Mid-trial, with history, saves, and votes.
-  - **Educator**: `sarah@demo.groundwork.study`. Has a creator studio with analytics and tutoring requests.
-- Checkout is simulated (clearly labeled on the billing page).
+Videos live in `src/data/youtube.json` (committed, so deploys need no API access). Rebuild it with either:
 
-## Production setup
-
-Copy `.env.example` to `.env.local` and fill it in.
-
-**Supabase (auth + Postgres)**
-1. Create a project. Run `supabase/migrations/0001_init.sql`, then `supabase/seed.sql` (regenerate with `npm run db:seed` after editing content).
-2. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
-3. In Auth settings, add `<APP_URL>/auth/callback` as a redirect URL. Enabling Google shows the Google button.
-4. To link an existing educator row to a real account: `update educators set owner_id = '<auth user id>' where handle = 'sarah-chen'; update profiles set role = 'creator', educator_id = 'edu_sarah-chen' where id = '<auth user id>';`
-
-**Stripe ($10/month after a free month)**
-1. `STRIPE_SECRET_KEY=sk_test_... npm run stripe:setup` creates the product and price and prints `STRIPE_PRICE_ID`.
-2. Point a webhook at `/api/billing/webhook` for `checkout.session.completed` and `customer.subscription.*`, then set `STRIPE_WEBHOOK_SECRET`.
-3. Enable the Customer Portal in the Stripe dashboard. Whatever is left of the student's free month carries over as a Stripe trial, so subscribing early never costs them free days.
-
-No keys are hardcoded anywhere. Each integration turns on when its variables are present.
-
-## How ranking works
-
-`src/lib/ranking.ts`, with the full explanation at `/how-ranking-works`.
-
-| Signal | Weight | Notes |
-| --- | --- | --- |
-| Completion rate | 35% | Bayesian-smoothed toward 45% over 150 views |
-| Helpful votes | 25% | Wilson lower bound, so 900/1000 beats 9/10 |
-| Saves per viewer | 20% | Smoothed and capped at 12% |
-| Engagement quality | 15% | Watch depth, rewatches, early drop-off |
-| Views | 5% | Log-scaled, used as a tiebreaker |
-
-A lesson only counts as completed when the viewer reaches 90% **and** actually watched at least half of it, so seeking to the end doesn't inflate the score. Live engagement is merged into baseline stats by the `video_stats` view in Postgres, or by the demo store locally.
-
-## Architecture
-
-```
-src/
-  app/(site)/          Landing, courses, topics, watch, educators, search, dashboard, library, settings, creator studio
-  app/(focus)/         Sign in, sign up, onboarding (minimal chrome)
-  app/actions/         Server actions: auth, learning (save/vote/profile/tutoring), creator
-  app/api/             search, progress beacons, Stripe checkout/portal/webhook
-  lib/catalog/         Curriculum content, catalog builder, indexed catalog
-  lib/data/            Store interface + demo (JSON) and Supabase implementations
-  lib/ranking.ts       Quality score
-  lib/search.ts        Field-weighted, typo-tolerant search
-  lib/recommend.ts     Continue watching, next topic, recommendations
-  proxy.ts             Supabase session refresh (Next 16 "proxy", formerly middleware)
-supabase/              Schema with RLS, trigger, stats view, FTS/trigram indexes; generated seed
+```bash
+npm run ingest            # official YouTube Data API (needs YOUTUBE_API_KEY in .env.local)
+npm run ingest:keyless    # no key: reads YouTube's public search/channel pages
+npm run ingest:keyless -- --likes   # then fills like counts from the public Return YouTube Dislike API
 ```
 
-## About the seed content
+Both search every curriculum topic, add broad course reviews, then crawl the full uploads of the channels that appear most often. Each video is classified into its topic by title and description (`src/lib/catalog/match.ts`); uploads that can't be placed confidently are dropped. Responses are cached in `.cache/`, so reruns are cheap and resumable.
 
-The curriculum (6 courses, 91 topics with real summaries) was written for this app. The **educators are fictional**, and the **272 lessons have no video files**: their titles, chapters, and engagement stats are generated deterministically from the curriculum. Those lessons play in a built-in chapter player that has a real clock, scrubbing, speed control, keyboard shortcuts, resume, and progress reporting. Lessons created in the studio with a media URL play as real video through the same tracking. Replace the seed with real lessons and educators before launch.
+**Prefer the official API for production.** Automated page reads aren't covered by YouTube's API terms, and YouTube can change its page format at any time. The keyless path exists so the library can be built without a key.
 
-Marketing copy (FAQ answers, educator credentials, "AP Reader" claims) is placeholder and should be reviewed before public use.
+Clicking a video goes through `/go/:id`, which records the open in the student's history and redirects to YouTube.
+
+## Ranking
+
+`src/lib/ranking.ts`, explained at `/how-ranking-works`: helpfulness (Groundwork student votes anchored to YouTube like rate) 30%, like rate 20%, topic fit 20%, reach 15%, saves 10%, discussion 5%. Every feed can also be sorted by most helpful, views, likes, newest, shortest, longest, or most discussed, and filtered by length.
+
+## Calendar sync
+
+Students paste a private iCal link (Google Calendar, Canvas, Schoology, Apple Calendar, Outlook) or upload an `.ics` file during onboarding or on `/schedule`. `src/lib/ics.ts` parses events (folded lines, all-day dates, weekly recurrences), keeps school-related ones, and matches them to courses and topics. Upcoming tests and assignments drive the "Coming up on your calendar" shelf and the For you feed. Fetching is SSRF-guarded (`src/lib/schedule.ts`): https only, public IPs only, every redirect checked, 3 MB cap.
+
+## Accounts and data
+
+Without Supabase, accounts and activity are stored in `.data/state.json` (local development). **For real users, connect Supabase**:
+
+1. Create a project, run `supabase/migrations/0001_init.sql` in the SQL editor.
+2. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
+3. Add `{APP_URL}/auth/callback` as an Auth redirect URL; enable Google if you want the Google button.
+
+The database stores only per-student data (profiles, history, saves, votes, mastery, schedules, subscriptions) under row-level security.
+
+## Billing
+
+Browsing is free. Groundwork Plus ($10/month, 30 days free) unlocks calendar sync. `npm run stripe:setup` creates the price; point a webhook at `/api/billing/webhook`. Without Stripe keys, checkout is simulated and labeled as such.
 
 ## Quality checks
 
 ```bash
 npm run typecheck
 npm run lint
-npm test                       # Playwright: unit tests + end-to-end flows (starts dev server if needed)
-node scripts/screens.mjs out   # desktop + mobile screenshots of every page
+npm test                       # Playwright unit + end-to-end tests
+node scripts/screens.mjs out   # desktop + mobile screenshots
 ```
+
+AP® and SAT® are trademarks of the College Board, which is not affiliated with Groundwork. Videos belong to their creators and play on YouTube.

@@ -1,26 +1,25 @@
-import type { Video, VideoStats } from "@/lib/types";
+import type { SiteStats, YtVideo } from "@/lib/types";
 
 /**
- * Groundwork's lesson ranking.
+ * Groundwork's quality score for a lesson (0–100).
  *
- * Views measure reach, not whether a lesson taught anything, so they carry only
- * 5% of the weight. Every other signal is smoothed toward a prior so a
- * new lesson with 40 perfect views doesn't outrank a proven one with 40,000.
+ * Views measure reach, not teaching, so they're a small part of the score.
+ * Signals are smoothed toward priors so a video with 300 views and 40 likes
+ * doesn't beat a proven lesson on luck.
  */
 export const RANKING_WEIGHTS = {
-  completion: 0.35,
-  helpful: 0.25,
-  saves: 0.2,
-  engagement: 0.15,
-  reach: 0.05,
+  helpful: 0.3, // Groundwork students' helpful votes, anchored to YouTube like rate
+  likeRate: 0.2, // likes per view on YouTube
+  relevance: 0.2, // how squarely it covers the topic
+  reach: 0.15, // log-scaled views
+  saves: 0.1, // saved per open on Groundwork
+  discussion: 0.05, // comments per view
 } as const;
 
-const PRIOR_VIEWS = 150;
-const PRIOR_COMPLETION = 0.45;
-const PRIOR_SAVE_RATE = 0.04;
-const SAVE_RATE_CEILING = 0.12;
+const PRIOR_VIEWS = 3000;
+const PRIOR_LIKE_RATE = 0.025;
+const GOOD_LIKE_RATE = 0.05;
 
-/** Lower bound of the Wilson score interval (95%). Rewards both ratio and confidence. */
 export function wilsonLowerBound(positive: number, total: number, z = 1.96) {
   if (total === 0) return 0;
   const p = positive / total;
@@ -31,48 +30,92 @@ export function wilsonLowerBound(positive: number, total: number, z = 1.96) {
 }
 
 export type RankBreakdown = {
-  score: number; // 0–100
-  completion: number; // 0–1 components
+  score: number;
   helpful: number;
-  saves: number;
-  engagement: number;
+  likeRate: number;
+  relevance: number;
   reach: number;
+  saves: number;
+  discussion: number;
 };
 
-export function rankVideo(stats: VideoStats): RankBreakdown {
-  const v = Math.max(0, stats.views);
-  const completion = (stats.completions + PRIOR_COMPLETION * PRIOR_VIEWS) / (v + PRIOR_VIEWS);
-  const helpful = wilsonLowerBound(stats.helpful, stats.helpful + stats.notHelpful);
-  const saveRate = (stats.saves + PRIOR_SAVE_RATE * PRIOR_VIEWS) / (v + PRIOR_VIEWS);
-  const saves = Math.min(1, saveRate / SAVE_RATE_CEILING);
-  const engagement = Math.max(
-    0,
-    Math.min(
-      1,
-      0.55 * stats.avgWatchFraction + 0.25 * Math.min(1, stats.rewatchRate / 0.3) + 0.2 * (1 - stats.earlyDropRate),
-    ),
-  );
-  const reach = Math.min(1, Math.log10(v + 1) / 5);
+export const EMPTY_SITE_STATS: SiteStats = { opens: 0, saves: 0, helpful: 0, notHelpful: 0 };
 
+/** Smoothed YouTube like rate (likes per view). */
+export function likeRate(v: Pick<YtVideo, "likes" | "views">) {
+  const likes = v.likes ?? v.views * PRIOR_LIKE_RATE;
+  return (likes + PRIOR_LIKE_RATE * PRIOR_VIEWS) / (v.views + PRIOR_VIEWS);
+}
+
+/** Share of Groundwork students who found it helpful, with the like rate as the prior. */
+export function helpfulShare(v: Pick<YtVideo, "likes" | "views">, s: SiteStats) {
+  const prior = 0.6 + 0.35 * Math.min(1, likeRate(v) / GOOD_LIKE_RATE);
+  const PRIOR_VOTES = 12;
+  return (s.helpful + prior * PRIOR_VOTES) / (s.helpful + s.notHelpful + PRIOR_VOTES);
+}
+
+export function rankVideo(v: YtVideo, s: SiteStats = EMPTY_SITE_STATS): RankBreakdown {
+  const helpful = helpfulShare(v, s);
+  const lr = Math.min(1, likeRate(v) / GOOD_LIKE_RATE);
+  const relevance = v.topicId ? Math.min(1, v.relevance) : 0.35;
+  const reach = Math.min(1, Math.log10(v.views + 1) / 7);
+  const saves = Math.min(1, (s.saves + 0.5) / (s.opens + 10) / 0.15);
+  const discussion = Math.min(1, ((v.comments ?? 0) + 1) / (v.views + 500) / 0.004);
   const w = RANKING_WEIGHTS;
   const score =
-    100 *
-    (w.completion * completion + w.helpful * helpful + w.saves * saves + w.engagement * engagement + w.reach * reach);
-
-  return { score: Math.round(score * 10) / 10, completion, helpful, saves, engagement, reach };
+    100 * (w.helpful * helpful + w.likeRate * lr + w.relevance * relevance + w.reach * reach + w.saves * saves + w.discussion * discussion);
+  return { score: Math.round(score * 10) / 10, helpful, likeRate: lr, relevance, reach, saves, discussion };
 }
 
-export function rankVideos<T extends Pick<Video, "stats">>(videos: T[]): (T & { rank: RankBreakdown })[] {
-  return videos
-    .map((v) => ({ ...v, rank: rankVideo(v.stats) }))
-    .sort((a, b) => b.rank.score - a.rank.score);
+export const SORTS = {
+  best: "Best match",
+  helpful: "Most helpful",
+  views: "Most viewed",
+  likes: "Most liked",
+  newest: "Newest",
+  shortest: "Shortest",
+  longest: "Longest",
+  comments: "Most discussed",
+} as const;
+export type SortKey = keyof typeof SORTS;
+
+export function isSortKey(v: unknown): v is SortKey {
+  return typeof v === "string" && v in SORTS;
 }
 
-export function completionRate(stats: VideoStats) {
-  return stats.views ? stats.completions / stats.views : 0;
+export function compareBy<T extends YtVideo & { rank: RankBreakdown }>(sort: SortKey): (a: T, b: T) => number {
+  switch (sort) {
+    case "helpful":
+      return (a, b) => b.rank.helpful - a.rank.helpful || b.views - a.views;
+    case "views":
+      return (a, b) => b.views - a.views;
+    case "likes":
+      return (a, b) => (b.likes ?? 0) - (a.likes ?? 0);
+    case "newest":
+      return (a, b) => b.publishedAt.localeCompare(a.publishedAt);
+    case "shortest":
+      return (a, b) => a.durationSec - b.durationSec;
+    case "longest":
+      return (a, b) => b.durationSec - a.durationSec;
+    case "comments":
+      return (a, b) => (b.comments ?? 0) - (a.comments ?? 0);
+    default:
+      return (a, b) => b.rank.score - a.rank.score;
+  }
 }
 
-export function helpfulRate(stats: VideoStats) {
-  const total = stats.helpful + stats.notHelpful;
-  return total ? stats.helpful / total : 0;
+export const LENGTHS = {
+  any: "Any length",
+  short: "Under 10 min",
+  medium: "10–30 min",
+  long: "Over 30 min",
+} as const;
+export type LengthKey = keyof typeof LENGTHS;
+
+export function inLength(v: Pick<YtVideo, "durationSec">, length: LengthKey) {
+  const m = v.durationSec / 60;
+  if (length === "short") return m < 10;
+  if (length === "medium") return m >= 10 && m <= 30;
+  if (length === "long") return m > 30;
+  return true;
 }
