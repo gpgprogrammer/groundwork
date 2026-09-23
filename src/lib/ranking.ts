@@ -8,17 +8,17 @@ import type { SiteStats, YtVideo } from "@/lib/types";
  * doesn't beat a proven lesson on luck.
  */
 export const RANKING_WEIGHTS = {
-  helpful: 0.3, // Groundwork students' helpful votes, anchored to YouTube like rate
+  reach: 0.25, // log-scaled views: evidence a lesson has worked for many students
+  helpful: 0.2, // Groundwork students' helpful votes
   likeRate: 0.2, // likes per view on YouTube
   relevance: 0.2, // how squarely it covers the topic
-  reach: 0.15, // log-scaled views
   saves: 0.1, // saved per open on Groundwork
   discussion: 0.05, // comments per view
 } as const;
 
 const PRIOR_VIEWS = 3000;
 const PRIOR_LIKE_RATE = 0.025;
-const GOOD_LIKE_RATE = 0.05;
+const GOOD_LIKE_RATE = 0.06;
 
 export function wilsonLowerBound(positive: number, total: number, z = 1.96) {
   if (total === 0) return 0;
@@ -49,7 +49,8 @@ export function likeRate(v: Pick<YtVideo, "likes" | "views">) {
 
 /** Share of Groundwork students who found it helpful, with the like rate as the prior. */
 export function helpfulShare(v: Pick<YtVideo, "likes" | "views">, s: SiteStats) {
-  const prior = 0.6 + 0.35 * Math.min(1, likeRate(v) / GOOD_LIKE_RATE);
+  // Weak link to like rate so it isn't double-counted before students vote.
+  const prior = 0.7 + 0.2 * Math.min(1, likeRate(v) / GOOD_LIKE_RATE);
   const PRIOR_VOTES = 12;
   return (s.helpful + prior * PRIOR_VOTES) / (s.helpful + s.notHelpful + PRIOR_VOTES);
 }
@@ -58,7 +59,7 @@ export function rankVideo(v: YtVideo, s: SiteStats = EMPTY_SITE_STATS): RankBrea
   const helpful = helpfulShare(v, s);
   const lr = Math.min(1, likeRate(v) / GOOD_LIKE_RATE);
   const relevance = v.topicId ? Math.min(1, v.relevance) : 0.35;
-  const reach = Math.min(1, Math.log10(v.views + 1) / 7);
+  const reach = Math.min(1, Math.log10(v.views + 1) / 6.5);
   const saves = Math.min(1, (s.saves + 0.5) / (s.opens + 10) / 0.15);
   const discussion = Math.min(1, ((v.comments ?? 0) + 1) / (v.views + 500) / 0.004);
   const w = RANKING_WEIGHTS;

@@ -27,7 +27,7 @@ Clicking a video goes through `/go/:id`, which records the open in the student's
 
 ## Ranking
 
-`src/lib/ranking.ts`, explained at `/how-ranking-works`: helpfulness (Groundwork student votes anchored to YouTube like rate) 30%, like rate 20%, topic fit 20%, reach 15%, saves 10%, discussion 5%. Every feed can also be sorted by most helpful, views, likes, newest, shortest, longest, or most discussed, and filtered by length.
+`src/lib/ranking.ts`, explained at `/how-ranking-works`: reach (log-scaled views) 25%, Groundwork student helpful votes 20%, YouTube like rate 20%, topic fit 20%, saves 10%, discussion 5%. Every feed can also be sorted by most helpful, views, likes, newest, shortest, longest, or most discussed, and filtered by length.
 
 ## Calendar sync
 

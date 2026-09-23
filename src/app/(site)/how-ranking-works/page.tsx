@@ -8,10 +8,10 @@ export const metadata: Metadata = {
 };
 
 const SIGNALS = [
+  ["reach", "Reach", "Views, log-scaled. A lesson two million students have watched is proven; the log scale means going from 1M to 2M views barely moves it, so a viral video can't buy the top spot."],
   ["helpful", "Helpfulness", "Groundwork students mark videos as helpful (or not) for studying. We blend those votes with a prior based on the video's YouTube like rate, so a lesson with three votes isn't ranked on luck, and one with three thousand is ranked on what students said."],
   ["likeRate", "Like rate", "Likes per view on YouTube, smoothed for small videos. A lesson that 5% of viewers like is doing something right, whether it has 20,000 views or 2 million."],
   ["relevance", "Topic fit", "How squarely the video covers the topic, from its title and description. A focused 8-minute lesson on the chain rule beats a 2-hour unit review that mentions it."],
-  ["reach", "Reach", "Views, log-scaled. It helps separate proven lessons from unknowns, but a viral video can't buy the top spot."],
   ["saves", "Saves", "How often Groundwork students save a lesson to watch again before an exam."],
   ["discussion", "Discussion", "Comments per view. Active comment sections often mean students are working through problems together."],
 ] as const;
@@ -34,7 +34,7 @@ export default function HowRankingWorksPage() {
                 <span className="tabular text-sm font-medium text-muted">{Math.round(w * 100)}%</span>
               </div>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-line">
-                <div className="h-full rounded-full bg-accent" style={{ width: `${(w / 0.3) * 100}%` }} />
+                <div className="h-full rounded-full bg-accent" style={{ width: `${(w / 0.25) * 100}%` }} />
               </div>
               <p className="mt-4 text-[15px] leading-relaxed text-ink-2">{body}</p>
             </section>
