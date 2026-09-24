@@ -397,7 +397,7 @@ test("a tutor uploads a video; it plays on Merit and shows on their profile", as
   await page.waitForURL(/\/studio\/upload/);
 });
 
-test("signup skips calendar setup; the sync popup appears 5 minutes later and the X closes it for good", async ({ page }) => {
+test("signup skips calendar setup; the sync popup appears 5 minutes later, can be closed after 5 seconds, and stays closed", async ({ page }) => {
   await page.clock.install();
   await signUpAndOnboard(page);
   const popup = page.getByRole("dialog", { name: "Sync your schedule" });
@@ -405,6 +405,13 @@ test("signup skips calendar setup; the sync popup appears 5 minutes later and th
   await page.clock.fastForward("05:05");
   await expect(popup).toBeVisible();
   await expect(popup.getByText(/Included with Merit Plus or Exam Sprint/)).toBeVisible();
+  // The X appears only after 5 seconds; until then Escape and clicking outside don't close it.
+  await expect(popup.getByRole("button", { name: "Close" })).toHaveCount(0);
+  await expect(popup.getByRole("timer")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.mouse.click(10, 10);
+  await expect(popup).toBeVisible();
+  await page.clock.runFor(5000);
   await popup.getByRole("button", { name: "Close" }).click();
   await expect(popup).toHaveCount(0);
   await page.reload();

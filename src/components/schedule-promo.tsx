@@ -6,6 +6,9 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { dismissSchedulePromo } from "@/app/actions/prompts";
 
+/** Seconds before the popup can be closed, so it gets read first. */
+const LOCK_SECONDS = 5;
+
 const HIDDEN_ON = /^\/(schedule|onboarding|login|signup|pricing|settings\/billing|admin)/;
 
 /**
@@ -16,7 +19,8 @@ export function SchedulePromo({ showAt, trialDaysLeft }: { showAt: string; trial
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [closed, setClosed] = useState(false);
-  const closeBtn = useRef<HTMLButtonElement>(null);
+  const [lockLeft, setLockLeft] = useState(LOCK_SECONDS);
+  const cta = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     const wait = Math.max(1500, new Date(showAt).getTime() - Date.now());
@@ -25,11 +29,19 @@ export function SchedulePromo({ showAt, trialDaysLeft }: { showAt: string; trial
   }, [showAt]);
 
   const visible = open && !closed && !HIDDEN_ON.test(pathname);
+  const locked = lockLeft > 0;
+
+  // Count down while it's on screen; only then can it be closed.
+  useEffect(() => {
+    if (!visible) return;
+    cta.current?.focus();
+    const t = setInterval(() => setLockLeft((n) => Math.max(0, n - 1)), 1000);
+    return () => clearInterval(t);
+  }, [visible]);
 
   useEffect(() => {
     if (!visible) return;
-    closeBtn.current?.focus();
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && dismiss();
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && close();
     document.addEventListener("keydown", esc);
     return () => document.removeEventListener("keydown", esc);
   });
@@ -39,9 +51,13 @@ export function SchedulePromo({ showAt, trialDaysLeft }: { showAt: string; trial
     void dismissSchedulePromo();
   }
 
+  function close() {
+    if (!locked) dismiss();
+  }
+
   if (!visible) return null;
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-4 backdrop-blur-[2px] sm:items-center" onClick={dismiss}>
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-4 backdrop-blur-[2px] sm:items-center" onClick={close}>
       <div
         role="dialog"
         aria-modal="true"
@@ -49,9 +65,15 @@ export function SchedulePromo({ showAt, trialDaysLeft }: { showAt: string; trial
         onClick={(e) => e.stopPropagation()}
         className="rise relative w-full max-w-md overflow-hidden rounded-3xl bg-bg shadow-2xl ring-1 ring-line"
       >
-        <button ref={closeBtn} type="button" onClick={dismiss} aria-label="Close" className="absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-bg/80 text-muted hover:bg-bg-subtle hover:text-ink">
-          <X className="size-5" />
-        </button>
+        {locked ? (
+          <span role="timer" aria-label={`You can close this in ${lockLeft} seconds`} className="tabular absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-white/20 text-[14px] font-semibold text-white">
+            {lockLeft}
+          </span>
+        ) : (
+          <button type="button" onClick={dismiss} aria-label="Close" className="absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-bg/80 text-muted hover:bg-bg-subtle hover:text-ink">
+            <X className="size-5" />
+          </button>
+        )}
         <div className="bg-gradient-to-br from-accent to-[#1d4ed8] px-6 pb-6 pt-8 text-white">
           <CalendarDays className="size-9" />
           <h2 id="schedule-promo-title" className="mt-4 text-2xl font-extrabold tracking-tight">
@@ -90,7 +112,7 @@ export function SchedulePromo({ showAt, trialDaysLeft }: { showAt: string; trial
               <>Merit Plus is free for your first month.</>
             )}
           </p>
-          <Link href="/schedule" onClick={dismiss} className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-white hover:brightness-110">
+          <Link ref={cta} href="/schedule" onClick={dismiss} className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-white hover:brightness-110">
             Sync my schedule <ArrowRight className="size-4" />
           </Link>
         </div>
