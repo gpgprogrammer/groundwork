@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BellRing, CalendarDays, Target, X } from "lucide-react";
+import { ArrowRight, BellRing, CalendarDays, Sparkles, Target, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -61,6 +61,12 @@ export function SchedulePromo({ showAt, trialDaysLeft }: { showAt: string; trial
         </div>
         <div className="px-6 pb-6 pt-5">
           <ul className="space-y-3 text-[14.5px] text-ink-2">
+            <li className="flex gap-3">
+              <Sparkles className="mt-0.5 size-5 shrink-0 text-accent" />
+              <span>
+                <span className="font-semibold text-ink">Your feed learns what you&apos;re learning in school.</span> The topics on your calendar move to the top of For you, so Merit keeps pace with your classes.
+              </span>
+            </li>
             <li className="flex gap-3">
               <CalendarDays className="mt-0.5 size-5 shrink-0 text-accent" />
               Connect Blackbaud, Canvas, Schoology, Google, or a PDF in about a minute. It stays up to date on its own.
