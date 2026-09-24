@@ -4,15 +4,15 @@ import { RANKING_WEIGHTS, SORTS } from "@/lib/ranking";
 
 export const metadata: Metadata = {
   title: "How ranking works",
-  description: "How Groundwork orders lessons: student helpfulness, YouTube like rate, topic fit, and reach.",
+  description: "How Merit orders lessons: student helpfulness, YouTube like rate, topic fit, and reach.",
 };
 
 const SIGNALS = [
   ["reach", "Reach", "Views, log-scaled. A lesson two million students have watched is proven; the log scale means going from 1M to 2M views barely moves it, so a viral video can't buy the top spot."],
-  ["helpful", "Helpfulness", "Groundwork students mark videos as helpful (or not) for studying. We blend those votes with a prior based on the video's YouTube like rate, so a lesson with three votes isn't ranked on luck, and one with three thousand is ranked on what students said."],
+  ["helpful", "Helpfulness", "Merit students mark videos as helpful (or not) for studying. We blend those votes with a prior based on the video's YouTube like rate, so a lesson with three votes isn't ranked on luck, and one with three thousand is ranked on what students said."],
   ["likeRate", "Like rate", "Likes per view on YouTube, smoothed for small videos. A lesson that 5% of viewers like is doing something right, whether it has 20,000 views or 2 million."],
   ["relevance", "Topic fit", "How squarely the video covers the topic, from its title and description. A focused 8-minute lesson on the chain rule beats a 2-hour unit review that mentions it."],
-  ["saves", "Saves", "How often Groundwork students save a lesson to watch again before an exam."],
+  ["saves", "Saves", "How often Merit students save a lesson to watch again before an exam."],
   ["discussion", "Discussion", "Comments per view. Active comment sections often mean students are working through problems together."],
 ] as const;
 
@@ -22,7 +22,7 @@ export default function HowRankingWorksPage() {
       <h1 className="text-4xl font-bold tracking-tight text-ink">How ranking works</h1>
       <p className="mt-4 text-[17px] leading-relaxed text-ink-2">
         YouTube orders videos by what keeps people watching. We order them by what helps students study. Each lesson gets a score from 0 to
-        100 built from six signals, recomputed as students use Groundwork.
+        100 built from six signals, recomputed as students use Merit.
       </p>
       <div className="mt-10 space-y-3">
         {SIGNALS.map(([key, name, body]) => {

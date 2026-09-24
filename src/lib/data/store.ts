@@ -7,7 +7,7 @@ export type TutorInput = Omit<Tutor, "id" | "userId" | "createdAt">;
 
 /** Per-user data. The video library itself is static (src/data/youtube.json). */
 export interface Store {
-  /** Aggregate Groundwork engagement per video (opens, saves, votes). */
+  /** Aggregate Merit engagement per video (opens, saves, votes). */
   siteStats(): Promise<Record<string, SiteStats>>;
   getUserState(userId: string): Promise<UserState | null>;
   ensureProfile(user: { id: string; email: string; name: string }): Promise<Profile>;
@@ -30,6 +30,13 @@ export interface Store {
   updateTutoringStatus(tutorId: string, id: string, status: TutoringRequest["status"]): Promise<void>;
   logReferral(ref: Omit<Referral, "id" | "createdAt">): Promise<void>;
   referralCounts(partnerIds: string[]): Promise<Record<string, number>>;
+
+  // Documents for newer features (billing, sprints, educator content, bookings…).
+  // Access control happens in server actions; these are never exposed to clients directly.
+  getDoc<T>(collection: string, id: string): Promise<T | null>;
+  listDocs<T>(collection: string, filter?: { owner?: string }): Promise<T[]>;
+  putDoc<T>(collection: string, id: string, data: T, owner?: string | null): Promise<void>;
+  deleteDoc(collection: string, id: string): Promise<void>;
 }
 
 let instance: Promise<Store> | null = null;

@@ -1,7 +1,7 @@
 import type { SiteStats, YtVideo } from "@/lib/types";
 
 /**
- * Groundwork's quality score for a lesson (0–100).
+ * Merit's quality score for a lesson (0–100).
  *
  * Views measure reach, not teaching, so they're a small part of the score.
  * Signals are smoothed toward priors so a video with 300 views and 40 likes
@@ -9,10 +9,10 @@ import type { SiteStats, YtVideo } from "@/lib/types";
  */
 export const RANKING_WEIGHTS = {
   reach: 0.25, // log-scaled views: evidence a lesson has worked for many students
-  helpful: 0.2, // Groundwork students' helpful votes
+  helpful: 0.2, // Merit students' helpful votes
   likeRate: 0.2, // likes per view on YouTube
   relevance: 0.2, // how squarely it covers the topic
-  saves: 0.1, // saved per open on Groundwork
+  saves: 0.1, // saved per open on Merit
   discussion: 0.05, // comments per view
 } as const;
 
@@ -55,7 +55,7 @@ export function likeRate(v: Pick<YtVideo, "likes" | "views">) {
   return (likes + PRIOR_LIKE_RATE * PRIOR_VIEWS) / (v.views + PRIOR_VIEWS);
 }
 
-/** Share of Groundwork students who found it helpful, with the like rate as the prior. */
+/** Share of Merit students who found it helpful, with the like rate as the prior. */
 export function helpfulShare(v: Pick<YtVideo, "likes" | "views">, s: SiteStats) {
   // Weak link to like rate so it isn't double-counted before students vote.
   const prior = 0.7 + 0.2 * Math.min(1, likeRate(v) / GOOD_LIKE_RATE);

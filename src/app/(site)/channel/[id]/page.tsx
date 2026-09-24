@@ -43,7 +43,7 @@ export default async function ChannelPage({ params, searchParams }: PageProps<"/
           <p className="tabular mt-2 flex flex-wrap gap-x-2 text-sm text-muted">
             {channel.handle ? <span className="font-medium text-ink-2">{channel.handle}</span> : null}
             {channel.subscribers ? <span>· {formatViews(channel.subscribers)} subscribers</span> : null}
-            <span>· {all.length} lessons on Groundwork</span>
+            <span>· {all.length} lessons on Merit</span>
             <span>· {topicCount} topics</span>
             <span>· {formatViews(totalViews)} views</span>
           </p>

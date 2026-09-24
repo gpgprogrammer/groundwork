@@ -12,14 +12,19 @@ import { focusCourses } from "@/lib/focus";
 import { toFeedVideo } from "@/lib/feed";
 import { futureEvents, whenLabel } from "@/lib/recommend";
 import type { ScheduleEvent } from "@/lib/types";
-import { requireViewer } from "@/lib/viewer";
+import { getViewer } from "@/lib/viewer";
+import { hasPlus } from "@/lib/billing/access";
+import { sampleState } from "@/lib/sample";
+import { PlusLocked } from "@/components/upgrade";
+import type { PlusAccess } from "@/lib/types";
 
 export const metadata: Metadata = { title: "My schedule" };
 
 const KIND: Record<ScheduleEvent["kind"], string> = { test: "Test", assignment: "Due", class: "Class", other: "Event" };
 
 export default async function SchedulePage() {
-  const [viewer, catalog] = await Promise.all([requireViewer("/schedule"), getCatalog()]);
+  const [viewer, catalog] = await Promise.all([getViewer(), getCatalog()]);
+  if (!viewer || !hasPlus(viewer.plus)) return <SchedulePreview catalog={catalog} access={viewer?.plus ?? { kind: "anonymous" }} />;
   const schedule = viewer.state.schedule;
   const upcoming = futureEvents(schedule?.events ?? []).slice(0, 40);
 
@@ -36,7 +41,7 @@ export default async function SchedulePage() {
         <CalendarDays className="size-7 text-accent" /> My schedule
       </h1>
       <p className="mt-1 max-w-2xl text-[15px] text-muted">
-        Connect your class calendar and Groundwork lines up the right videos before each quiz, test, and assignment.
+        Your class calendar, matched to lessons. Every quiz and test gets the right videos days before it happens.
       </p>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_420px]">
@@ -166,6 +171,38 @@ function EventBlock({ e, catalog }: { e: ScheduleEvent; catalog: IndexedCatalog 
           ) : null}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+/** Signed-out (or lapsed) visitors see a sample week first, then the offer. */
+function SchedulePreview({ catalog, access }: { catalog: IndexedCatalog; access: PlusAccess }) {
+  const events = futureEvents(sampleState(catalog).schedule!.events);
+  return (
+    <div className="mx-auto max-w-[1100px] px-4 pb-16 pt-6 sm:px-6">
+      <h1 className="flex items-center gap-3 text-[28px] font-bold tracking-tight text-ink">
+        <CalendarDays className="size-7 text-accent" /> My schedule
+      </h1>
+      <p className="mt-1 max-w-2xl text-[15px] text-muted">
+        Connect the calendar your class uses. When a quiz or test is coming, Merit lines up the exact lessons for it, days ahead.
+      </p>
+      <div className="mt-6 flex items-center gap-2">
+        <span className="rounded-full bg-bg-subtle px-2.5 py-1 text-[12px] font-medium text-muted">Sample week</span>
+        <span className="text-[13px] text-muted">A student taking AP Biology and AP Calculus BC</span>
+      </div>
+      <div className="mt-4 space-y-4">
+        {events.map((e) => (
+          <div key={e.uid}>
+            <p className="mb-2 text-sm font-medium text-ink">
+              {whenLabel(e.start)} <span className="font-normal text-muted">· {new Date(e.start).toLocaleDateString("en-US", { month: "long", day: "numeric" })}</span>
+            </p>
+            <EventBlock e={e} catalog={catalog} />
+          </div>
+        ))}
+      </div>
+      <div className="mt-10">
+        <PlusLocked access={access} feature="Calendar sync" returnTo="/schedule" />
+      </div>
     </div>
   );
 }

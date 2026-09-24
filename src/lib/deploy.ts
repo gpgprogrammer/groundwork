@@ -1,7 +1,7 @@
 import "server-only";
 import { env, isSupabaseEnabled } from "@/lib/env";
 
-const DEFAULT_DEMO_SECRET = "groundwork-local-demo-secret-change-me";
+const DEFAULT_DEMO_SECRET = "merit-local-demo-secret-change-me";
 
 /** Fail fast on hosted production when the app would run in an unsafe demo configuration. */
 export function validateDeploymentConfig() {
@@ -13,18 +13,18 @@ export function validateDeploymentConfig() {
 
   if (!isSupabaseEnabled && !allowDemo) {
     throw new Error(
-      "[groundwork] Production requires Supabase (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY). " +
+      "[merit] Production requires Supabase (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY). " +
         "For a temporary demo deploy only, set ALLOW_DEMO_MODE=true and a strong AUTH_SECRET.",
     );
   }
 
   if (!isSupabaseEnabled && allowDemo) {
     if (!env.authSecret || env.authSecret === DEFAULT_DEMO_SECRET) {
-      throw new Error("[groundwork] Demo mode in production requires a unique AUTH_SECRET (32+ random bytes).");
+      throw new Error("[merit] Demo mode in production requires a unique AUTH_SECRET (32+ random bytes).");
     }
   }
 
   if (isSupabaseEnabled && !env.supabaseServiceRoleKey) {
-    console.warn("[groundwork] SUPABASE_SERVICE_ROLE_KEY is missing; server-side account writes may fail.");
+    console.warn("[merit] SUPABASE_SERVICE_ROLE_KEY is missing; server-side account writes may fail.");
   }
 }

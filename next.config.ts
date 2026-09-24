@@ -12,8 +12,6 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/watch/:id", destination: "/go/:id", permanent: false },
-      { source: "/pricing", destination: "/about", permanent: false },
-      { source: "/settings/billing", destination: "/settings", permanent: false },
     ];
   },
   async headers() {

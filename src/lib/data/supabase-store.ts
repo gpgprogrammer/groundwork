@@ -262,5 +262,26 @@ export function createSupabaseStore(): Store {
       for (const r of rows as any[]) out[r.partner_id]++;
       return out;
     },
+
+    async getDoc(collection, id) {
+      const rows = must(await createAdminClient().from("docs").select("data").eq("collection", collection).eq("id", id).limit(1));
+      return ((rows as any[])[0]?.data ?? null) as any;
+    },
+
+    async listDocs(collection, filter) {
+      let q = createAdminClient().from("docs").select("data").eq("collection", collection);
+      if (filter?.owner) q = q.eq("owner", filter.owner);
+      return (must(await q.limit(10000)) as any[]).map((r) => r.data);
+    },
+
+    async putDoc(collection, id, data, owner = null) {
+      const row: Record<string, unknown> = { collection, id, data, updated_at: new Date().toISOString() };
+      if (owner) row.owner = owner;
+      must(await createAdminClient().from("docs").upsert(row, { onConflict: "collection,id" }).select("id"));
+    },
+
+    async deleteDoc(collection, id) {
+      must(await createAdminClient().from("docs").delete().eq("collection", collection).eq("id", id).select("id"));
+    },
   };
 }

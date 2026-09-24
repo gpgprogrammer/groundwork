@@ -36,7 +36,7 @@ export default async function LibraryPage({ searchParams }: PageProps<"/library"
             .filter((v) => v !== undefined);
 
   const empty = {
-    history: ["No history yet", "Videos you open from Groundwork show up here, so you can find them again."],
+    history: ["No history yet", "Videos you open from Merit show up here, so you can find them again."],
     saved: ["Nothing saved", "Use the ⋮ menu on any video and choose “Save to Watch later.”"],
     liked: ["No helpful votes yet", "Mark videos that helped you. Your votes improve rankings for every student."],
   }[tab];

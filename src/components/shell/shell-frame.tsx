@@ -18,12 +18,21 @@ import {
   X,
   Clock,
   ChevronRight,
+  Sparkles,
+  Target,
+  CalendarCheck,
+  ChartColumn,
+  NotebookPen,
+  Shield,
+  CreditCard,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { signOut } from "@/app/actions/auth";
 import type { Suggestion } from "@/app/api/search/route";
+import { CourseIcon } from "../course-icon";
+import { QuickAsk } from "../ask/quick-ask";
 import { Logo } from "../logo";
 import { cn } from "../ui";
 import { ChannelAvatar } from "../video-card";
@@ -31,6 +40,9 @@ import { ChannelAvatar } from "../video-card";
 export type ShellData = {
   user: { name: string; email: string } | null;
   isTutor: boolean;
+  isEducator: boolean;
+  isAdmin: boolean;
+  plus: "anonymous" | "trial" | "active" | "expired";
   hasSchedule: boolean;
   courses: { slug: string; title: string; hue: number }[];
   myCourses: string[];
@@ -107,6 +119,7 @@ export function ShellFrame({ data, children }: { data: ShellData; children: Reac
         ) : null}
         <main className={cn("min-w-0 flex-1", expanded ? "md:pl-[72px] xl:pl-60" : "md:pl-[72px]")}>{children}</main>
       </div>
+      <QuickAsk />
     </div>
   );
 }
@@ -134,6 +147,12 @@ function TopBar({ data, onMenu }: { data: ShellData; onMenu: () => void }) {
             <SearchBox />
           </div>
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <Link
+              href="/sprint"
+              className="hidden h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-[#ff8a3d] to-[#e0531c] px-3.5 text-[13px] font-semibold text-white hover:brightness-110 lg:flex"
+            >
+              <Target className="size-4" /> Exam Sprint
+            </Link>
             <button onClick={() => setMobileSearch(true)} className="flex size-10 items-center justify-center rounded-full hover:bg-bg-subtle sm:hidden" aria-label="Search">
               <Search className="size-5" />
             </button>
@@ -148,7 +167,7 @@ function TopBar({ data, onMenu }: { data: ShellData; onMenu: () => void }) {
                   <CalendarDays className="size-5" />
                   {!data.hasSchedule ? <span className="absolute right-2 top-2 size-2 rounded-full bg-accent ring-2 ring-bg" /> : null}
                 </Link>
-                <UserMenu user={data.user} isTutor={data.isTutor} />
+                <UserMenu data={data} />
               </>
             ) : (
               <Link
@@ -302,7 +321,9 @@ function SearchBox({ autoFocus }: { autoFocus?: boolean }) {
   );
 }
 
-function UserMenu({ user, isTutor }: { user: { name: string; email: string }; isTutor: boolean }) {
+function UserMenu({ data }: { data: ShellData }) {
+  const user = data.user!;
+  const isTutor = data.isTutor;
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -338,12 +359,17 @@ function UserMenu({ user, isTutor }: { user: { name: string; email: string }; is
             </div>
           </div>
           <div className="my-2 h-px bg-line" />
+          <MenuRow href="/plan" icon={<CalendarCheck className="size-5" />}>Tonight&apos;s plan</MenuRow>
+          <MenuRow href="/progress" icon={<ChartColumn className="size-5" />}>Progress</MenuRow>
           <MenuRow href="/library" icon={<Clock className="size-5" />}>Your library</MenuRow>
           <MenuRow href="/schedule" icon={<CalendarDays className="size-5" />}>My schedule</MenuRow>
+          <MenuRow href="/studio" icon={<NotebookPen className="size-5" />}>{data.isEducator ? "Teacher studio" : "Add lessons (teachers)"}</MenuRow>
           <MenuRow href={isTutor ? "/tutor" : "/tutors/join"} icon={<GraduationCap className="size-5" />}>
             {isTutor ? "Tutor dashboard" : "Become a tutor"}
           </MenuRow>
+          <MenuRow href="/settings/billing" icon={<CreditCard className="size-5" />}>Plan and billing</MenuRow>
           <MenuRow href="/settings" icon={<Settings className="size-5" />}>Settings</MenuRow>
+          {data.isAdmin ? <MenuRow href="/admin" icon={<Shield className="size-5" />}>Admin</MenuRow> : null}
           <div className="my-2 h-px bg-line" />
           <form action={signOut}>
             <button className="flex w-full items-center gap-4 px-4 py-2 text-left text-sm text-ink hover:bg-bg-subtle">
@@ -410,9 +436,16 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
         <NavRow href="/" icon={<House className="size-5" />} label="Home" pathname={pathname} />
         <NavRow href="/shorts" icon={<Clapperboard className="size-5" />} label="Shorts" pathname={pathname} />
         <NavRow href="/courses" icon={<GraduationCap className="size-5" />} label="Courses" pathname={pathname} />
+        <NavRow href="/ask" icon={<Sparkles className="size-5" />} label="Ask Merit AI" pathname={pathname} />
         <NavRow href="/tutors" icon={<Users className="size-5" />} label="Tutors" pathname={pathname} />
-        <NavRow href="/schedule" icon={<CalendarDays className="size-5" />} label="My schedule" pathname={pathname} />
       </Section>
+      <Section title="Study tools">
+        <NavRow href="/plan" icon={<CalendarCheck className="size-5" />} label="Tonight's plan" pathname={pathname} trailing={<PlusTag />} />
+        <NavRow href="/sprint" icon={<Target className="size-5" />} label="Exam Sprint" pathname={pathname} />
+        <NavRow href="/schedule" icon={<CalendarDays className="size-5" />} label="My schedule" pathname={pathname} trailing={<PlusTag />} />
+        <NavRow href="/progress" icon={<ChartColumn className="size-5" />} label="Progress" pathname={pathname} trailing={<PlusTag />} />
+      </Section>
+      <SidebarPromo plus={data.plus} />
       {data.user ? (
         <Section title="You" href="/library">
           <NavRow href="/library?tab=history" icon={<History className="size-5" />} label="History" pathname={pathname} />
@@ -421,7 +454,7 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
         </Section>
       ) : (
         <Section>
-          <p className="px-3 py-2 text-sm leading-snug text-ink">Sign in to save videos, track topics, and sync your class calendar.</p>
+          <p className="px-3 py-2 text-sm leading-snug text-ink">Sign in to save lessons, track topics, and get a study plan.</p>
           <Link
             href="/login"
             className="mx-3 mb-1 mt-1 inline-flex h-9 items-center gap-1.5 rounded-full border border-line-strong px-3 text-sm font-medium text-accent hover:border-transparent hover:bg-accent-soft"
@@ -435,7 +468,7 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
           <NavRow
             key={c.slug}
             href={`/courses/${c.slug}`}
-            icon={<span className="size-2.5 rounded-full" style={{ background: `oklch(0.6 0.14 ${c.hue})` }} />}
+            icon={<CourseIcon id={c.slug} size={24} />}
             label={c.title}
             pathname={pathname}
           />
@@ -449,8 +482,10 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
         </Section>
       ) : null}
       <Section>
+        <NavRow href="/pricing" icon={<CreditCard className="size-5" />} label="Pricing" pathname={pathname} />
+        <NavRow href="/studio" icon={<NotebookPen className="size-5" />} label="For teachers" pathname={pathname} />
         <NavRow href="/how-ranking-works" icon={<Sigma className="size-5" />} label="How ranking works" pathname={pathname} />
-        <NavRow href="/about" icon={<Info className="size-5" />} label="About Groundwork" pathname={pathname} />
+        <NavRow href="/about" icon={<Info className="size-5" />} label="About Merit" pathname={pathname} />
       </Section>
       <div className="px-6 pt-3 text-xs leading-5 text-muted">
         <p className="flex flex-wrap gap-x-2">
@@ -458,8 +493,8 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
           <Link href="/privacy" className="hover:text-ink">Privacy</Link>
           <Link href="/terms" className="hover:text-ink">Terms</Link>
         </p>
-        <p className="mt-2 text-faint">Videos play on YouTube. AP® and SAT® are trademarks of the College Board, which is not affiliated with Groundwork.</p>
-        <p className="mt-2 text-faint">© {new Date().getFullYear()} Groundwork</p>
+        <p className="mt-2 text-faint">Videos play on YouTube. AP® and SAT® are trademarks of the College Board, which is not affiliated with Merit.</p>
+        <p className="mt-2 text-faint">© {new Date().getFullYear()} Merit</p>
       </div>
     </nav>
   );
@@ -468,10 +503,11 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
 function MiniNav({ pathname }: { pathname: string }) {
   const items = [
     { href: "/", label: "Home", icon: <House className="size-5" /> },
-    { href: "/shorts", label: "Shorts", icon: <Clapperboard className="size-5" /> },
     { href: "/courses", label: "Courses", icon: <GraduationCap className="size-5" /> },
+    { href: "/ask", label: "Ask AI", icon: <Sparkles className="size-5" /> },
     { href: "/tutors", label: "Tutors", icon: <Users className="size-5" /> },
-    { href: "/schedule", label: "Schedule", icon: <CalendarDays className="size-5" /> },
+    { href: "/plan", label: "Plan", icon: <CalendarCheck className="size-5" /> },
+    { href: "/sprint", label: "Sprint", icon: <Target className="size-5" /> },
     { href: "/library", label: "You", icon: <UserRound className="size-5" /> },
   ];
   return (
@@ -490,5 +526,29 @@ function MiniNav({ pathname }: { pathname: string }) {
         </Link>
       ))}
     </nav>
+  );
+}
+
+function PlusTag() {
+  return <span className="rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">Plus</span>;
+}
+
+function SidebarPromo({ plus }: { plus: ShellData["plus"] }) {
+  return (
+    <div className="border-b border-line px-3 py-3">
+      <Link href="/sprint" className="block overflow-hidden rounded-xl bg-gradient-to-br from-[#ff8a3d] to-[#c2410c] p-4 text-white hover:brightness-105">
+        <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-white/85">
+          <Target className="size-3.5" /> Exam Sprint
+        </p>
+        <p className="mt-1.5 text-[15px] font-bold leading-snug">Your exam, planned day by day.</p>
+        <p className="mt-1 text-[12px] text-white/85">Free diagnostic in 10 minutes.</p>
+      </Link>
+      {plus === "anonymous" || plus === "expired" ? (
+        <Link href={plus === "anonymous" ? "/signup?next=/plan" : "/pricing"} className="mt-2 block rounded-xl bg-accent-soft p-3 text-[13px] text-ink hover:opacity-90">
+        <span className="font-semibold text-accent">Know what to study tonight.</span>{" "}
+        {plus === "anonymous" ? "Merit Plus is free for your first year." : "Get your plan back with Plus."}
+        </Link>
+      ) : null}
+    </div>
   );
 }

@@ -1,5 +1,5 @@
 /**
- * Builds the Groundwork video library from the YouTube Data API v3.
+ * Builds the Merit video library from the YouTube Data API v3.
  *
  *   npm run ingest                 # search every topic, then crawl top channels
  *   npm run ingest -- --refresh    # only refresh views/likes/comments (cheap)

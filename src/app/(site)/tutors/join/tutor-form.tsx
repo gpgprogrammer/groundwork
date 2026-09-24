@@ -6,9 +6,9 @@ import { Field, FormMessage, inputClass } from "@/components/form";
 import { Button, cn } from "@/components/ui";
 import type { Tutor } from "@/lib/types";
 
-type Props = { existing: Tutor | null; defaultName: string; courses: { id: string; title: string; category: string }[] };
+type Props = { existing: Tutor | null; defaultName: string; courses: { id: string; title: string; category: string }[]; agreed: boolean };
 
-export function TutorForm({ existing, defaultName, courses }: Props) {
+export function TutorForm({ existing, defaultName, courses, agreed }: Props) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveTutorProfile, {});
   const groups = [...new Set(courses.map((c) => c.category))];
   const e = existing;
@@ -88,6 +88,21 @@ export function TutorForm({ existing, defaultName, courses }: Props) {
           </Field>
         </div>
       </section>
+
+      {!agreed ? (
+        <section className="rounded-2xl bg-bg-subtle p-6">
+          <h2 className="text-lg font-bold text-ink">Merit Partner Terms</h2>
+          <ul className="mt-3 list-disc space-y-1.5 pl-5 text-[14px] leading-relaxed text-ink-2">
+            <li>Listing is free. Merit earns a 10% referral fee on sessions students book with you through Merit.</li>
+            <li>If students pay through Merit, the fee is deducted automatically and the rest is paid out to you. If they pay you directly, Merit bills the 10% after the session.</li>
+            <li>The fee applies to students who first found you on Merit, for sessions booked here.</li>
+            <li>Keep your profile honest. Reviews come from real Merit students and can&apos;t be edited or bought.</li>
+          </ul>
+          <label className="mt-4 flex items-start gap-3 text-[14px] font-medium text-ink">
+            <input type="checkbox" name="agreeTerms" required className="mt-0.5 size-4 accent-[var(--accent)]" /> I agree to the Merit Partner Terms.
+          </label>
+        </section>
+      ) : null}
 
       <div className="flex flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center">
         <FormMessage error={state.error} />

@@ -6,12 +6,14 @@ import { OnboardingFlow } from "./flow";
 
 export const metadata: Metadata = { title: "Welcome" };
 
-export default async function OnboardingPage() {
-  const [viewer, catalog] = await Promise.all([requireViewer("/onboarding"), getCatalog()]);
+export default async function OnboardingPage({ searchParams }: PageProps<"/onboarding">) {
+  const [viewer, catalog, sp] = await Promise.all([requireViewer("/onboarding"), getCatalog(), searchParams]);
+  const next = typeof sp.next === "string" && sp.next.startsWith("/") && !sp.next.startsWith("//") ? sp.next : "/";
   const p = viewer.state.profile;
   return (
     <OnboardingFlow
       firstName={p.name.split(" ")[0]}
+      next={next}
       initial={{ courseIds: p.courseIds, examDate: p.examDate, focusTopicIds: p.focusTopicIds }}
       courses={catalog.courses.map((c) => ({
         id: c.id,

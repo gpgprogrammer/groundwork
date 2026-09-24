@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, BookmarkCheck, EllipsisVertical, Link2, ListVideo, ThumbsDown, ThumbsUp, UserRound } from "lucide-react";
+import { Bookmark, BookmarkCheck, GraduationCap, EllipsisVertical, Link2, ListVideo, ThumbsDown, ThumbsUp, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
@@ -81,6 +81,11 @@ export function VideoCard({ v }: { v: FeedVideo }) {
             <p className="tabular truncate">
               {formatViews(v.views)} views{ago(v.publishedAt) ? ` · ${ago(v.publishedAt)}` : ""}
             </p>
+            {v.addedBy ? (
+              <Link href={v.addedBy.href} className="mt-0.5 flex items-center gap-1 truncate text-[12.5px] font-medium text-positive hover:underline">
+                <GraduationCap className="size-3.5 shrink-0" /> Picked by {v.addedBy.name}
+              </Link>
+            ) : null}
             {v.reason ? (
               <p className="mt-0.5 truncate text-[12.5px] font-medium text-accent">{v.reason}</p>
             ) : v.topicTitle ? (
@@ -125,6 +130,11 @@ export function VideoRow({ v, rank, extra }: { v: FeedVideo; rank?: number; extr
             </Link>
           ) : null}
           <span className="rounded bg-bg-subtle px-1.5 py-0.5 text-[12px] text-ink-2">{v.helpfulPct}% helpful</span>
+          {v.addedBy ? (
+            <Link href={v.addedBy.href} className="inline-flex items-center gap-1 rounded bg-positive-soft px-1.5 py-0.5 text-[12px] font-medium text-positive hover:underline">
+              <GraduationCap className="size-3" /> Picked by {v.addedBy.name}
+            </Link>
+          ) : null}
           {extra}
         </div>
       </div>

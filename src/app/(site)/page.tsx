@@ -3,11 +3,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Chips, FeedGrid, Shelf, SortControls } from "@/components/feed";
 import { LogoMark } from "@/components/logo";
+import { PlusFeedCard, SprintFeedCard } from "@/components/upgrade";
+import { Fragment } from "react";
 import { ShortCard, VideoCard } from "@/components/video-card";
 import { getCatalog } from "@/lib/catalog";
 import { CHIP_EXTRAS, pageOf, queryFeed, toFeedVideo } from "@/lib/feed";
 import { scheduleShelf } from "@/lib/recommend";
 import { getViewer } from "@/lib/viewer";
+import { hasPlus } from "@/lib/billing/access";
+import { buildPlan } from "@/lib/plan";
+import { getPlanPrefs } from "@/lib/plan-store";
 
 const FIRST_ROWS = 12;
 
@@ -26,7 +31,12 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
   const result = queryFeed(catalog, viewer?.state ?? null, { chip, sort: str(sp.sort), length: str(sp.length) });
   const showShelves = (chip === "all" || chip === "foryou") && result.sort === "best";
-  const upcoming = viewer && showShelves ? scheduleShelf(catalog, viewer.state, 8).slice(0, 4) : [];
+  const plus = viewer ? hasPlus(viewer.plus) : false;
+  // Plus: tonight's plan leads the page; otherwise, videos for upcoming calendar events.
+  const tonight = viewer && plus && showShelves ? buildPlan(catalog, viewer.state, await getPlanPrefs(viewer.user.id), 1)[0].tasks : [];
+  const upcoming = viewer && showShelves
+    ? [...tonight.flatMap((t) => (t.videos[0] ? [{ video: t.videos[0], reason: `Tonight · ${t.reason}` }] : [])), ...(plus ? [] : scheduleShelf(catalog, viewer.state, 8))].slice(0, 4)
+    : [];
   // Don't repeat the calendar shelf in the grid below it.
   if (upcoming.length) {
     const shown = new Set(upcoming.map((r) => r.video.id));
@@ -57,16 +67,14 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         <SortControls sort={result.sort} length={result.length} />
       </div>
 
-      {!viewer && chip === "all" ? <Welcome videoCount={catalog.videos.length} channelCount={catalog.channels.length} /> : null}
-
       {viewer && showShelves && upcoming.length ? (
         <div className="pt-4">
           <Shelf
             icon={<CalendarDays className="size-5 text-accent" />}
-            title="Coming up on your calendar"
+            title={tonight.length ? "Tonight's plan" : "Coming up on your calendar"}
             action={
-              <Link href="/schedule" className="rounded-full px-3 py-1.5 text-sm font-medium text-accent hover:bg-accent-soft">
-                See schedule
+              <Link href={tonight.length ? "/plan" : "/schedule"} className="rounded-full px-3 py-1.5 text-sm font-medium text-accent hover:bg-accent-soft">
+                {tonight.length ? "Open plan" : "See schedule"}
               </Link>
             }
           >
@@ -81,8 +89,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         <Link href="/schedule" className="mt-3 flex items-center gap-4 rounded-xl bg-accent-soft px-4 py-3.5 text-sm text-ink transition-opacity hover:opacity-90">
           <CalendarDays className="size-5 shrink-0 text-accent" />
           <span className="min-w-0 flex-1">
-            <span className="font-medium">Sync your class calendar.</span>{" "}
-            <span className="text-ink-2">We&apos;ll line up videos for your next quiz or test before it happens.</span>
+            <span className="font-medium">Know what to study tonight.</span>{" "}
+            <span className="text-ink-2">Connect your class calendar and Merit plans every night around your next quiz or test.</span>
           </span>
           <span className="hidden shrink-0 font-medium text-accent sm:block">Connect</span>
         </Link>
@@ -90,8 +98,12 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
       <div className="pt-6">
         <div className="grid grid-cols-1 gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-          {head.map((v) => (
-            <VideoCard key={v.id} v={v} />
+          {head.map((v, i) => (
+            <Fragment key={v.id}>
+              {showShelves && i === 2 ? <SprintFeedCard /> : null}
+              {showShelves && i === 8 && (!viewer || viewer.plus.kind === "expired") ? <PlusFeedCard /> : null}
+              <VideoCard v={v} />
+            </Fragment>
           ))}
         </div>
       </div>
@@ -125,26 +137,3 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   );
 }
 
-function Welcome({ videoCount, channelCount }: { videoCount: number; channelCount: number }) {
-  return (
-    <section className="mt-3 overflow-hidden rounded-2xl bg-[#0f0f0f] px-6 py-8 text-white sm:px-10 sm:py-10">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="max-w-2xl">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Every AP course. The best lessons. The best tutors. Free.</h1>
-          <p className="mt-2 text-[15px] leading-relaxed text-white/70">
-            {videoCount.toLocaleString()} lessons from {channelCount.toLocaleString()} educators, sorted into every course, unit, and topic and
-            ranked by how well they teach. Matched to your class calendar, with top tutors a click away.
-          </p>
-        </div>
-        <div className="flex shrink-0 gap-2">
-          <Link href="/signup" className="flex h-10 items-center rounded-full bg-white px-5 text-sm font-medium text-[#0f0f0f] hover:bg-white/90">
-            Sign up free
-          </Link>
-          <Link href="/tutors" className="flex h-10 items-center rounded-full bg-white/10 px-5 text-sm font-medium text-white hover:bg-white/20">
-            Find a tutor
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}

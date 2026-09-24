@@ -100,7 +100,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
                     <div className="min-w-0">
                       <p className="text-lg font-medium text-ink">{h.channel.title}</p>
                       <p className="tabular mt-1 text-[13px] text-muted">
-                        {[h.channel.handle, h.channel.subscribers ? `${formatViews(h.channel.subscribers)} subscribers` : null, `${h.lessons} lessons on Groundwork`].filter(Boolean).join(" · ")}
+                        {[h.channel.handle, h.channel.subscribers ? `${formatViews(h.channel.subscribers)} subscribers` : null, `${h.lessons} lessons on Merit`].filter(Boolean).join(" · ")}
                       </p>
                     </div>
                   </Link>

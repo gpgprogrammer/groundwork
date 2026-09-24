@@ -1,4 +1,4 @@
--- Groundwork schema. Apply with `supabase db push` or paste into the SQL editor.
+-- Merit schema. Apply with `supabase db push` or paste into the SQL editor.
 -- The video library is static (src/data/youtube.json, built by `npm run ingest`);
 -- the database holds per-student data only.
 

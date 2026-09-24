@@ -1,4 +1,7 @@
-import { ArrowRight, Check, ChevronDown, Play, Users } from "lucide-react";
+import { CourseIcon, courseColor } from "@/components/course-icon";
+import { ArrowRight, Check, ChevronDown, Play, Target, Users } from "lucide-react";
+import { ExamCta } from "@/components/upgrade";
+import { daysUntil, examDateFor } from "@/lib/exams";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -28,11 +31,12 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
   const videoCount = catalog.videosForCourse(course.id).length;
   const prog = viewer ? courseProgress(catalog, viewer.state, course.id) : null;
   const next = viewer ? nextTopicInCourse(catalog, viewer.state, course.id) : topics.find((t) => catalog.videosForTopic(t.id).length);
+  const examDate = examDateFor(course, viewer?.state.profile ?? null);
   const started = Boolean(prog && (prog.done || topics.some((t) => topicStatus(catalog, viewer!.state, t.id) !== "new")));
 
   return (
     <div className="pb-20">
-      <header className="border-b border-line px-4 pt-8 sm:px-6 lg:px-10" style={{ background: `linear-gradient(180deg, oklch(0.62 0.14 ${course.hue} / 0.1), transparent 85%)` }}>
+      <header className="border-b border-line px-4 pt-8 sm:px-6 lg:px-10" style={{ background: `linear-gradient(180deg, ${courseColor(course.id)}1f, transparent 85%)` }}>
         <nav className="text-[13px] text-muted">
           <Link href="/courses" className="hover:text-ink">
             Courses
@@ -40,7 +44,10 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
           <span className="mx-1.5">›</span>
           {course.category}
         </nav>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink sm:text-[40px]">{course.title}</h1>
+        <div className="mt-3 flex items-center gap-4">
+          <CourseIcon id={course.id} size={64} className="max-sm:hidden" />
+          <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-[40px]">{course.title}</h1>
+        </div>
         <p className="mt-2 max-w-3xl text-[16px] leading-relaxed text-ink-2">{course.description}</p>
         <div className="mt-4 flex flex-wrap gap-2 text-[13px]">
           {[`${units.length} units`, `${topics.length} topics`, `${videoCount.toLocaleString()} videos`, `Exam: ${course.examMonth}`].map((p) => (
@@ -58,6 +65,9 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
           ) : null}
           <Link href={`/tutors?course=${course.id}`} className="flex h-11 items-center gap-2 rounded-full bg-bg px-5 text-sm font-medium text-ink ring-1 ring-line hover:bg-bg-subtle">
             <Users className="size-4" /> Find a tutor
+          </Link>
+          <Link href={`/sprint?course=${course.id}`} className="flex h-11 items-center gap-2 rounded-full bg-gradient-to-r from-[#ff8a3d] to-[#e0531c] px-5 text-sm font-semibold text-white hover:brightness-110">
+            <Target className="size-4" /> Exam Sprint
           </Link>
         </div>
         <div className="mt-8 flex gap-6">
@@ -82,6 +92,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
         <div className="mx-auto grid max-w-[1400px] gap-8 px-4 pt-8 sm:px-6 lg:grid-cols-[1fr_320px] lg:px-10">
           <Outline course={course} catalog={catalog} viewer={viewer} nextTopicId={next?.id} />
           <aside className="space-y-6">
+            <ExamCta daysLeft={examDate ? daysUntil(examDate) : null} courseId={course.id} courseTitle={course.shortTitle} />
             {prog ? (
               <div className="rounded-2xl p-5 ring-1 ring-line">
                 <p className="text-sm font-semibold text-ink">Your progress</p>

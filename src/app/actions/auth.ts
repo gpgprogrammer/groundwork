@@ -50,7 +50,8 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
     await (await getStore()).ensureProfile({ id: user.id, email: user.email, name: user.name });
     await setDemoSession(user.id);
   }
-  redirect("/onboarding");
+  const next = safeNext(form.get("next"), "");
+  redirect(next ? `/onboarding?next=${encodeURIComponent(next)}` : "/onboarding");
 }
 
 export async function signIn(_: AuthState, form: FormData): Promise<AuthState> {
@@ -73,13 +74,15 @@ export async function signIn(_: AuthState, form: FormData): Promise<AuthState> {
   redirect(next);
 }
 
-export async function signInWithGoogle(form: FormData) {
+/** Google or Apple sign-in through Supabase Auth. */
+export async function signInWithProvider(form: FormData) {
   if (!isSupabaseEnabled) redirect("/login");
+  const provider = form.get("provider") === "apple" ? "apple" : "google";
   const { createSessionClient } = await import("@/lib/supabase/server");
   const supabase = await createSessionClient();
   const next = safeNext(form.get("next"), "/");
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
+    provider,
     options: { redirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}` },
   });
   if (error || !data.url) redirect("/login?error=oauth");

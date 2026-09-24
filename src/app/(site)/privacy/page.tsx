@@ -1,96 +1,40 @@
 import type { Metadata } from "next";
-import { Container } from "@/components/ui";
+import { Clause, Contact, LegalPage } from "@/components/legal";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
-  description: "How Groundwork collects, uses, and protects your information.",
-};
+export const metadata: Metadata = { title: "Privacy Policy", description: "How Merit Learning collects, uses, and protects your information." };
 
 export default function PrivacyPage() {
   return (
-    <Container size="md" className="py-16 sm:py-20">
-      <h1 className="headline text-3xl text-ink sm:text-4xl">Privacy Policy</h1>
-      <p className="mt-3 text-sm text-muted">Last updated: September 23, 2026</p>
-
-      <div className="prose-groundwork mt-10 space-y-8 text-[15px] leading-relaxed text-ink-2">
-        <section>
-          <h2 className="text-lg font-semibold text-ink">Overview</h2>
-          <p className="mt-2">
-            Groundwork Learning, Inc. (&quot;Groundwork,&quot; &quot;we,&quot; &quot;us&quot;) provides a learning platform for AP and SAT
-            students. This policy describes what we collect when you use groundwork.study (or our other domains), why we collect it, and
-            the choices you have.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-ink">Information we collect</h2>
-          <ul className="mt-2 list-disc space-y-2 pl-5">
-            <li>
-              <strong className="font-medium text-ink">Account data</strong>: name, email, password hash (via our auth provider), and
-              profile preferences such as courses and exam date.
-            </li>
-            <li>
-              <strong className="font-medium text-ink">Learning activity</strong>: videos you open from Groundwork, saves, helpful votes,
-              and topics you mark as understood, used to rank videos and personalize recommendations.
-            </li>
-            <li>
-              <strong className="font-medium text-ink">Tutoring</strong>: if you list yourself as a tutor, your profile is public. If you
-              request a session, your name, email, and message go to that tutor. We record referrals to tutors and partner services.
-            </li>
-            <li>
-              <strong className="font-medium text-ink">Calendar data</strong>: if you connect a calendar, we store the calendar link you
-              provide and the titles and dates of school-related events (tests, assignments, classes) matched to your courses. Other events are
-              discarded. You can disconnect at any time, which deletes this data.
-            </li>
-            <li>
-              <strong className="font-medium text-ink">Technical data</strong>: device/browser type, IP address, and cookies required for
-              sign-in and security.
-            </li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-ink">How we use information</h2>
-          <p className="mt-2">We use your information to operate the service, including authentication, lesson ranking, recommendations, tutor matching, fraud prevention, and support. We do not sell your personal information.</p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-ink">Sharing</h2>
-          <p className="mt-2">
-            We share data with service providers that help us run Groundwork (for example Supabase for auth and database). When you open a video you go to YouTube, which handles your viewing under Google&apos;s Privacy Policy. We may disclose information if required by law or to protect
-            users and the service.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-ink">Retention and deletion</h2>
-          <p className="mt-2">
-            We retain account and learning data while your account is active. You may request deletion by emailing{" "}
-            <a href="mailto:privacy@groundwork.study" className="font-medium text-ink underline underline-offset-2">
-              privacy@groundwork.study
-            </a>
-            . Some records may be kept where we have a legal obligation (for example payment records).
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-ink">Children</h2>
-          <p className="mt-2">
-            Groundwork is designed for high school students. Users under 13 should use the service with a parent or guardian. If you believe
-            we have collected information from a child without appropriate consent, contact us and we will delete it.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-ink">Contact</h2>
-          <p className="mt-2">
-            Questions about this policy:{" "}
-            <a href="mailto:privacy@groundwork.study" className="font-medium text-ink underline underline-offset-2">
-              privacy@groundwork.study
-            </a>
-          </p>
-        </section>
-      </div>
-    </Container>
+    <LegalPage title="Privacy Policy" updated="September 23, 2026">
+      <Clause title="Overview">
+        <p>Merit Learning (&quot;Merit&quot;) helps high school students study for AP exams and the SAT. This policy explains what we collect, why, and the choices you have. We don&apos;t sell personal information and we don&apos;t show ads.</p>
+      </Clause>
+      <Clause title="What we collect">
+        <p>
+          <strong className="text-ink">Account</strong>: your name, email, and password (stored hashed), or your Google or Apple sign-in. <strong className="text-ink">Learning activity</strong>: courses, lessons you open, saves, helpful votes, topics you mark understood, study plan progress, Exam Sprint answers, and messages you send to Merit AI.{" "}
+          <strong className="text-ink">Calendar</strong>: if you connect one, the school events on it and the private link you gave us (kept private to your account). <strong className="text-ink">Location</strong>: the city, state, or ZIP you enter to find tutors.{" "}
+          <strong className="text-ink">Payments</strong>: handled by Stripe; we keep a record of what you bought, not your card number. <strong className="text-ink">Tutoring</strong>: bookings and messages between students and tutors.
+        </p>
+      </Clause>
+      <Clause title="How we use it">
+        <p>To run Merit: build your plan, rank lessons, personalize practice, answer your questions, process purchases and bookings, prevent abuse, and improve the service. Aggregated, anonymous engagement helps rank lessons for everyone.</p>
+      </Clause>
+      <Clause title="Sharing">
+        <p>
+          With service providers that run Merit for us (for example hosting, database, payments, and AI model providers that process Merit AI requests under their own privacy terms and do not use them to train models on your data where that option is available). With a tutor you book: your name, email, and message. With a parent or guardian who bought Merit for you: that the purchase was used. We share information if the law requires it.
+        </p>
+      </Clause>
+      <Clause title="Retention and deletion">
+        <p>We keep your data while your account is active. You can clear your history in your library, disconnect your calendar at any time, and ask us to delete your account.</p>
+      </Clause>
+      <Clause title="Children">
+        <p>Merit is designed for high school students. Children under 13 should use Merit only with a parent or guardian. If you believe a child under 13 gave us information without consent, contact us and we will delete it.</p>
+      </Clause>
+      <Clause title="Contact">
+        <p>
+          To exercise your privacy rights or ask a question, <Contact />.
+        </p>
+      </Clause>
+    </LegalPage>
   );
 }

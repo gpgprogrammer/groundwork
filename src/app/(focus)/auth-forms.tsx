@@ -25,7 +25,7 @@ export function SignInForm({ next }: { next?: string }) {
   );
 }
 
-export function SignUpForm() {
+export function SignUpForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState<AuthState, FormData>(signUp, {});
   if (state.message) {
     return (
@@ -41,6 +41,7 @@ export function SignUpForm() {
   }
   return (
     <form action={action} className="space-y-4">
+      <input type="hidden" name="next" value={next ?? ""} />
       <Field label="Your name">
         <input name="name" required autoComplete="name" autoFocus defaultValue={state.fields?.name} className={inputClass} placeholder="Maya Alvarez" />
       </Field>

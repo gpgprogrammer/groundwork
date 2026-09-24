@@ -36,7 +36,7 @@ export function RatingLine({ rating, count }: { rating: number | null; count: nu
   );
 }
 
-export function TutorCard({ t, courses, rank }: { t: TutorWithStats; courses: Course[]; rank?: number }) {
+export function TutorCard({ t, courses, rank, vetted }: { t: TutorWithStats; courses: Course[]; rank?: number; vetted?: boolean }) {
   const names = t.courseIds.map((id) => courses.find((c) => c.id === id)?.shortTitle).filter(Boolean);
   return (
     <Link href={`/tutors/${t.id}`} className="group flex gap-4 rounded-2xl p-4 ring-1 ring-line transition-colors hover:bg-bg-subtle/60">
@@ -46,7 +46,10 @@ export function TutorCard({ t, courses, rank }: { t: TutorWithStats; courses: Co
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
-          <p className="truncate text-[16px] font-semibold text-ink group-hover:underline">{t.name}</p>
+          <p className="flex min-w-0 items-center gap-1.5 text-[16px] font-semibold text-ink">
+            <span className="truncate group-hover:underline">{t.name}</span>
+            {vetted ? <BadgeCheck className="size-4 shrink-0 text-accent" aria-label="Merit Verified" /> : null}
+          </p>
           <p className="tabular shrink-0 text-[15px] font-semibold text-ink">{t.hourlyRate == null ? "Free" : `$${t.hourlyRate}/hr`}</p>
         </div>
         <p className="line-clamp-2 text-[13.5px] leading-snug text-ink-2">{t.headline}</p>
@@ -102,8 +105,11 @@ export function ServiceCard({ s, course, zip }: { s: Service; course: Course | n
       className="group flex flex-col rounded-2xl p-5 ring-1 ring-line transition-colors hover:bg-bg-subtle/60"
     >
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[16px] font-semibold text-ink">{s.name}</p>
-        <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", s.kind === "Free" ? "bg-positive-soft text-positive" : "bg-bg-subtle text-ink-2")}>{s.kind}</span>
+        <p className="flex min-w-0 items-center gap-1.5 text-[16px] font-semibold text-ink">
+          <span className="truncate">{s.name}</span>
+          {s.partner ? <span className="shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-accent">Merit Partner</span> : null}
+        </p>
+        <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold", s.kind === "Free" ? "bg-positive-soft text-positive" : "bg-bg-subtle text-ink-2")}>{s.kind}</span>
       </div>
       <p className="mt-2 flex-1 text-[13.5px] leading-relaxed text-muted">{s.blurb}</p>
       <p className="mt-4 flex items-center gap-1.5 text-sm font-medium text-accent">
@@ -117,7 +123,7 @@ export function VerifiedNote() {
   return (
     <p className="flex items-start gap-2 text-xs leading-relaxed text-muted">
       <BadgeCheck className="mt-0.5 size-3.5 shrink-0" />
-      Tutor profiles are self-reported. Reviews come from Groundwork students. Rankings are never paid for.
+      Tutor profiles are self-reported; Merit Verified tutors have been reviewed by our team. Reviews come from Merit students. Merit may earn a referral fee when you book through Merit or a partner link. Rankings are never paid for.
     </p>
   );
 }

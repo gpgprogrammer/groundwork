@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { CourseIcon } from "./course-icon";
 import { cn } from "./ui";
 
 export type CourseTile = {
@@ -17,15 +18,6 @@ export type CourseTile = {
   studying: boolean;
   progress: number | null;
 };
-
-/** A short badge like "BC", "Bio", "P1", or "R&W". */
-function monogram(t: CourseTile) {
-  const words = t.shortTitle.replace(/^AP\s+/, "").replace(/[:.]/g, "").split(/\s+/).filter(Boolean);
-  if (words.length === 1) return words[0].slice(0, 4);
-  const code = words.find((w) => /^[A-Z&]{2,4}$/.test(w) && w !== "SAT");
-  if (code) return code;
-  return words.map((w) => (/^\d/.test(w) ? w.replace(/-.*/, "") : w[0])).join("").slice(0, 3);
-}
 
 export function CoursesBrowser({ courses, categories }: { courses: CourseTile[]; categories: string[] }) {
   const [q, setQ] = useState("");
@@ -88,13 +80,7 @@ function Grid({ items }: { items: CourseTile[] }) {
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {items.map((c) => (
         <Link key={c.id} href={`/courses/${c.slug}`} className="group flex items-center gap-4 rounded-2xl p-4 ring-1 ring-line transition-colors hover:bg-bg-subtle/70">
-          <span
-            className="flex size-12 shrink-0 items-center justify-center rounded-xl text-[15px] font-bold tracking-tight text-white"
-            style={{ background: `linear-gradient(145deg, oklch(0.62 0.14 ${c.hue}), oklch(0.5 0.14 ${c.hue + 25}))` }}
-            aria-hidden
-          >
-            {monogram(c)}
-          </span>
+          <CourseIcon id={c.id} size={52} />
           <div className="min-w-0 flex-1">
             <p className="line-clamp-2 text-[15px] font-semibold leading-snug text-ink group-hover:underline">{c.title}</p>
             <p className="tabular mt-0.5 text-[12.5px] text-muted">

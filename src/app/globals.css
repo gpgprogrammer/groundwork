@@ -12,7 +12,8 @@
   --faint: #909090;
   --line: #e5e5e5;
   --line-strong: #d3d3d3;
-  --accent: #1865f2;
+  --accent: #2563eb;
+  --brand-ink: #15295e;
   --accent-soft: #e8f0fe;
   --positive: #1a7f37;
   --positive-soft: #e7f5ec;
@@ -26,6 +27,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f0f0f;
+    --brand-ink: #f1f5ff;
     --bg-subtle: #272727;
     --surface: #212121;
     --ink: #f1f1f1;
@@ -48,6 +50,7 @@
 
 :root[data-theme="dark"] {
   --bg: #0f0f0f;
+  --brand-ink: #f1f5ff;
   --bg-subtle: #272727;
   --surface: #212121;
   --ink: #f1f1f1;
@@ -78,6 +81,8 @@
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-accent: var(--accent);
+  --color-brand-ink: var(--brand-ink);
+  --font-brand: var(--font-nunito), ui-rounded, system-ui, sans-serif;
   --color-accent-soft: var(--accent-soft);
   --color-positive: var(--positive);
   --color-positive-soft: var(--positive-soft);

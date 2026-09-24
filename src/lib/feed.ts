@@ -21,6 +21,8 @@ export type FeedVideo = {
   topicHref: string | null;
   helpfulPct: number;
   reason?: string;
+  /** A teacher on Merit recommended this lesson. */
+  addedBy?: { name: string; href: string; note: string };
 };
 
 export function toFeedVideo(catalog: IndexedCatalog, v: RankedVideo, reason?: string): FeedVideo {
@@ -42,6 +44,7 @@ export function toFeedVideo(catalog: IndexedCatalog, v: RankedVideo, reason?: st
     topicTitle: topic?.title ?? null,
     topicHref: topic && course ? `/courses/${course.slug}/${topic.slug}` : null,
     helpfulPct: Math.round(v.rank.helpful * 100),
+    ...(v.addedBy ? { addedBy: { name: v.addedBy.name, href: `/educators/${v.addedBy.educatorId}`, note: v.addedBy.note.slice(0, 200) } } : {}),
     ...(reason ? { reason } : {}),
   };
 }

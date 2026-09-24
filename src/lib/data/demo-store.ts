@@ -25,10 +25,11 @@ type LocalState = {
   reviews: TutorReview[];
   requests: TutoringRequest[];
   referrals: Referral[];
+  docs?: Record<string, Record<string, { owner: string | null; data: unknown; updatedAt: string }>>;
 };
 
 const STATE_VERSION = 11;
-const DATA_DIR = process.env.DEMO_DATA_DIR || (process.env.VERCEL ? "/tmp/groundwork" : path.join(process.cwd(), ".data"));
+const DATA_DIR = process.env.DEMO_DATA_DIR || (process.env.VERCEL ? "/tmp/merit" : path.join(process.cwd(), ".data"));
 const FILE = path.join(DATA_DIR, "state.json");
 
 function hashPassword(password: string, salt = randomBytes(16).toString("hex")) {
@@ -278,6 +279,29 @@ export function createLocalStore(): Store {
       const out: Record<string, number> = Object.fromEntries(partnerIds.map((p) => [p, 0]));
       for (const r of s.referrals) if (r.partnerId in out) out[r.partnerId]++;
       return out;
+    },
+
+    async getDoc<T>(collection: string, id: string) {
+      const row = (await load()).docs?.[collection]?.[id];
+      return row ? (structuredClone(row.data) as T) : null;
+    },
+
+    async listDocs<T>(collection: string, filter?: { owner?: string }) {
+      const rows = Object.values((await load()).docs?.[collection] ?? {});
+      return structuredClone(rows.filter((r) => !filter?.owner || r.owner === filter.owner).map((r) => r.data)) as T[];
+    },
+
+    async putDoc(collection, id, data, owner = null) {
+      const s = await load();
+      const col = ((s.docs ??= {})[collection] ??= {});
+      col[id] = { owner: owner ?? col[id]?.owner ?? null, data: structuredClone(data), updatedAt: new Date().toISOString() };
+      await persist();
+    },
+
+    async deleteDoc(collection, id) {
+      const s = await load();
+      if (s.docs?.[collection]) delete s.docs[collection][id];
+      await persist();
     },
   };
 }

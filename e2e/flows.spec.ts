@@ -39,7 +39,8 @@ async function signUpAndOnboard(page: Page, opts: { calendar?: boolean } = {}) {
 
 test("anonymous home: chips, sorting, and real YouTube thumbnails", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Every AP course\. The best lessons\. The best tutors\. Free\./ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Merit Learning home" }).first()).toBeVisible();
+  await expect(page.getByText("The best AP and SAT lessons on YouTube")).toHaveCount(0);
   const firstThumb = page.locator('main img[src*="ytimg.com"]').first();
   await expect(firstThumb).toBeVisible();
   await page.getByRole("tab", { name: "AP World History: Modern" }).click();
@@ -86,8 +87,8 @@ test("save to Watch later from the card menu", async ({ page }) => {
 
 test("calendar sync in onboarding puts the quiz's videos on the home page", async ({ page }) => {
   await signUpAndOnboard(page, { calendar: true });
-  await expect(page.getByRole("heading", { name: "Coming up on your calendar" })).toBeVisible();
-  await expect(page.getByText(/Before your AP Calc BC quiz: Chain Rule/).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tonight's plan" })).toBeVisible();
+  await expect(page.getByText(/AP Calc BC quiz: Chain Rule/).first()).toBeVisible();
   await page.goto("/schedule");
   await expect(page.getByText("AP Calc BC quiz: Chain Rule")).toBeVisible();
   await expect(page.getByRole("link", { name: "Chain Rule" }).first()).toBeVisible();
@@ -136,6 +137,7 @@ test("tutor lists themselves, a student finds them, requests a session, and revi
   await tutorPage.getByRole("textbox", { name: "City" }).fill("Atlanta");
   await tutorPage.getByLabel("State / region").fill("GA");
   await tutorPage.getByLabel(/Rate/).fill("55");
+  await tutorPage.getByLabel("I agree to the Merit Partner Terms.").check();
   await tutorPage.getByRole("button", { name: "Publish my listing" }).click();
   await tutorPage.waitForURL(/\/tutors\/[^/]+\?saved=1/);
   const tutorUrl = new URL(tutorPage.url()).pathname;
@@ -147,9 +149,10 @@ test("tutor lists themselves, a student finds them, requests a session, and revi
   await student.getByLabel("State or region").fill("GA");
   await student.getByLabel("ZIP code").fill("30305");
   await student.getByRole("button", { name: "Set", exact: true }).click();
-  await expect(student.getByRole("heading", { name: /Top tutors near Atlanta, GA/ })).toBeVisible();
+  await expect(student.getByRole("heading", { name: /Merit tutors near Atlanta, GA/ })).toBeVisible();
   await student.locator(`a[href="${tutorUrl}"]`).first().click();
   await student.waitForURL(`**${tutorUrl}`);
+  await student.getByText("Send a message instead").click();
   await student.getByLabel("What do you need help with?").fill("Equilibrium and ICE tables before my unit test.");
   await student.getByRole("button", { name: "Request a session" }).click();
   await expect(student.getByText("Request sent to Dana")).toBeVisible();
@@ -179,4 +182,110 @@ test("courses page lists every AP course, grouped and searchable", async ({ page
   await page.getByLabel("Find a course").fill("psych");
   await expect(page.locator("main").getByRole("link", { name: /AP Psychology/ })).toBeVisible();
   await expect(page.locator("main").getByRole("link", { name: /AP Biology/ })).toHaveCount(0);
+});
+
+test("pricing shows the three offers and a test-mode Sprint purchase unlocks the Sprint", async ({ page }) => {
+  await page.goto("/pricing");
+  await expect(page.getByRole("heading", { name: "Know what to study tonight." })).toBeVisible();
+  await expect(page.getByText("$4.99").first()).toBeAttached();
+  await expect(page.getByText("$14.99").first()).toBeVisible();
+  await signUpAndOnboard(page);
+  await page.goto("/sprint?course=ap-biology");
+  await page.getByRole("button", { name: /Start the free diagnostic/ }).click();
+  await page.waitForURL(/\/sprint\/spr_[^/]+\/diagnostic/);
+  const sprintUrl = page.url().replace(/\/diagnostic$/, "");
+  await expect(page.getByRole("heading", { name: /how do you feel about each unit/ })).toBeVisible();
+  for (const group of await page.getByRole("radiogroup").all()) await group.getByRole("radio", { name: "Okay" }).click();
+  await page.getByRole("button", { name: /Start the questions/ }).click();
+  await page.goto(sprintUrl);
+  await expect(page.getByText(/days to exam day/)).toBeVisible();
+  await page.getByRole("button", { name: /Unlock for \$14.99/ }).click();
+  await page.waitForURL(/checkout=success/);
+  await expect(page.getByText(/Exam Sprint is ready/)).toBeVisible();
+  await expect(page.getByRole("button", { name: /Unlock for/ })).toHaveCount(0);
+  await page.goto("/settings/billing");
+  await expect(page.getByText(/Your free year is active/)).toBeVisible();
+});
+
+test("a new account has Plus: tonight's plan, progress, and a reminders feed", async ({ page }) => {
+  await signUpAndOnboard(page);
+  await page.goto("/plan");
+  await expect(page.getByRole("heading", { name: "Tonight" })).toBeVisible();
+  const feed = await page.getByLabel("Private calendar link").inputValue();
+  const res = await page.request.get(feed);
+  expect(res.status()).toBe(200);
+  expect(await res.text()).toContain("BEGIN:VCALENDAR");
+  await page.goto("/progress");
+  await expect(page.getByRole("heading", { name: "Your progress" })).toBeVisible();
+});
+
+test("signed-out visitors see a sample week on My schedule, then the offer", async ({ page }) => {
+  await page.goto("/schedule");
+  await expect(page.getByText("Sample week")).toBeVisible();
+  await expect(page.getByText(/Calendar sync is part of Merit Plus/)).toBeVisible();
+});
+
+test("Merit AI answers with lessons (fallback mode without a model key)", async ({ page }) => {
+  await page.goto("/ask");
+  await page.getByLabel("Ask Merit AI").fill("chain rule");
+  await page.keyboard.press("Enter");
+  await expect(page.locator('main a[href^="/go/"]').first()).toBeVisible({ timeout: 30000 });
+});
+
+test("a teacher sets up a studio and publishes a study guide on a topic", async ({ page }) => {
+  await signUpAndOnboard(page);
+  await page.goto("/studio");
+  await page.getByPlaceholder("AP Chemistry teacher, 12 years").fill("AP Calculus teacher, 10 years");
+  await page.getByText(/only add accurate, school-appropriate material/).click();
+  await page.getByRole("button", { name: "Save and open my studio" }).click();
+  await page.waitForURL(/\/studio\?welcome=1/);
+  await page.goto("/studio/guide");
+  await page.getByLabel("Course").selectOption("ap-calculus-bc");
+  await page.getByLabel("Topic").selectOption("ap-calculus-bc/chain-rule");
+  await page.getByLabel("Title").fill("Chain rule in three steps");
+  await page.locator('textarea[name="body"]').fill("### The idea\nDifferentiate the outside, keep the inside, then multiply by the derivative of the inside. Practice with sin(3x²) and e^(5x).");
+  await page.getByRole("button", { name: "Publish guide" }).click();
+  await page.waitForURL(/\/guides\/con_/);
+  const guide = new URL(page.url()).pathname;
+  await page.goto("/courses/ap-calculus-bc/chain-rule");
+  await expect(page.locator(`a[href="${guide}"]`)).toBeVisible();
+});
+
+test("a student books a tutor's open hour; the tutor confirms and Merit's 10% fee is recorded", async ({ browser }) => {
+  const tutor = await browser.newPage();
+  await signUpAndOnboard(tutor);
+  await tutor.goto("/tutors/join");
+  await tutor.getByRole("textbox", { name: "Name", exact: true }).fill("Priya Raman");
+  await tutor.getByLabel(/Headline/).fill("AP Physics tutor, former engineer");
+  await tutor.getByLabel("About you").fill("I teach physics by drawing it first. Free-body diagrams, energy bar charts, and lots of practice problems.");
+  await tutor.locator('label:has(input[value="ap-physics-1"])').click();
+  await tutor.getByLabel(/Rate/).fill("60");
+  await tutor.getByLabel("I agree to the Merit Partner Terms.").check();
+  await tutor.getByRole("button", { name: "Publish my listing" }).click();
+  await tutor.waitForURL(/\/tutors\/[^/]+\?saved=1/);
+  const profile = new URL(tutor.url()).pathname;
+  await tutor.goto("/tutor");
+  // Default hours: Mondays 4 to 7pm.
+  await tutor.getByRole("button", { name: "Save hours" }).click();
+  await expect(tutor.getByText(/Saved. Students can book/)).toBeVisible();
+
+  const student = await browser.newPage();
+  await signUpAndOnboard(student);
+  await student.goto(profile);
+  await student.locator('button:has-text(":")').filter({ hasText: /AM|PM/ }).first().click();
+  await student.getByPlaceholder(/What do you want to work on/).fill("Rotational motion before my test next week.");
+  await student.getByRole("button", { name: /^Request/ }).click();
+  await student.waitForURL(/\/bookings\/bk_/);
+  await expect(student.getByText("Waiting for tutor")).toBeVisible();
+  const booking = student.url().split("?")[0];
+
+  await tutor.goto(booking);
+  await expect(tutor.getByText(/Merit referral fee \(10%\): \$6/)).toBeVisible();
+  await tutor.getByRole("button", { name: "Confirm" }).click();
+  await expect(tutor.getByText("Confirmed")).toBeVisible();
+  await tutor.getByRole("button", { name: "Mark completed" }).click();
+  await tutor.goto("/tutor/payouts");
+  await expect(tutor.getByRole("button", { name: "Pay $6" })).toBeVisible();
+  await tutor.close();
+  await student.close();
 });

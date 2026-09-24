@@ -66,14 +66,14 @@ export function LocationForm({ initial }: { initial: Location | null }) {
   return (
     <form action={action} className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
       <div className="flex h-11 w-full min-w-0 items-center gap-2 rounded-full bg-white pl-4 pr-1.5 sm:w-auto">
-        <MapPin className="size-4 shrink-0 text-[#1865f2]" />
+        <MapPin className="size-4 shrink-0 text-[#2563eb]" />
         <input name="city" defaultValue={initial?.city} placeholder="City" className={locInput + " min-w-0 flex-[2] sm:w-32 sm:flex-none"} aria-label="City" />
         <span className="h-5 w-px bg-[#e5e5e5]" />
         <input name="region" defaultValue={initial?.region} placeholder="State" className={locInput + " min-w-0 flex-1 sm:w-16 sm:flex-none"} aria-label="State or region" />
         <span className="h-5 w-px bg-[#e5e5e5]" />
         <input name="zip" defaultValue={initial?.zip} placeholder="ZIP" inputMode="numeric" className={locInput + " min-w-0 flex-1 sm:w-16 sm:flex-none"} aria-label="ZIP code" />
         <input type="hidden" name="country" value={initial?.country || "United States"} />
-        <button type="submit" disabled={pending} className="h-8 shrink-0 rounded-full bg-[#1865f2] px-4 text-sm font-medium text-white hover:bg-[#1865f2]/90 disabled:opacity-60">
+        <button type="submit" disabled={pending} className="h-8 shrink-0 rounded-full bg-[#2563eb] px-4 text-sm font-medium text-white hover:bg-[#2563eb]/90 disabled:opacity-60">
           {pending ? "Saving…" : "Set"}
         </button>
       </div>

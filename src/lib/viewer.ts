@@ -2,10 +2,12 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getSessionUser, type SessionUser } from "@/lib/auth/session";
+import { claimGifts, getBilling, plusAccess } from "@/lib/billing/access";
 import { getStore } from "@/lib/data/store";
-import type { UserState } from "@/lib/types";
+import { env } from "@/lib/env";
+import type { Billing, PlusAccess, UserState } from "@/lib/types";
 
-export type Viewer = { user: SessionUser; state: UserState };
+export type Viewer = { user: SessionUser; state: UserState; billing: Billing; plus: PlusAccess; isAdmin: boolean };
 
 export const getViewer = cache(async (): Promise<Viewer | null> => {
   const user = await getSessionUser();
@@ -17,7 +19,13 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     state = await store.getUserState(user.id);
   }
   if (!state) return null;
-  return { user, state };
+  let billing = await getBilling(user.id);
+  try {
+    if ((await claimGifts(user.id, user.email)).length) billing = await getBilling(user.id);
+  } catch (err) {
+    console.error("[billing] gift claim failed", err);
+  }
+  return { user, state, billing, plus: plusAccess(state.profile, billing), isAdmin: env.adminEmails.includes(user.email.toLowerCase()) };
 });
 
 /** For pages that require an account. Sends people to sign in, then back here. */

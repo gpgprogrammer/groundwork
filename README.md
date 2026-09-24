@@ -1,6 +1,6 @@
-# Groundwork
+# Merit Learning
 
-Every AP course and the SAT, with the best YouTube lessons organized by course, unit, and topic, ranked by how well they teach, and matched to each student's class calendar. Plus a tutoring hub: the best tutors near you and online, the best free teachers on each topic, and trusted tutoring services. Free for students.
+Merit ("merit: academic tutoring") helps high schoolers master every AP course and the SAT: the best lessons for every topic, an AI study partner, a nightly study plan, Exam Sprints, teacher-added content, and a tutor marketplace with booking and commission tracking.
 
 ## Run it
 
@@ -27,7 +27,7 @@ Clicking a video goes through `/go/:id`, which records the open in the student's
 
 ## Ranking
 
-`src/lib/ranking.ts`, explained at `/how-ranking-works`: reach (log-scaled views) 25%, Groundwork student helpful votes 20%, YouTube like rate 20%, topic fit 20%, saves 10%, discussion 5%. Every feed can also be sorted by most helpful, views, likes, newest, shortest, longest, or most discussed, and filtered by length.
+`src/lib/ranking.ts`, explained at `/how-ranking-works`: reach (log-scaled views) 25%, Merit student helpful votes 20%, YouTube like rate 20%, topic fit 20%, saves 10%, discussion 5%. Every feed can also be sorted by most helpful, views, likes, newest, shortest, longest, or most discussed, and filtered by length.
 
 ## Calendar sync
 
@@ -41,13 +41,17 @@ All 40 AP courses plus SAT Math and SAT Reading & Writing (42 total, about 240 u
 
 `/tutors` shows, per subject:
 
-- **Tutors near you and online**, ranked by a Bayesian average of Groundwork student reviews (a tutor with one 5-star review doesn't outrank one with forty 4.8s). Location comes from the student's profile, or a cookie for visitors.
+- **Tutors near you and online**, ranked by a Bayesian average of Merit student reviews (a tutor with one 5-star review doesn't outrank one with forty 4.8s). Location comes from the student's profile, or a cookie for visitors.
 - **Best free teachers**: the YouTube creators whose lessons rank highest for that course or topic.
 - **Tutoring services** (Wyzant, Varsity Tutors, The Princeton Review, Tutor.com, Schoolhouse.world, PrepScholar), deep-linked to the right subject and ZIP.
 
 Tutors list themselves at `/tutors/join`. Students request sessions from a tutor's profile, and requests appear on the tutor's dashboard at `/tutor`. Students can review tutors (but tutors can't review themselves).
 
-**Referrals.** Every outbound link goes through `/r/<service>` or `/r/tutor/<id>`, which logs a row in `referrals` (service, course, user if signed in, time) before redirecting. That's the ledger for commission deals. When a partner gives you an affiliate code, set `PARTNER_REF_<SERVICE_ID>` (e.g. `PARTNER_REF_WYZANT`) and it's appended to every link. Rankings never take payment into account.
+**Bookings and the 10% commission.** Tutors accept the Merit Partner Terms when they list, then set weekly hours on `/tutor`. Students book open slots from a tutor's profile; the tutor confirms, then marks the session completed. If the tutor has connected Stripe payouts (`/tutor/payouts`, Stripe Connect Express), the student pays through Merit and the 10% is taken as an application fee automatically. Otherwise the student pays the tutor directly and the 10% is recorded as owed; the tutor settles it from `/tutor/payouts`.
+
+**Partners and referrals.** Tutoring businesses apply at `/tutors/partners` and appear on the Tutors page once approved at `/admin`. Every outbound link goes through `/r/<service>` or `/r/tutor/<id>`, which logs a referral. When a partner gives you an affiliate code, set `PARTNER_REF_<SERVICE_ID>`. Rankings never take payment into account.
+
+**Admin.** `/admin` (for the emails in `ADMIN_EMAILS`) shows MRR, Sprint sales, tutoring volume and fees, referral clicks, partner applications, tutor verification, and moderation of teacher content.
 
 ## Accounts and data
 
@@ -55,13 +59,28 @@ Without Supabase, accounts and activity are stored in `.data/state.json` (local 
 
 1. Create a project, run `supabase/migrations/0001_init.sql` in the SQL editor.
 2. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
-3. Add `{APP_URL}/auth/callback` as an Auth redirect URL; enable Google if you want the Google button.
+3. Add `{APP_URL}/auth/callback` as an Auth redirect URL. Enable the Google and Apple providers in Supabase Auth; the buttons appear automatically (`NEXT_PUBLIC_OAUTH_PROVIDERS`, default `google,apple`).
 
-The database stores only per-student data (profiles, history, saves, votes, mastery, schedules, tutor listings, reviews, session requests, referrals) under row-level security.
+The database stores only per-student data (profiles, history, saves, votes, mastery, schedules, tutor listings, reviews, session requests, referrals), plus a `docs` table (migration `0002_docs.sql`) for billing, sprints, teacher content, bookings, and AI caches under row-level security.
 
-## Pricing
+## Pricing and payments
 
-Everything is free for students: no plan, no trial, no card. Revenue later comes from tutoring referrals (above).
+Defined in `src/lib/billing/plans.ts`.
+
+- **Free**: courses, lessons, tutor search, Merit AI (30 questions/day; 5 signed out).
+- **Merit Plus**: $4.99/month or $39.99/year. Includes the study plan (`/plan`), calendar sync (`/schedule`), reminders (a private iCal feed with alarms), and progress (`/progress`). Every new account gets Plus free for `NEXT_PUBLIC_PLUS_TRIAL_DAYS` days (default 365, no card). If a student subscribes during the free year, billing starts when it ends.
+- **Exam Sprint**: $14.99 once per exam (`/sprint`). The diagnostic and readiness report are free. Paying unlocks the day-by-day plan, unlimited AI-written practice with per-choice explanations, weekly checkpoints, cram sheets, and the free-response coach.
+- **Parent checkout** (`/pricing/parents`): anyone can pay for a student's Plus year or Sprint. It unlocks when the student signs in with that email.
+
+Stripe: set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, then point a webhook at `/api/billing/webhook` (events: `checkout.session.completed`, `customer.subscription.*`, `account.updated`). Prices are sent inline, so no Stripe products need to be created. **Without a key, checkout runs in labeled test mode**: purchases are granted with no charge.
+
+## Merit AI
+
+`/ask` plus the floating "Ask Merit" panel on every page (Cmd/Ctrl+J). It uses the AI SDK with the Vercel AI Gateway (`MERIT_AI_MODEL`, default `anthropic/claude-sonnet-5`). Its tools search the lesson library, look up curriculum topics and outlines, read the student's plan, find tutors, and render interactive quizzes. On Vercel it authenticates with the deployment's OIDC token. **The Vercel team needs a card on file to unlock AI Gateway credits.** Until then, Merit AI answers with the best-ranked lessons instead of an explanation. Sprint questions and cram sheets are generated once per topic or unit and cached for everyone.
+
+## Teacher studio
+
+`/studio`: teachers set up a profile, add any public YouTube lesson to a topic with a note, and write study guides. Their picks show a "Picked by …" badge in feeds, and guides appear on the topic page. Public profiles are at `/educators/[id]`.
 
 ## Quality checks
 
@@ -72,4 +91,4 @@ npm test                       # Playwright unit + end-to-end tests
 node scripts/screens.mjs out   # desktop + mobile screenshots
 ```
 
-AP® and SAT® are trademarks of the College Board, which is not affiliated with Groundwork. Videos belong to their creators and play on YouTube.
+AP® and SAT® are trademarks of the College Board, which is not affiliated with Merit. Videos belong to their creators and play on YouTube.

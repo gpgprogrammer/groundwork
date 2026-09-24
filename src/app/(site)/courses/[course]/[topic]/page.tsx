@@ -10,7 +10,11 @@ import { pageOf, queryFeed } from "@/lib/feed";
 import { topicStatus } from "@/lib/recommend";
 import { topCreators } from "@/lib/tutoring";
 import { ChannelAvatar } from "@/components/video-card";
-import { Users } from "lucide-react";
+import { FileText, Sparkles, Users } from "lucide-react";
+import { guidesForTopic } from "@/lib/educators";
+import { OpenAskButton } from "@/components/ask/quick-ask";
+import { ExamCta } from "@/components/upgrade";
+import { daysUntil, examDateFor } from "@/lib/exams";
 import { getViewer } from "@/lib/viewer";
 
 export async function generateMetadata({ params }: PageProps<"/courses/[course]/[topic]">): Promise<Metadata> {
@@ -26,6 +30,8 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
   if (!course || !topic || topic.courseId !== course.id) notFound();
 
   const unit = catalog.unit(topic.unitId)!;
+  const examDate = examDateFor(course, viewer?.state.profile ?? null);
+  const guides = await guidesForTopic(topic.id);
   const concept = catalog.concept(topic.conceptId)!;
   const str = (v: unknown) => (typeof v === "string" ? v : undefined);
   const result = queryFeed(catalog, null, { topicId: topic.id, sort: str(sp.sort), length: str(sp.length) });
@@ -65,7 +71,12 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
         </nav>
         <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-[34px]">{topic.title}</h1>
-          <MasteryButton topicId={topic.id} mastered={Boolean(viewer?.state.mastered[topic.id])} signedIn={Boolean(viewer)} />
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <OpenAskButton className="inline-flex h-10 items-center gap-2 rounded-full bg-accent-soft px-4 text-sm font-semibold text-accent hover:brightness-95">
+              <Sparkles className="size-4" /> Ask Merit AI
+            </OpenAskButton>
+            <MasteryButton topicId={topic.id} mastered={Boolean(viewer?.state.mastered[topic.id])} signedIn={Boolean(viewer)} />
+          </div>
         </div>
         <p className="mt-3 max-w-3xl text-[17px] leading-relaxed text-ink-2">{topic.summary}</p>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -75,6 +86,22 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
             </span>
           ))}
         </div>
+
+        {guides.length ? (
+          <section className="mt-8">
+            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+              <FileText className="size-4 text-accent" /> Study guides from teachers
+            </h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {guides.map((g) => (
+                <Link key={g.id} href={`/guides/${g.id}`} className="rounded-2xl p-4 ring-1 ring-line hover:bg-bg-subtle">
+                  <p className="font-semibold text-ink">{g.title}</p>
+                  <p className="mt-1 line-clamp-2 text-[13px] text-muted">{(g.body ?? "").replace(/[#*`>\[\]()-]/g, "").slice(0, 160)}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <div className="sticky top-14 z-20 -mx-4 mt-8 flex items-center justify-between gap-3 border-b border-line bg-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
           <p className="text-[15px] font-medium text-ink">
@@ -143,7 +170,11 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
             <ArrowRight className="size-5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" />
           </Link>
         ) : null}
+        <ExamCta daysLeft={examDate ? daysUntil(examDate) : null} courseId={course.id} courseTitle={course.shortTitle} />
         <TopicCreators catalog={catalog} topicId={topic.id} courseId={course.id} courseShort={course.shortTitle} />
+        <Link href="/studio/video" className="block px-1 text-[13px] text-muted hover:text-ink">
+          Teacher? <span className="font-medium text-accent">Add a lesson or guide for this topic</span>
+        </Link>
         {topic.aliases.length ? (
           <p className="px-1 text-[13px] leading-relaxed text-muted">
             <span className="font-medium text-ink-2">Also called:</span> {topic.aliases.join(", ")}

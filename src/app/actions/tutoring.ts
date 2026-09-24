@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
+import { getTutorMeta, saveTutorMeta } from "@/lib/bookings";
 import type { Location, TutoringRequest } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
 
@@ -87,13 +88,19 @@ export async function saveTutorProfile(_: FormState, form: FormData): Promise<Fo
   const d = parsed.data;
   if (!d.online && !d.inPerson) return { error: "Choose online, in person, or both." };
   if (d.inPerson && !d.city && !d.region) return { error: "Add your city or state so nearby students can find you." };
+  const store = await getStore();
+  const prior = (await store.listTutors()).find((t) => t.userId === viewer.user.id);
+  const priorMeta = prior ? await getTutorMeta(prior.id) : null;
+  if (!priorMeta?.agreedAt && form.get("agreeTerms") !== "on") return { error: "Please accept the Merit Partner Terms to list." };
   const catalog = await getCatalog();
-  const tutor = await (await getStore()).saveTutor(viewer.user.id, {
+  const tutor = await store.saveTutor(viewer.user.id, {
     ...d,
     courseIds: d.courseIds.filter((id) => catalog.course(id)),
     hourlyRate: d.hourlyRate === "" ? null : d.hourlyRate,
     bookingUrl: d.bookingUrl || null,
   });
+  const meta = await getTutorMeta(tutor.id);
+  if (!meta.agreedAt) await saveTutorMeta({ ...meta, agreedAt: new Date().toISOString() });
   revalidatePath("/", "layout");
   redirect(`/tutors/${tutor.id}?saved=1`);
 }

@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarCheck, Clock, ExternalLink, MapPin, MonitorSmartphone } from "lucide-react";
+import { ArrowLeft, Clock, ExternalLink, MapPin, MonitorSmartphone } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,6 +9,9 @@ import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { formatPlace, rankTutors } from "@/lib/tutoring";
 import { getViewer } from "@/lib/viewer";
+import { BookingForm } from "@/components/booking-client";
+import { getTutorMeta, listBookings, openSlots } from "@/lib/bookings";
+import { BadgeCheck } from "lucide-react";
 
 async function load(id: string) {
   const store = await getStore();
@@ -28,6 +31,9 @@ export default async function TutorPage({ params, searchParams }: PageProps<"/tu
   if (!tutor) notFound();
   const courses = tutor.courseIds.map((c) => catalog.course(c)).filter((c) => c !== undefined);
   const own = viewer?.user.id === tutor.userId;
+  const [meta, booked] = await Promise.all([getTutorMeta(tutor.id), listBookings({ tutorId: tutor.id })]);
+  const slots = Object.fromEntries([30, 60, 90].map((m) => [String(m), openSlots(meta, booked, m)]));
+  const tzLabel = meta.timezone.replace(/_/g, " ");
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 pb-20 pt-6 sm:px-6">
@@ -40,7 +46,14 @@ export default async function TutorPage({ params, searchParams }: PageProps<"/tu
           <div className="flex items-center gap-5">
             <Initials name={tutor.name} size={88} />
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-ink">{tutor.name}</h1>
+              <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-ink">
+                {tutor.name}
+                {meta.vetted ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[12px] font-semibold text-accent">
+                    <BadgeCheck className="size-3.5" /> Merit Verified
+                  </span>
+                ) : null}
+              </h1>
               <p className="mt-1 text-[16px] text-ink-2">{tutor.headline}</p>
               <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                 <RatingLine rating={tutor.rating} count={tutor.reviewCount} />
@@ -116,24 +129,34 @@ export default async function TutorPage({ params, searchParams }: PageProps<"/tu
                 </Link>
               </div>
             ) : (
-              <div className="mt-5">
-                {tutor.bookingUrl ? (
-                  <a
-                    href={`/r/tutor/${tutor.id}`}
-                    target="_blank"
-                    rel="noopener"
-                    className="mb-5 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-accent text-sm font-medium text-white hover:bg-accent/90"
-                  >
-                    <CalendarCheck className="size-4" /> Book a time <ExternalLink className="size-3.5" />
-                  </a>
-                ) : null}
-                <RequestSessionForm
+              <div className="mt-5 space-y-5">
+                <BookingForm
                   tutorId={tutor.id}
                   tutorName={tutor.name}
+                  hourlyRate={tutor.hourlyRate}
+                  slots={slots}
                   courses={courses.map((c) => ({ id: c.id, title: c.title }))}
                   defaultCourse={courses[0]?.id ?? null}
-                  prefill={viewer ? { name: viewer.user.name, email: viewer.user.email } : undefined}
+                  timezoneLabel={tzLabel}
+                  signedIn={Boolean(viewer)}
                 />
+                <details className="rounded-xl bg-bg-subtle p-4">
+                  <summary className="cursor-pointer text-sm font-medium text-ink">Send a message instead</summary>
+                  <div className="mt-4">
+                    <RequestSessionForm
+                      tutorId={tutor.id}
+                      tutorName={tutor.name}
+                      courses={courses.map((c) => ({ id: c.id, title: c.title }))}
+                      defaultCourse={courses[0]?.id ?? null}
+                      prefill={viewer ? { name: viewer.user.name, email: viewer.user.email } : undefined}
+                    />
+                  </div>
+                </details>
+                {tutor.bookingUrl ? (
+                  <a href={`/r/tutor/${tutor.id}`} target="_blank" rel="noopener" className="flex items-center justify-center gap-1.5 text-[13px] text-muted hover:text-ink">
+                    Or use {tutor.name.split(" ")[0]}&apos;s own scheduling page <ExternalLink className="size-3.5" />
+                  </a>
+                ) : null}
               </div>
             )}
             <div className="mt-6">

@@ -7,6 +7,7 @@ import { useMemo, useState, useTransition } from "react";
 import { completeOnboarding } from "@/app/actions/learning";
 import { FocusPicker, type FocusCourse } from "@/components/focus-picker";
 import { inputClass } from "@/components/form";
+import { CourseIcon } from "@/components/course-icon";
 import { ScheduleConnect } from "@/components/schedule-connect";
 import { Button, cn } from "@/components/ui";
 
@@ -17,6 +18,7 @@ type Props = {
   initial: { courseIds: string[]; examDate: string | null; focusTopicIds: string[] };
   courses: CourseOption[];
   focus: FocusCourse[];
+  next: string;
 };
 
 function upcomingExamDates() {
@@ -35,7 +37,7 @@ function upcomingExamDates() {
 
 const pretty = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-export function OnboardingFlow({ firstName, initial, courses, focus }: Props) {
+export function OnboardingFlow({ firstName, initial, courses, focus, next }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<string[]>(initial.courseIds);
@@ -64,7 +66,7 @@ export function OnboardingFlow({ firstName, initial, courses, focus }: Props) {
   };
 
   const finish = () => {
-    router.push("/");
+    router.push(next);
     router.refresh();
   };
 
@@ -105,7 +107,7 @@ export function OnboardingFlow({ firstName, initial, courses, focus }: Props) {
                         on ? "bg-accent-soft ring-2 ring-accent" : "bg-bg-subtle hover:bg-line",
                       )}
                     >
-                      <span className="size-3 shrink-0 rounded-full" style={{ background: `oklch(0.6 0.14 ${c.hue})` }} />
+                      <CourseIcon id={c.id} size={36} />
                       <span className="min-w-0 flex-1">
                         <span className="block text-[15px] font-medium text-ink">{c.title}</span>
                         <span className="tabular block text-xs text-muted">{c.videos.toLocaleString()} videos</span>

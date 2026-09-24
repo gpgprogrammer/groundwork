@@ -7,6 +7,7 @@ import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { buildEvents, fetchCalendar, ScheduleError } from "@/lib/schedule";
 import type { Schedule } from "@/lib/types";
+import { hasPlus } from "@/lib/billing/access";
 import { getViewer } from "@/lib/viewer";
 
 async function viewerOr401() {
@@ -78,6 +79,7 @@ export type ScheduleResult = { ok: true; matched: number; total: number; upcomin
 async function saveSchedule(schedule: Omit<Schedule, "events" | "syncedAt">, ics: string): Promise<ScheduleResult> {
   const viewer = await getViewer();
   if (!viewer) return { ok: false, error: "Sign in to sync your calendar." };
+  if (!hasPlus(viewer.plus)) return { ok: false, error: "Calendar sync is part of Merit Plus." };
   const events = buildEvents(ics, viewer.state.profile.courseIds);
   await (await getStore()).setSchedule(viewer.user.id, { ...schedule, syncedAt: new Date().toISOString(), events });
   revalidatePath("/", "layout");
@@ -104,6 +106,9 @@ const calendarLabel = (url: URL) =>
             : url.hostname.replace(/^www\./, "");
 
 export async function syncCalendarUrl(rawUrl: string): Promise<ScheduleResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { ok: false, error: "Sign in to sync your calendar." };
+  if (!hasPlus(viewer.plus)) return { ok: false, error: "Calendar sync is part of Merit Plus." };
   try {
     const url = new URL(rawUrl.trim().replace(/^webcal:\/\//i, "https://"));
     const ics = await fetchCalendar(url.toString());

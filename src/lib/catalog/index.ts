@@ -4,7 +4,7 @@ import path from "node:path";
 import { cache } from "react";
 import { getStore } from "@/lib/data/store";
 import { EMPTY_SITE_STATS, rankVideo, type RankBreakdown } from "@/lib/ranking";
-import type { Channel, Concept, Course, Curriculum, Library, SiteStats, Topic, Unit, YtVideo } from "@/lib/types";
+import type { Channel, Concept, Contribution, Course, Curriculum, Educator, Library, SiteStats, Topic, Unit, YtVideo } from "@/lib/types";
 import { buildCurriculum } from "./build";
 
 export type RankedVideo = YtVideo & { rank: RankBreakdown; site: SiteStats };
@@ -122,15 +122,39 @@ export function indexCatalog(lib: Library, stats: Record<string, SiteStats>): In
   };
 }
 
-/** The catalog for this request, with live Groundwork engagement merged in. */
+/** Adds lessons teachers published on Merit to the library. */
+export function withContributions(lib: Library, contributions: Contribution[], educators: Educator[]): Library {
+  const names = new Map(educators.map((e) => [e.id, e.name]));
+  const videos = new Map(lib.videos.map((v) => [v.id, v]));
+  const channels = new Map(lib.channels.map((c) => [c.id, c]));
+  for (const c of contributions) {
+    if (c.kind !== "video" || c.status !== "published" || !c.video) continue;
+    const addedBy = { educatorId: c.educatorId, name: names.get(c.educatorId) ?? "A Merit teacher", note: c.note };
+    const existing = videos.get(c.video.id);
+    if (existing) {
+      videos.set(existing.id, { ...existing, addedBy, topicId: existing.topicId ?? c.topicId });
+      continue;
+    }
+    videos.set(c.video.id, { ...c.video, likes: null, comments: null, courseId: c.courseId, topicId: c.topicId, relevance: 1, addedBy });
+    if (!channels.has(c.video.channelId)) {
+      channels.set(c.video.channelId, { id: c.video.channelId, title: c.video.channelTitle, handle: null, thumbnail: null, subscribers: null, videoCount: null });
+    }
+  }
+  return { ...lib, videos: [...videos.values()], channels: [...channels.values()] };
+}
+
+/** The catalog for this request, with live Merit engagement and teacher-added lessons merged in. */
 export const getCatalog = cache(async () => {
   let stats: Record<string, SiteStats> = {};
+  let contributions: Contribution[] = [];
+  let educators: Educator[] = [];
   try {
-    stats = await (await getStore()).siteStats();
+    const store = await getStore();
+    [stats, contributions, educators] = await Promise.all([store.siteStats(), store.listDocs<Contribution>("contributions"), store.listDocs<Educator>("educators")]);
   } catch (err) {
-    console.error("[catalog] site stats unavailable", err);
+    console.error("[catalog] live data unavailable", err);
   }
-  return indexCatalog(loadLibrary(), stats);
+  return indexCatalog(contributions.length ? withContributions(loadLibrary(), contributions, educators) : loadLibrary(), stats);
 });
 
 export { curriculum };

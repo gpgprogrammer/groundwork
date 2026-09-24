@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { getCatalog } from "@/lib/catalog";
 import { getViewer } from "@/lib/viewer";
+import { getStore } from "@/lib/data/store";
 import { ViewerMarksProvider } from "../viewer-marks";
 import { ShellFrame, type ShellData } from "./shell-frame";
 
@@ -17,6 +18,9 @@ export async function AppShell({ children }: { children: ReactNode }) {
   const data: ShellData = {
     user: viewer ? { name: viewer.user.name, email: viewer.user.email } : null,
     isTutor: viewer?.state.profile.role === "tutor",
+    isEducator: Boolean(viewer && (await (await getStore()).getDoc("educators", viewer.user.id))),
+    isAdmin: viewer?.isAdmin ?? false,
+    plus: viewer?.plus.kind ?? "anonymous",
     hasSchedule: Boolean(viewer?.state.schedule),
     courses: [...catalog.courses]
       .sort((a, b) => catalog.videosForCourse(b.id).length - catalog.videosForCourse(a.id).length)
