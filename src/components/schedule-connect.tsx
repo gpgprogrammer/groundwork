@@ -47,6 +47,7 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("link");
   const [url, setUrl] = useState("");
+  const [school, setSchool] = useState(false);
   const [result, setResult] = useState<ScheduleResult | null>(null);
   const [preview, setPreview] = useState<Extract<PreviewResult, { ok: true }> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +82,7 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
   const tabs: [Mode, string, typeof Link2][] = [
     ["link", "Calendar link", Link2],
     ["ics", "Upload .ics", Upload],
-    ["doc", "Upload a PDF or CSV", FileText],
+    ["doc", "PDF, CSV, or screenshots", FileText],
     ["paste", "Paste text", ClipboardPaste],
   ];
 
@@ -103,20 +104,21 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
 
       {mode === "link" ? (
         <form
-          className="mt-4 flex flex-col gap-2 sm:flex-row"
+          className="mt-4 flex flex-col flex-wrap gap-2 sm:flex-row"
           onSubmit={(e) => {
             e.preventDefault();
-            start(async () => finish(await connectCalendarUrl(url)));
+            start(async () => finish(await connectCalendarUrl(url, school)));
           }}
         >
           <input value={url} onChange={(e) => setUrl(e.target.value)} required inputMode="url" placeholder="webcal://yourschool.myschoolapp.com/… or https://…ics" className={cn(inputClass, "h-11 rounded-full px-4")} aria-label="Calendar link" />
           <Button type="submit" size="lg" disabled={pending || !url.trim()} className="shrink-0">
             {pending ? "Connecting…" : "Connect"}
           </Button>
+          <SchoolToggle checked={school} onChange={setSchool} />
         </form>
       ) : mode === "ics" ? (
         <form
-          className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center"
+          className="mt-4 flex flex-col flex-wrap gap-2 sm:flex-row sm:items-center"
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
@@ -127,6 +129,8 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
           <Button type="submit" size="lg" disabled={pending} className="shrink-0">
             {pending ? "Importing…" : "Import"}
           </Button>
+          <input type="hidden" name="school" value={school ? "on" : ""} />
+          <SchoolToggle checked={school} onChange={setSchool} />
         </form>
       ) : mode === "doc" ? (
         <form
@@ -137,7 +141,7 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
           }}
         >
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <FilePick name="file" accept=".pdf,.csv,.txt,application/pdf,text/csv,text/plain" label="Choose a PDF or CSV (for example Blackbaud's calendar or Assignment Center, printed to PDF)" />
+            <FilePick name="file" multiple accept=".pdf,.csv,.txt,application/pdf,text/csv,text/plain,image/*" label="Choose a PDF, CSV, or screenshots of your calendar" />
             <Button type="submit" size="lg" disabled={pending} className="shrink-0">
               {pending ? "Reading…" : "Read it"}
             </Button>
@@ -239,7 +243,8 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
         <p className="mt-3 flex items-start gap-2 text-sm text-positive" role="status">
           <Check className="mt-0.5 size-4 shrink-0" />
           Connected {result.label}. Added {result.added} {result.added === 1 ? "test or assignment" : "tests and assignments"}
-          {result.tests ? ` (${result.tests} tests)` : ""}.
+          {result.tests ? ` (${result.tests} tests)` : ""}
+          {result.read ? `, from ${result.read} calendar items` : ""}.
         </p>
       ) : null}
       {error ? (
@@ -282,13 +287,33 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
   );
 }
 
-function FilePick({ name, accept, label }: { name: string; accept: string; label: string }) {
+function SchoolToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex w-full items-center gap-2 text-[12.5px] text-ink-2">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="size-4 accent-[var(--accent)]" />
+      Everything on this calendar is schoolwork (from a school portal like Blackbaud)
+    </label>
+  );
+}
+
+function FilePick({ name, accept, label, multiple }: { name: string; accept: string; label: string; multiple?: boolean }) {
   const [file, setFile] = useState<string | null>(null);
   return (
     <label className="flex h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-full border border-dashed border-line-strong px-4 text-sm text-muted hover:border-ink">
       <Upload className="size-4 shrink-0" />
       <span className="truncate">{file ?? label}</span>
-      <input type="file" name={name} accept={accept} required className="sr-only" onChange={(e) => setFile(e.target.files?.[0]?.name ?? null)} />
+      <input
+        type="file"
+        name={name}
+        accept={accept}
+        multiple={multiple}
+        required
+        className="sr-only"
+        onChange={(e) => {
+          const f = e.target.files;
+          setFile(!f?.length ? null : f.length > 1 ? `${f.length} files` : f[0].name);
+        }}
+      />
     </label>
   );
 }

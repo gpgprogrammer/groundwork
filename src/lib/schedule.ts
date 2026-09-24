@@ -3,12 +3,12 @@ import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { curriculum } from "@/lib/catalog";
 import type { ScheduleEvent } from "@/lib/types";
-import { eventsFromIcs } from "./ics";
+import { eventsFromIcs, type ParseStats } from "./ics";
 
 export { parseIcs } from "./ics";
 
-export function buildEvents(ics: string, courseHints: string[]): ScheduleEvent[] {
-  return eventsFromIcs(ics, curriculum, courseHints);
+export function buildEvents(ics: string, courseHints: string[], opts: { url?: string | null; stats?: ParseStats; school?: boolean } = {}): ScheduleEvent[] {
+  return eventsFromIcs(ics, curriculum, courseHints, Date.now(), opts);
 }
 
 /**
@@ -17,7 +17,7 @@ export function buildEvents(ics: string, courseHints: string[]): ScheduleEvent[]
  * publishes an iCal address, then matches events to curriculum topics.
  */
 
-const MAX_BYTES = 3 * 1024 * 1024;
+const MAX_BYTES = 15 * 1024 * 1024;
 
 export class ScheduleError extends Error {}
 
@@ -31,7 +31,7 @@ function isPrivateAddress(ip: string): boolean {
 }
 
 async function assertPublicHost(url: URL) {
-  if (url.protocol !== "https:") throw new ScheduleError("Use an https:// (or webcal://) calendar link.");
+  if (url.protocol !== "https:" && url.protocol !== "http:") throw new ScheduleError("Use a calendar link that starts with webcal://, https://, or http://.");
   const host = url.hostname;
   const addresses = isIP(host) ? [host] : (await lookup(host, { all: true }).catch(() => [])).map((a) => a.address);
   if (!addresses.length) throw new ScheduleError("We couldn't reach that calendar's server.");
@@ -50,7 +50,7 @@ export async function fetchCalendar(rawUrl: string): Promise<string> {
   // Follow up to 3 redirects by hand so every hop is checked.
   for (let hop = 0; hop < 4; hop++) {
     await assertPublicHost(url);
-    res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(10_000), headers: { Accept: "text/calendar, */*" } }).catch(() => {
+    res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(10_000), headers: { Accept: "text/calendar, text/plain, */*", "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36 MeritCalendarSync" } }).catch(() => {
       throw new ScheduleError("We couldn't download that calendar. Check that the link is the public (secret) iCal address.");
     });
     const location = res.status >= 300 && res.status < 400 ? res.headers.get("location") : null;
@@ -68,7 +68,7 @@ export async function fetchCalendar(rawUrl: string): Promise<string> {
     const { done, value } = await reader.read();
     if (done) break;
     size += value.byteLength;
-    if (size > MAX_BYTES) throw new ScheduleError("That calendar is too large to import (over 3 MB).");
+    if (size > MAX_BYTES) throw new ScheduleError("That calendar is too large to import (over 15 MB).");
     chunks.push(value);
   }
   const text = Buffer.concat(chunks).toString("utf8");

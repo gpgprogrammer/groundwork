@@ -1,4 +1,4 @@
-import { detectCourse, matchTopics, type TopicMatcher } from "@/lib/catalog/match";
+import { matchTopics, type TopicMatcher } from "@/lib/catalog/match";
 import { validTimeZone, wallToUtc } from "@/lib/tz";
 import type { ScheduleEvent } from "@/lib/types";
 
@@ -196,9 +196,15 @@ function expand(e: RawEvent, from: number, to: number): RawEvent[] {
   return out;
 }
 
-const TEST = /\b(test|exam|quiz|quizzes|midterm|final|assessment|mcq|frq|dbq|leq|saq|mock|practice exam)\b/i;
-const ASSIGNMENT = /\b(hw|homework|assignment|problem set|pset|due|worksheet|project|essay|lab report|reading|paper|presentation|submit|turn in)\b/i;
-const NOT_SCHOOLWORK = /\b(no school|holiday|break|vacation|half day|early dismissal|practice|game|rehearsal|club|meeting|advisory|assembly|lunch|office hours)\b/i;
+const TEST = /\b(tests?|exams?|quiz|quizzes|midterms?|finals?|assessments?|summative|mcq|frq|dbq|leq|saq|mock|skill check|unit check|checkpoint)\b/i;
+const ASSIGNMENT =
+  /\b(hw|homework|assignments?|problem sets?|psets?|due|worksheets?|wksts?|wks|packets?|projects?|essays?|labs?|lab reports?|reading|read|notes|paper|presentations?|submit|turn in|cw|classwork|exit tickets?|warm ?ups?|quickwrites?|vocab|vocabulary|practice|review|graded|formative|log|journal|draft|outline|annotations?|questions|activity|check)\b/i;
+const NOT_SCHOOLWORK =
+  /\b(no school|holiday|vacation|(winter|spring|fall|thanksgiving|mid-?winter) break|half day|early dismissal|(soccer|football|basketball|baseball|softball|volleyball|lacrosse|tennis|swim|swimming|track|cross country|hockey|golf|wrestling|cheer|band|orchestra|choir|dance|team) (practice|game|meet|match|tryouts?)|rehearsal|club meeting|advisory|assembly|lunch|office hours|pep rally|parent conferences?|picture day|birthday)\b/i;
+/** Class periods from a schedule, e.g. "Period 3 English" or "Block A: Chemistry". */
+const CLASS_PERIOD = /^\s*(period|per\.?|block|mod|hour)\s*[a-h0-9]{1,2}\b|\b(homeroom|free period|study hall)\b/i;
+
+export const isNotSchoolwork = (title: string) => NOT_SCHOOLWORK.test(title) || CLASS_PERIOD.test(title);
 
 export function classify(text: string): ScheduleEvent["kind"] {
   if (TEST.test(text)) return "test";
@@ -206,14 +212,48 @@ export function classify(text: string): ScheduleEvent["kind"] {
   return "other";
 }
 
+/** Distinctive course keywords are enough; generic ones ("chemistry", "calculus") also need "AP" in the text, so honors and regular classes aren't mistaken for AP courses. */
+const GENERIC = /^(calculus|calc|precalculus|precalc|pre calc|statistics|stats|java|biology|bio|chemistry|chem|environmental science|enviro sci|physics 1|physics 2|us history|american history|world history|european history|us government|government and politics|comparative government|comp gov|human geography|human geo|macroeconomics|macro econ|microeconomics|micro econ|psychology|psych|african american studies|latin|art history|music theory|electricity and magnetism|e&m|computer science principles|calculus ab|calculus bc|physics c mechanics|physics c mech|physics c em|physics c e&m)$/;
+
+export function detectSchoolCourse(curriculum: TopicMatcher, text: string, courseHints: string[]) {
+  const t = ` ${text.toLowerCase().replace(/[^a-z0-9&]+/g, " ")} `;
+  const saysAp = /\sap\s|\sapush\s|\sapes\s/.test(t);
+  const honors = /\s(h|hon|honors|cp|reg|regular)\s/.test(t) && !saysAp;
+  let best: { id: string; len: number; pref: boolean } | null = null;
+  for (const c of curriculum.courses) {
+    for (const k of c.keywords) {
+      const kw = k.toLowerCase().replace(/[^a-z0-9&]+/g, " ").trim();
+      if (!kw || !t.includes(` ${kw} `)) continue;
+      if (GENERIC.test(kw) && (!saysAp || honors)) continue;
+      const cand = { id: c.id, len: kw.length, pref: courseHints.includes(c.id) };
+      if (!best || cand.len > best.len || (cand.len === best.len && cand.pref && !best.pref)) best = cand;
+    }
+  }
+  return best?.id ?? null;
+}
+
 /** Course and topics named in the event's own text (never guessed from the student's course list alone). */
 export function matchEvent(curriculum: TopicMatcher, text: string, courseHints: string[]) {
-  const courseId = detectCourse(curriculum, text, courseHints);
+  const courseId = detectSchoolCourse(curriculum, text, courseHints);
   const topics = courseId ? matchTopics(curriculum, text, { courseIds: [courseId], limit: 3 }).filter((m) => m.score >= 0.85) : [];
   return { courseId, topicIds: topics.map((m) => m.topicId) };
 }
 
-export function eventsFromIcs(ics: string, curriculum: TopicMatcher, courseHints: string[], now = Date.now()): ScheduleEvent[] {
+/** Feeds from school systems list only coursework, so everything in them counts (minus sports and holidays). */
+export function isSchoolFeed(ics: string, url?: string | null) {
+  const head = ics.slice(0, 4000);
+  const host = url ? (() => { try { return new URL(url).hostname; } catch { return ""; } })() : "";
+  return (
+    /myschoolapp|blackbaud|instructure|canvas|schoology|veracross|powerschool|brightspace|d2l|moodle|classroom\.google|finalsite|rediker|aspen/i.test(host) ||
+    /PRODID:.*(Blackbaud|myschoolapp|Instructure|Canvas|Schoology|Veracross|PowerSchool|Brightspace|D2L|Moodle)/i.test(head) ||
+    /X-WR-CALNAME:.*(assignments|classes|homework|coursework)/i.test(head)
+  );
+}
+
+export type ParseStats = { read: number; kept: number; upcoming: number };
+
+export function eventsFromIcs(ics: string, curriculum: TopicMatcher, courseHints: string[], now = Date.now(), opts: { url?: string | null; stats?: ParseStats; school?: boolean } = {}): ScheduleEvent[] {
+  const school = opts.school || isSchoolFeed(ics, opts.url);
   const from = now - WINDOW_PAST_DAYS * DAY;
   const to = now + WINDOW_FUTURE_DAYS * DAY;
   const parsed = parseIcs(ics);
@@ -237,12 +277,29 @@ export function eventsFromIcs(ics: string, curriculum: TopicMatcher, courseHints
 
   const out: ScheduleEvent[] = [];
   const seen = new Set<string>();
-  for (const e of raw) {
+  if (opts.stats) opts.stats.read = raw.length;
+  // Titles that repeat on several days with no coursework words are class meetings ("AP Calculus BC - 4").
+  const titleCount = new Map<string, number>();
+  for (const e of raw) titleCount.set(e.summary.toLowerCase(), (titleCount.get(e.summary.toLowerCase()) ?? 0) + 1);
+  for (const e0 of raw) {
+    // Assignment feeds often run from the day it was assigned to the day it's due: use the due date.
+    let e = e0;
+    if (school && e0.end != null && e0.end - e0.start > 20 * 3600000) {
+      const due = e0.allDay ? e0.end - DAY : e0.end;
+      e = { ...e0, start: due, end: null };
+    }
     if (e.start < from || e.start > to) continue;
     const text = `${e.summary}\n${e.description}`;
-    const kind = classify(e.summary) === "other" ? classify(text) : classify(e.summary);
-    // Keep schoolwork only: tests and assignments. Class periods, sports, and holidays are skipped.
-    if (kind === "other" || NOT_SCHOOLWORK.test(e.summary)) continue;
+    let kind = classify(e.summary) === "other" ? classify(text) : classify(e.summary);
+    if (NOT_SCHOOLWORK.test(e.summary) || CLASS_PERIOD.test(e.summary)) continue;
+    // Repeating events are class periods, not coursework, unless they say "quiz" or "test".
+    if (e.uid.includes("#") && kind !== "test") continue;
+    if (kind === "other") {
+      // School systems only list coursework; from a personal calendar, an unlabeled event is skipped.
+      if (!school) continue;
+      if ((titleCount.get(e.summary.toLowerCase()) ?? 0) >= 3 || /\s[-–]\s*\d{1,2}\s*$/.test(e.summary)) continue;
+      kind = "assignment";
+    }
     const key = `${e.summary.toLowerCase()}|${Math.round(e.start / 60000)}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -257,6 +314,10 @@ export function eventsFromIcs(ics: string, curriculum: TopicMatcher, courseHints
       courseId,
       topicIds,
     });
+  }
+  if (opts.stats) {
+    opts.stats.kept = out.length;
+    opts.stats.upcoming = out.filter((e) => new Date(e.start).getTime() >= now - DAY / 2).length;
   }
   return out.sort((a, b) => a.start.localeCompare(b.start)).slice(0, 500);
 }

@@ -99,6 +99,7 @@ test("topic mastery updates course progress", async ({ page }) => {
   await page.goto("/courses/ap-calculus-bc/chain-rule");
   await page.getByRole("button", { name: "I understand this" }).click();
   await expect(page.getByRole("button", { name: "Understood" })).toBeVisible();
+  await page.waitForLoadState("networkidle");
   await page.goto("/courses/ap-calculus-bc");
   await expect(page.locator("p", { hasText: "topics understood" }).first()).toHaveText(/^1 \/ \d+ topics understood/);
 });

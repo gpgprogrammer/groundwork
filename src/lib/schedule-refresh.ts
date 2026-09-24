@@ -16,7 +16,7 @@ export async function refreshStaleSources(viewer: Viewer): Promise<Schedule | nu
   let next = s;
   for (const src of stale.slice(0, 4)) {
     try {
-      const events = buildEvents(await fetchCalendar(src.url!), viewer.state.profile.courseIds).map((e) => ({ ...e, sourceId: src.id }));
+      const events = buildEvents(await fetchCalendar(src.url!), viewer.state.profile.courseIds, { url: src.url }).map((e) => ({ ...e, sourceId: src.id }));
       next = {
         ...next,
         sources: next.sources.map((x) => (x.id === src.id ? { ...x, syncedAt: new Date().toISOString(), count: events.length } : x)),

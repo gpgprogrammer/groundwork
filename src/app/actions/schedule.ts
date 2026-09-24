@@ -4,14 +4,21 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { calendarAccess } from "@/lib/billing/access";
 import { getStore } from "@/lib/data/store";
-import { candidatesFromCsv, candidatesFromPdf, candidatesFromText, candidatesWithAi, type Candidate } from "@/lib/extract-events";
+import { candidatesFromCsv, candidatesFromImages, candidatesFromPdf, candidatesFromText, candidatesWithAi, type Candidate } from "@/lib/extract-events";
 import { buildEvents, fetchCalendar, ScheduleError } from "@/lib/schedule";
+import type { ParseStats } from "@/lib/ics";
 import { normalizeSchedule } from "@/lib/schedule-model";
 import { validTimeZone, zonedToUtc } from "@/lib/tz";
 import type { Schedule, ScheduleEvent, ScheduleSource } from "@/lib/types";
 import { getViewer, type Viewer } from "@/lib/viewer";
 
-export type ScheduleResult = { ok: true; added: number; tests: number; label: string } | { ok: false; error: string };
+export type ScheduleResult = { ok: true; added: number; tests: number; label: string; read?: number; upcoming?: number } | { ok: false; error: string };
+
+/** Explains an import that found nothing to add, instead of silently adding zero. */
+function emptyResult(label: string, stats: ParseStats): ScheduleResult {
+  if (!stats.read) return { ok: false, error: `${label} connected, but the feed had no events in the last two weeks or next six months. In Blackbaud, turn on Assignments and your classes in the calendar filters before copying the feed link.` };
+  return { ok: false, error: `We read ${stats.read} events from ${label}, but none looked like tests or assignments. If this calendar is all schoolwork, check “Everything on this calendar is schoolwork” and connect again.` };
+}
 export type PreviewResult = { ok: true; candidates: Candidate[]; label: string; kind: "document" | "text"; usedAi: boolean } | { ok: false; error: string };
 
 const LOCKED = "Calendar sync comes with Merit Plus or Exam Sprint.";
@@ -65,7 +72,7 @@ const labelFor = (url: URL) =>
                   ? "Outlook"
                   : url.hostname.replace(/^www\./, "");
 
-export async function connectCalendarUrl(rawUrl: string): Promise<ScheduleResult> {
+export async function connectCalendarUrl(rawUrl: string, school = false): Promise<ScheduleResult> {
   const a = await access();
   if ("error" in a) return { ok: false, error: a.error };
   try {
@@ -74,8 +81,11 @@ export async function connectCalendarUrl(rawUrl: string): Promise<ScheduleResult
     if (!/BEGIN:VCALENDAR/.test(ics)) return { ok: false, error: "That link didn't return a calendar. Copy the iCal / feed link, not the page address." };
     const existing = normalizeSchedule(a.viewer.state.schedule)?.sources.find((s) => s.url === url.toString());
     const source: ScheduleSource = { id: existing?.id ?? `src_${randomUUID().slice(0, 8)}`, kind: "ics-url", url: url.toString(), label: labelFor(url), syncedAt: new Date().toISOString(), count: 0 };
-    const added = await saveSource(a.viewer, source, buildEvents(ics, a.viewer.state.profile.courseIds));
-    return { ok: true, added: added.length, tests: added.filter((e) => e.kind === "test").length, label: source.label };
+    const stats: ParseStats = { read: 0, kept: 0, upcoming: 0 };
+    const events = buildEvents(ics, a.viewer.state.profile.courseIds, { url: url.toString(), stats, school });
+    if (!events.length) return emptyResult(source.label, stats);
+    const added = await saveSource(a.viewer, source, events);
+    return { ok: true, added: added.length, tests: added.filter((e) => e.kind === "test").length, label: source.label, read: stats.read, upcoming: stats.upcoming };
   } catch (e) {
     if (e instanceof ScheduleError) return { ok: false, error: e.message };
     if (e instanceof TypeError) return { ok: false, error: "That doesn't look like a calendar link." };
@@ -89,12 +99,15 @@ export async function importIcsFile(form: FormData): Promise<ScheduleResult> {
   if ("error" in a) return { ok: false, error: a.error };
   const file = form.get("file");
   if (!(file instanceof File) || !file.size) return { ok: false, error: "Choose a file." };
-  if (file.size > 3 * 1024 * 1024) return { ok: false, error: "That file is over 3 MB." };
+  if (file.size > 15 * 1024 * 1024) return { ok: false, error: "That file is over 15 MB." };
   const text = await file.text();
   if (!text.includes("BEGIN:VCALENDAR")) return { ok: false, error: "That isn't an iCalendar (.ics) file." };
   const source: ScheduleSource = { id: `src_${randomUUID().slice(0, 8)}`, kind: "ics-file", url: null, label: file.name.replace(/\.ics$/i, "") || "Uploaded calendar", syncedAt: new Date().toISOString(), count: 0 };
-  const added = await saveSource(a.viewer, source, buildEvents(text, a.viewer.state.profile.courseIds));
-  return { ok: true, added: added.length, tests: added.filter((e) => e.kind === "test").length, label: source.label };
+  const stats: ParseStats = { read: 0, kept: 0, upcoming: 0 };
+  const events = buildEvents(text, a.viewer.state.profile.courseIds, { stats, school: form.get("school") === "on" });
+  if (!events.length) return emptyResult(source.label, stats);
+  const added = await saveSource(a.viewer, source, events);
+  return { ok: true, added: added.length, tests: added.filter((e) => e.kind === "test").length, label: source.label, read: stats.read, upcoming: stats.upcoming };
 }
 
 /** Reads a PDF, CSV, or pasted text into a list for the student to review. Nothing is saved yet. */
@@ -102,7 +115,16 @@ export async function previewImport(form: FormData): Promise<PreviewResult> {
   const a = await access();
   if ("error" in a) return { ok: false, error: a.error };
   const hints = a.viewer.state.profile.courseIds;
-  const file = form.get("file");
+  const files = form.getAll("file").filter((f): f is File => f instanceof File && f.size > 0);
+  const images = files.filter((f) => f.type.startsWith("image/") || /\.(png|jpe?g|heic|webp)$/i.test(f.name));
+  if (images.length) {
+    if (images.length > 12 || images.some((f) => f.size > 8 * 1024 * 1024)) return { ok: false, error: "Upload up to 12 screenshots, each under 8 MB." };
+    const found = await candidatesFromImages(await Promise.all(images.map(async (f) => ({ data: new Uint8Array(await f.arrayBuffer()), type: f.type || "image/png" }))), hints);
+    if (found === null) return { ok: false, error: "Reading screenshots needs Merit AI, which isn't switched on yet. Use your calendar's feed link, a .ics file, or copy and paste the list instead." };
+    if (!found.length) return { ok: false, error: "We couldn't read any assignments in those screenshots." };
+    return { ok: true, candidates: found.slice(0, 400), label: "Calendar screenshots", kind: "document", usedAi: true };
+  }
+  const file = files[0] ?? null;
   const pasted = String(form.get("text") ?? "").slice(0, 60000);
   let candidates: Candidate[] = [];
   let text = pasted;
@@ -186,7 +208,7 @@ export async function resyncCalendars(): Promise<ScheduleResult> {
     try {
       const ics = await fetchCalendar(src.url!);
       const viewer = a.viewer;
-      added += (await saveSource(viewer, { ...src, syncedAt: new Date().toISOString() }, buildEvents(ics, viewer.state.profile.courseIds))).length;
+      added += (await saveSource(viewer, { ...src, syncedAt: new Date().toISOString() }, buildEvents(ics, viewer.state.profile.courseIds, { url: src.url }))).length;
     } catch (err) {
       console.warn("[schedule] resync failed for", src.label, err);
     }
