@@ -104,7 +104,9 @@ export async function importIcsFile(form: FormData): Promise<ScheduleResult> {
   if (!(file instanceof File) || !file.size) return { ok: false, error: "Choose a file." };
   if (file.size > 15 * 1024 * 1024) return { ok: false, error: "That file is over 15 MB." };
   const text = await file.text();
+  if (text.startsWith("%PDF")) return { ok: false, error: "That file is actually a PDF (it was saved with an .ics name). Use the “PDF, CSV, or screenshots” tab instead." };
   if (!text.includes("BEGIN:VCALENDAR")) return { ok: false, error: "That isn't an iCalendar (.ics) file." };
+  if (!text.includes("BEGIN:VEVENT")) return { ok: false, error: "That calendar file is empty: it has no events in it. Blackbaud's Export often leaves assignments out. Use your calendar's feed link, or print the month view to PDF and use the “PDF, CSV, or screenshots” tab." };
   const source: ScheduleSource = { id: `src_${randomUUID().slice(0, 8)}`, kind: "ics-file", url: null, label: file.name.replace(/\.ics$/i, "") || "Uploaded calendar", syncedAt: new Date().toISOString(), count: 0 };
   const stats: ParseStats = { read: 0, kept: 0, upcoming: 0 };
   const events = buildEvents(text, a.viewer.state.profile.courseIds, { stats, school: form.get("school") === "on" });

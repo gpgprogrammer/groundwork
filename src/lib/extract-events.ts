@@ -3,7 +3,7 @@ import { contentModel } from "@/lib/ai/model";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 import { aiAvailable } from "@/lib/ai/runtime";
-import { candidatesFromBlocks, candidatesFromText, DAY_HEAD, dedupe, iso, MONTHS, monthIndex, toCandidate, type Candidate } from "@/lib/extract-text";
+import { candidatesFromText, dedupe, iso, MONTHS, monthIndex, toCandidate, type Candidate } from "@/lib/extract-text";
 
 export { candidatesFromCsv, candidatesFromText, type Candidate } from "@/lib/extract-text";
 
@@ -13,70 +13,131 @@ export { candidatesFromCsv, candidatesFromText, type Candidate } from "@/lib/ext
  * student reviews the list, so a misread line never lands on their schedule.
  */
 
-type Item = { str: string; x: number; y: number };
+type Item = { str: string; x: number; y: number; width?: number };
+
+const WEEKDAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+const DAY = 86400000;
+/** Timed entries in a portal's month view are class periods, clubs, and games, not coursework. */
+const TIMED = /^\d{1,2}(:\d{2})?\s*(a|p|am|pm)\b/i;
+const NOT_WORK = /^([AB]( Day| \(TWS\))|[AB] Day \(TWS\))$|^[AB] Day \(|closed$|-close$|^no (school|summatives|quizz|tests|homework)/i;
+const CHROME = /^\d{1,2}\/\d{1,2}\/\d{2,4},|^https?:\/\/|^\d+\/\d+$|current view saved|^student\s*:\s*calendar$/i;
+
+/**
+ * A month view printed from a school portal (Blackbaud and others). The weekday
+ * headers mark the columns; the grid starts on the Sunday before the 1st, so any
+ * day number tells us which week a row is. Works across pages.
+ */
+function monthGrid(pages: Item[][], courseHints: string[], now: Date): Candidate[] | null {
+  const all = pages.flat();
+  const head = all.map((i) => i.str.trim().match(new RegExp(`^(${MONTHS.join("|")})\\s+(20\\d{2})$`, "i"))).find(Boolean);
+  if (!head) return null;
+  const month = monthIndex(head[1]);
+  const year = +head[2];
+  const first = Date.UTC(year, month, 1);
+  const gridStart = first - new Date(first).getUTCDay() * DAY;
+  const found: { day: number; title: string }[] = [];
+  let bounds: number[] | null = null;
+  let carryRow: number | null = null;
+  for (const page of pages) {
+    const items = page.filter((i) => i.str.trim());
+    const heads = items.filter((i) => WEEKDAYS.includes(i.str.trim().toLowerCase().slice(0, 3)) && i.str.trim().length <= 9);
+    if (heads.length >= 5) {
+      const centers = heads.map((h) => h.x + (h.width ?? 0) / 2).sort((x, y) => x - y);
+      bounds = centers.slice(1).map((c, k) => (c + centers[k]) / 2);
+    }
+    if (!bounds) continue;
+    const headerY = heads.length ? Math.min(...heads.map((h) => h.y)) : Infinity;
+    const col = (x: number) => {
+      const k = bounds!.findIndex((b) => x < b);
+      return k < 0 ? bounds!.length : k;
+    };
+    // Week rows on this page, from their day numbers.
+    const rows = new Map<number, number>(); // week index -> y of its day numbers
+    for (const i of items) {
+      if (!/^\d{1,2}$/.test(i.str.trim()) || i.y >= headerY) continue;
+      const v = +i.str.trim();
+      const c = col(i.x + (i.width ?? 0) / 2);
+      for (let r = 0; r < 7; r++) {
+        if (new Date(gridStart + (7 * r + c) * DAY).getUTCDate() === v) {
+          rows.set(r, Math.max(rows.get(r) ?? -Infinity, i.y));
+          break;
+        }
+      }
+    }
+    const ordered = [...rows.entries()].sort((x, y) => y[1] - x[1]); // top of page first
+    // Collect text lines per (row, column).
+    const cells = new Map<string, Item[]>();
+    for (const i of items) {
+      const t = i.str.trim();
+      if (i.y >= headerY || /^\d{1,2}$/.test(t) || CHROME.test(t) || heads.includes(i)) continue;
+      const above = ordered.filter(([, y]) => y > i.y);
+      const r = above.length ? above[above.length - 1][0] : carryRow;
+      if (r === null) continue;
+      const key = `${r}:${col(i.x)}`;
+      cells.set(key, [...(cells.get(key) ?? []), i]);
+    }
+    for (const [key, parts] of cells) {
+      const [r, c] = key.split(":").map(Number);
+      const lines = new Map<number, Item[]>();
+      for (const it of parts) {
+        const k = [...lines.keys()].find((y) => Math.abs(y - it.y) < 3) ?? it.y;
+        lines.set(k, [...(lines.get(k) ?? []), it]);
+      }
+      for (const [, row] of [...lines.entries()].sort((x, y) => y[0] - x[0])) {
+        const title = row.sort((x, y) => x.x - y.x).map((it) => it.str.trim()).join(" ").replace(/\s+/g, " ");
+        if (title.length < 3 || TIMED.test(title) || NOT_WORK.test(title)) continue;
+        found.push({ day: 7 * r + c, title });
+      }
+    }
+    if (ordered.length) carryRow = ordered[ordered.length - 1][0];
+  }
+  if (!found.length) return null;
+  // Printing cuts titles short, and not always at the same place ("BC 3.2 work" vs "BC 3.2 worksheet"):
+  // treat a title that's a prefix of a longer one as the same assignment.
+  const titles = [...new Set(found.map((f) => f.title))].sort((x, y) => y.length - x.length);
+  const canon = new Map<string, string>();
+  for (const t of titles) canon.set(t, titles.find((l) => l.length > t.length && t.length >= 8 && l.startsWith(t)) ?? t);
+  // An assignment is drawn in every day from assigned to due: keep the last day of each run.
+  const byTitle = new Map<string, number[]>();
+  for (const f of found) {
+    const t = canon.get(f.title)!;
+    byTitle.set(t, [...(byTitle.get(t) ?? []), f.day]);
+  }
+  const out: Candidate[] = [];
+  for (const [title, days] of byTitle) {
+    const sorted = [...new Set(days)].sort((x, y) => x - y);
+    sorted.forEach((d, k) => {
+      if (k + 1 < sorted.length && sorted[k + 1] - d <= 1) return;
+      const dt = new Date(gridStart + d * DAY);
+      const c = toCandidate(title, iso(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()), null, courseHints);
+      // Titles are cut short in print, hiding words like "worksheet"; anything tied to one of your classes is coursework.
+      if (c.courseId && c.kind === "other") out.push({ ...c, kind: "assignment", suggested: true });
+      else out.push(c);
+    });
+  }
+  void now;
+  return dedupe(out.sort((x, y) => x.date.localeCompare(y.date)));
+}
 
 /** Rebuilds lines from PDF text positions, and reads month-grid calendars cell by cell. */
 export async function candidatesFromPdf(data: Uint8Array, courseHints: string[], now = new Date()): Promise<{ candidates: Candidate[]; text: string }> {
   const { extractTextItems } = await import("unpdf");
   const { items } = await extractTextItems(data);
-  const out: Candidate[] = [];
+  const pages = items as Item[][];
   const lines: string[] = [];
-  let lastHeading: RegExpMatchArray | null = null;
-  for (const page of items as Item[][]) {
-    const cleaned = page.filter((i) => i.str.trim());
-    // Group into lines by y (top to bottom), then left to right.
+  for (const page of pages) {
     const byY = new Map<number, Item[]>();
-    for (const i of cleaned) {
+    for (const i of page.filter((x) => x.str.trim())) {
       const key = [...byY.keys()].find((y) => Math.abs(y - i.y) < 3) ?? i.y;
       byY.set(key, [...(byY.get(key) ?? []), i]);
     }
-    const pageLines = [...byY.entries()].sort((a, b) => b[0] - a[0]).map(([, row]) => row.sort((a, b) => a.x - b.x).map((i) => i.str.trim()).join("  "));
-    lines.push(...pageLines);
-
-    // Month grid: a "September 2026" heading and day numbers 1..28+ spread across columns.
-    // Later pages of a printed month view repeat no heading; reuse the last one.
-    const heading: RegExpMatchArray | null = pageLines.join(" ").match(new RegExp(`\\b(${MONTHS.join("|")})\\s+(20\\d{2})\\b`, "i")) ?? lastHeading;
-    lastHeading = heading;
-    const dayOf = (i: Item) => {
-      const m = i.str.trim().match(DAY_HEAD);
-      return m && +m[2] >= 1 && +m[2] <= 31 ? +m[2] : null;
-    };
-    const anchors = cleaned.filter((i) => dayOf(i) !== null && i.str.trim().length <= 7);
-    const distinctDays = new Set(anchors.map((a) => dayOf(a)));
-    if (heading && distinctDays.size >= 5) {
-      const month = monthIndex(heading[1]);
-      const year = +heading[2];
-      const colXs = [...new Set(anchors.map((a) => Math.round(a.x / 10) * 10))].sort((a, b) => a - b);
-      const colWidth = colXs.length > 1 ? Math.min(...colXs.slice(1).map((x, k) => x - colXs[k]).filter((d) => d > 20)) : 100;
-      const cellText = new Map<Item, Item[]>();
-      for (const i of cleaned) {
-        if (anchors.includes(i) || heading[0].toLowerCase().includes(i.str.trim().toLowerCase())) continue;
-        // The day cell is the nearest day number above and to the left, within one column.
-        const owner = anchors
-          .filter((a) => a.y >= i.y - 2 && i.x >= a.x - colWidth * 0.15 && i.x < a.x + colWidth * 0.95)
-          .sort((a, b) => a.y - b.y)[0];
-        if (owner) cellText.set(owner, [...(cellText.get(owner) ?? []), i]);
-      }
-      for (const [a, parts] of cellText) {
-        const day = dayOf(a)!;
-        // Grids show trailing days of neighboring months; skip days that don't exist.
-        if (day < 1 || day > new Date(Date.UTC(year, month + 1, 0)).getUTCDate()) continue;
-        // Rebuild the cell's lines top to bottom, then read it like a pasted day.
-        const rows = new Map<number, Item[]>();
-        for (const it of parts) {
-          const key = [...rows.keys()].find((y) => Math.abs(y - it.y) < 3) ?? it.y;
-          rows.set(key, [...(rows.get(key) ?? []), it]);
-        }
-        const cellLines = [...rows.entries()].sort((x, y) => y[0] - x[0]).map(([, r]) => r.sort((x, y) => x.x - y.x).map((it) => it.str.trim()).join(" "));
-        out.push(...(candidatesFromBlocks(cellLines, courseHints, now, iso(year, month, day)) ?? []));
-      }
-    }
+    lines.push(...[...byY.entries()].sort((a, b) => b[0] - a[0]).map(([, row]) => row.sort((a, b) => a.x - b.x).map((i) => i.str.trim()).join("  ")));
   }
   const text = lines.join("\n");
-  const fromLines = candidatesFromText(text, courseHints, now);
-  return { candidates: dedupe(out.length >= fromLines.length ? out : fromLines), text };
+  const grid = monthGrid(pages, courseHints, now);
+  if (grid?.length) return { candidates: grid, text };
+  return { candidates: candidatesFromText(text, courseHints, now), text };
 }
-
 
 const aiSchema = z.object({
   events: z.array(

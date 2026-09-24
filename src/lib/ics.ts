@@ -229,8 +229,26 @@ export function detectSchoolCourse(curriculum: TopicMatcher, text: string, cours
       if (!best || cand.len > best.len || (cand.len === best.len && cand.pref && !best.pref)) best = cand;
     }
   }
-  return best?.id ?? null;
+  if (best) return best.id;
+  // Teachers' shorthand at the start of a title, only for courses the student takes.
+  const lead = t.trim().split(" ")[0];
+  for (const id of courseHints) if (PREFIXES[id]?.includes(lead)) return id;
+  return null;
 }
+
+const PREFIXES: Record<string, string[]> = {
+  "ap-calculus-bc": ["bc"],
+  "ap-calculus-ab": ["ab"],
+  "ap-seminar": ["sem"],
+  "ap-research": ["research"],
+  "ap-world-history": ["world", "apwh", "whap"],
+  "ap-us-history": ["apush", "ush"],
+  "ap-european-history": ["euro"],
+  "ap-statistics": ["stats"],
+  "ap-psychology": ["psych"],
+  "ap-english-language": ["lang"],
+  "ap-english-literature": ["lit"],
+};
 
 /** Course and topics named in the event's own text (never guessed from the student's course list alone). */
 export function matchEvent(curriculum: TopicMatcher, text: string, courseHints: string[]) {
