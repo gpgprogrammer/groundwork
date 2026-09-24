@@ -21,6 +21,7 @@ export async function candidatesFromPdf(data: Uint8Array, courseHints: string[],
   const { items } = await extractTextItems(data);
   const out: Candidate[] = [];
   const lines: string[] = [];
+  let lastHeading: RegExpMatchArray | null = null;
   for (const page of items as Item[][]) {
     const cleaned = page.filter((i) => i.str.trim());
     // Group into lines by y (top to bottom), then left to right.
@@ -33,14 +34,16 @@ export async function candidatesFromPdf(data: Uint8Array, courseHints: string[],
     lines.push(...pageLines);
 
     // Month grid: a "September 2026" heading and day numbers 1..28+ spread across columns.
-    const heading = pageLines.join(" ").match(new RegExp(`\\b(${MONTHS.join("|")})\\s+(20\\d{2})\\b`, "i"));
+    // Later pages of a printed month view repeat no heading; reuse the last one.
+    const heading: RegExpMatchArray | null = pageLines.join(" ").match(new RegExp(`\\b(${MONTHS.join("|")})\\s+(20\\d{2})\\b`, "i")) ?? lastHeading;
+    lastHeading = heading;
     const dayOf = (i: Item) => {
       const m = i.str.trim().match(DAY_HEAD);
       return m && +m[2] >= 1 && +m[2] <= 31 ? +m[2] : null;
     };
     const anchors = cleaned.filter((i) => dayOf(i) !== null && i.str.trim().length <= 7);
     const distinctDays = new Set(anchors.map((a) => dayOf(a)));
-    if (heading && distinctDays.size >= 25) {
+    if (heading && distinctDays.size >= 5) {
       const month = monthIndex(heading[1]);
       const year = +heading[2];
       const colXs = [...new Set(anchors.map((a) => Math.round(a.x / 10) * 10))].sort((a, b) => a - b);

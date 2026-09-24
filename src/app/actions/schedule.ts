@@ -16,6 +16,7 @@ export type ScheduleResult = { ok: true; added: number; tests: number; label: st
 
 /** Explains an import that found nothing to add, instead of silently adding zero. */
 function emptyResult(label: string, stats: ParseStats): ScheduleResult {
+  console.warn("[schedule] import kept nothing", { label, ...stats });
   if (!stats.read) return { ok: false, error: `${label} connected, but the feed had no events in the last two weeks or next six months. In Blackbaud, turn on Assignments and your classes in the calendar filters before copying the feed link.` };
   return { ok: false, error: `We read ${stats.read} events from ${label}, but none looked like tests or assignments. If this calendar is all schoolwork, check “Everything on this calendar is schoolwork” and connect again.` };
 }
@@ -83,10 +84,12 @@ export async function connectCalendarUrl(rawUrl: string, school = false): Promis
     const source: ScheduleSource = { id: existing?.id ?? `src_${randomUUID().slice(0, 8)}`, kind: "ics-url", url: url.toString(), label: labelFor(url), syncedAt: new Date().toISOString(), count: 0 };
     const stats: ParseStats = { read: 0, kept: 0, upcoming: 0 };
     const events = buildEvents(ics, a.viewer.state.profile.courseIds, { url: url.toString(), stats, school });
+    console.info("[schedule] link", { host: url.hostname, bytes: ics.length, school, ...stats, prodid: ics.match(/PRODID:([^\r\n]{0,80})/)?.[1] ?? null });
     if (!events.length) return emptyResult(source.label, stats);
     const added = await saveSource(a.viewer, source, events);
     return { ok: true, added: added.length, tests: added.filter((e) => e.kind === "test").length, label: source.label, read: stats.read, upcoming: stats.upcoming };
   } catch (e) {
+    console.warn("[schedule] link failed", e instanceof Error ? e.message : e);
     if (e instanceof ScheduleError) return { ok: false, error: e.message };
     if (e instanceof TypeError) return { ok: false, error: "That doesn't look like a calendar link." };
     console.error("[schedule] sync failed", e);
@@ -105,6 +108,7 @@ export async function importIcsFile(form: FormData): Promise<ScheduleResult> {
   const source: ScheduleSource = { id: `src_${randomUUID().slice(0, 8)}`, kind: "ics-file", url: null, label: file.name.replace(/\.ics$/i, "") || "Uploaded calendar", syncedAt: new Date().toISOString(), count: 0 };
   const stats: ParseStats = { read: 0, kept: 0, upcoming: 0 };
   const events = buildEvents(text, a.viewer.state.profile.courseIds, { stats, school: form.get("school") === "on" });
+  console.info("[schedule] ics file", { bytes: text.length, ...stats, prodid: text.match(/PRODID:([^\r\n]{0,80})/)?.[1] ?? null });
   if (!events.length) return emptyResult(source.label, stats);
   const added = await saveSource(a.viewer, source, events);
   return { ok: true, added: added.length, tests: added.filter((e) => e.kind === "test").length, label: source.label, read: stats.read, upcoming: stats.upcoming };
@@ -153,6 +157,7 @@ export async function previewImport(form: FormData): Promise<PreviewResult> {
     console.error("[import] read failed", err);
     return { ok: false, error: "We couldn't read that file. Try exporting it again, or paste the text instead." };
   }
+  console.info("[schedule] preview", { kind, file: file ? { type: file.type, bytes: file.size } : null, textChars: text.length, lines: text.split("\n").length, found: candidates.length });
   const ai = await candidatesWithAi(text, hints);
   const usedAi = Boolean(ai && ai.length >= candidates.length * 0.6 && ai.length);
   if (usedAi) candidates = ai!;
