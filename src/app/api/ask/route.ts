@@ -1,9 +1,9 @@
 import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, isStepCount, streamText, toUIMessageStream, type UIMessage } from "ai";
+import { chatModel } from "@/lib/ai/model";
 import { getCatalog } from "@/lib/catalog";
 import { instructions } from "@/lib/ai/context";
 import { aiAvailable, spendMessage } from "@/lib/ai/runtime";
 import { buildTools, lessonCard } from "@/lib/ai/tools";
-import { env } from "@/lib/env";
 import { search } from "@/lib/search";
 import { getViewer } from "@/lib/viewer";
 
@@ -51,8 +51,8 @@ export async function POST(req: Request) {
           type: "text-delta",
           id,
           delta: lessons.length
-            ? `Merit AI's tutor mode is getting switched on. In the meantime, here are the best-ranked lessons for that${topic?.kind === "topic" ? ` ([${topic.topic.title}](/courses/${topic.course.slug}/${topic.topic.slug}))` : ""}:`
-            : "Merit AI's tutor mode is getting switched on. Try searching for a topic at the top of the page, or browse your course outline.",
+            ? `Merit AI can't write explanations right now, so here are the best-ranked lessons for that${topic?.kind === "topic" ? ` ([${topic.topic.title}](/courses/${topic.course.slug}/${topic.topic.slug}))` : ""}:`
+            : "Merit AI can't write explanations right now. Try searching for the topic at the top of the page, or browse your course outline.",
         });
         writer.write({ type: "text-end", id });
         if (lessons.length) {
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
         return;
       }
       const result = streamText({
-        model: env.aiModel,
+        model: chatModel(),
         instructions: instructions(catalog, viewer, body.path),
         messages: await convertToModelMessages(messages),
         tools: buildTools(catalog, viewer),

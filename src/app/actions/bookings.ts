@@ -10,6 +10,7 @@ import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import type { Booking } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
+import { createLead, listLeads, saveLead } from "@/lib/leads";
 
 export type BookingState = { error?: string };
 
@@ -60,6 +61,9 @@ export async function createBooking(_: BookingState, form: FormData): Promise<Bo
     createdAt: new Date().toISOString(),
   };
   await saveBooking(booking);
+  const lead = await createLead({ tutorId: tutor.id, tutorUserId: tutor.userId, studentId: viewer.user.id, studentName: viewer.user.name, studentEmail: viewer.user.email, courseId: booking.courseId });
+  // Booked through Merit, so there's nothing to check in about.
+  if (lead.status === "open") await saveLead({ ...lead, status: "logged" });
   try {
     await store.logReferral({ partnerId: tutor.id, kind: "tutor-booking", userId: viewer.user.id, courseId: booking.courseId });
   } catch (err) {
@@ -111,4 +115,56 @@ export async function saveAvailability(json: string, timezone: string) {
   revalidatePath("/tutor");
   revalidatePath(`/tutors/${tutor.id}`);
   return { ok: true };
+}
+
+/** Student check-in: "Did you end up working with this tutor?" */
+export async function answerCheckIn(leadId: string, had: boolean) {
+  const viewer = await getViewer();
+  if (!viewer) return;
+  const lead = (await listLeads({ studentId: viewer.user.id })).find((l) => l.id === leadId);
+  if (!lead || lead.status !== "open") return;
+  await saveLead({ ...lead, status: had ? "reported" : "dismissed", reportedAt: new Date().toISOString() });
+  revalidatePath("/bookings");
+  revalidatePath("/tutor");
+}
+
+const logSchema = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick the session date."), minutes: z.coerce.number().int().min(15).max(480) });
+
+/** Tutor logs a session held outside Merit with a student Merit referred. The 10% fee is recorded as owed. */
+export async function logLeadSession(leadId: string, _: BookingState, form: FormData): Promise<BookingState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Sign in first." };
+  const lead = (await listLeads()).find((l) => l.id === leadId && l.tutorUserId === viewer.user.id);
+  if (!lead) return { error: "That referral isn't yours." };
+  const parsed = logSchema.safeParse(Object.fromEntries(form));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const tutor = (await (await getStore()).listTutors()).find((t) => t.id === lead.tutorId);
+  if (!tutor) return { error: "Your listing wasn't found." };
+  const meta = await getTutorMeta(tutor.id);
+  const amount = Math.round(((tutor.hourlyRate ?? 0) * parsed.data.minutes) / 60 * 100) / 100;
+  await saveBooking({
+    id: `bk_${randomUUID().slice(0, 12)}`,
+    tutorId: tutor.id,
+    tutorUserId: tutor.userId,
+    studentId: lead.studentId,
+    studentName: lead.studentName,
+    studentEmail: lead.studentEmail,
+    courseId: lead.courseId,
+    startsAt: new Date(`${parsed.data.date}T12:00:00Z`).toISOString(),
+    minutes: parsed.data.minutes,
+    hourlyRate: tutor.hourlyRate ?? 0,
+    amount,
+    fee: Math.round(amount * (meta.commissionRate || TUTOR_COMMISSION) * 100) / 100,
+    message: "Logged by the tutor: session held outside Merit with a student Merit referred.",
+    status: "completed",
+    payment: "direct",
+    paid: true,
+    feeSettled: amount === 0,
+    source: null,
+    createdAt: new Date().toISOString(),
+  });
+  await saveLead({ ...lead, status: "logged" });
+  revalidatePath("/tutor");
+  revalidatePath("/tutor/payouts");
+  return {};
 }

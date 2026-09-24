@@ -16,8 +16,9 @@ const startOfDay = (t: number) => new Date(new Date(t).toDateString()).getTime()
 export type UnitReadiness = { unit: Unit; weight: number; score: number; answered: number; correct: number; confidence: number | null };
 
 /** Units weighted by how much of the course they cover (topic count). */
-export function unitWeights(catalog: IndexedCatalog, courseId: string) {
-  const units = catalog.unitsForCourse(courseId);
+export function unitWeights(catalog: IndexedCatalog, courseId: string, unitIds?: string[]) {
+  const all = catalog.unitsForCourse(courseId);
+  const units = unitIds?.length ? all.filter((u) => unitIds.includes(u.id)) : all;
   const counts = units.map((u) => catalog.topicsForUnit(u.id).length || 1);
   const total = counts.reduce((a, b) => a + b, 0);
   return units.map((u, i) => ({ unit: u, weight: counts[i] / total }));
@@ -40,7 +41,7 @@ export function topicAccuracy(sprint: Sprint) {
 
 export function readiness(catalog: IndexedCatalog, sprint: Sprint): UnitReadiness[] {
   const acc = topicAccuracy(sprint);
-  return unitWeights(catalog, sprint.courseId).map(({ unit, weight }) => {
+  return unitWeights(catalog, sprint.courseId, sprint.unitIds).map(({ unit, weight }) => {
     const topics = catalog.topicsForUnit(unit.id);
     let c = 0;
     let n = 0;
@@ -131,11 +132,14 @@ export function sprintPlan(catalog: IndexedCatalog, sprint: Sprint, now = Date.n
     const t = start + i * DAY;
     const date = dayKey(t);
     const dl = left - i;
-    const phase: SprintDay["phase"] = dl <= 1 ? "final" : dl <= Math.max(3, Math.round(left * 0.15)) ? "review" : "build";
+    // Long runways end with a review phase; short ones (a class test this week) keep learning until the night before.
+    const reviewCut = left >= 10 ? Math.max(3, Math.round(left * 0.15)) : 1;
+    const phase: SprintDay["phase"] = dl <= 1 ? "final" : dl <= reviewCut ? "review" : "build";
+    const what = sprint.kind === "test" ? "Test" : "Exam";
     const tasks: SprintTask[] = [];
 
     if (dl <= 0) {
-      tasks.push({ id: `${date}:rest`, kind: "rest", minutes: 0, why: "Exam day. Eat breakfast, bring your pencils, trust your prep." });
+      tasks.push({ id: `${date}:rest`, kind: "rest", minutes: 0, why: `${what} day. Eat breakfast, trust your prep.` });
     } else if (dl === 1) {
       const weakest = units[0]?.unit;
       if (weakest) tasks.push({ id: `${date}:cram:${weakest.id}`, kind: "cram", unit: weakest, minutes: 15, why: "Skim your weakest unit's cram sheet once. Then stop and sleep." });
@@ -143,7 +147,7 @@ export function sprintPlan(catalog: IndexedCatalog, sprint: Sprint, now = Date.n
     } else if (phase === "review") {
       const u = units[(n - i) % Math.max(1, Math.min(units.length, 4))]?.unit;
       if (u) tasks.push({ id: `${date}:cram:${u.id}`, kind: "cram", unit: u, minutes: 15, why: "Review the one-page summary for a high-weight unit" });
-      tasks.push({ id: `${date}:checkpoint`, kind: "checkpoint", count: 10, minutes: Math.max(15, minutes - 15), why: "Mixed questions across the whole course, like the real exam" });
+      tasks.push({ id: `${date}:checkpoint`, kind: "checkpoint", count: 10, minutes: Math.max(15, minutes - 15), why: sprint.kind === "test" ? "Mixed questions from every unit on the test" : "Mixed questions across the whole course, like the real exam" });
     } else if (i > 0 && i % 7 === 6) {
       tasks.push({ id: `${date}:checkpoint`, kind: "checkpoint", count: 12, minutes: Math.max(20, minutes - 10), why: "Weekly checkpoint: is the plan working?" });
       const u = units[0]?.unit;
@@ -183,12 +187,19 @@ export function sprintPlan(catalog: IndexedCatalog, sprint: Sprint, now = Date.n
 }
 
 /** Topics to draw diagnostic questions from: one per unit (two for big units), spread out. */
-export function diagnosticTopics(catalog: IndexedCatalog, courseId: string, max = 12) {
+export function diagnosticTopics(catalog: IndexedCatalog, courseId: string, max = 12, unitIds?: string[]) {
   const out: Topic[] = [];
-  const units = unitWeights(catalog, courseId).sort((a, b) => b.weight - a.weight);
+  const units = unitWeights(catalog, courseId, unitIds).sort((a, b) => b.weight - a.weight);
+  const scoped = Boolean(unitIds?.length);
   for (const { unit, weight } of units) {
     const ts = catalog.topicsForUnit(unit.id);
     if (!ts.length) continue;
+    if (scoped) {
+      // A class test covers few units: sample more topics from each.
+      const step = Math.max(1, Math.floor(ts.length / 4));
+      for (let k = 0; k < ts.length; k += step) out.push(ts[k]);
+      continue;
+    }
     out.push(ts[Math.floor(ts.length / 2)]);
     if (weight > 0.18 && ts.length > 2) out.push(ts[ts.length - 1]);
   }

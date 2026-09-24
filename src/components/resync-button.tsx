@@ -3,7 +3,7 @@
 import { RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { resyncCalendar } from "@/app/actions/learning";
+import { resyncCalendars } from "@/app/actions/schedule";
 import { cn } from "./ui";
 
 export function ResyncButton() {
@@ -15,7 +15,7 @@ export function ResyncButton() {
       <button
         onClick={() =>
           start(async () => {
-            const r = await resyncCalendar();
+            const r = await resyncCalendars();
             setError(r.ok ? null : r.error);
             router.refresh();
           })
@@ -23,7 +23,7 @@ export function ResyncButton() {
         disabled={pending}
         className="flex h-8 items-center gap-1.5 rounded-full bg-bg-subtle px-3 text-sm font-medium text-ink hover:bg-line"
       >
-        <RefreshCw className={cn("size-4", pending && "animate-spin")} /> {pending ? "Syncing" : "Sync now"}
+        <RefreshCw className={cn("size-4", pending && "animate-spin")} /> {pending ? "Syncing" : "Sync all"}
       </button>
       {error ? <p className="mt-1 max-w-48 text-xs text-[#c2410c]">{error}</p> : null}
     </div>

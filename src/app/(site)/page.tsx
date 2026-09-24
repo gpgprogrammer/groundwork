@@ -13,6 +13,7 @@ import { getViewer } from "@/lib/viewer";
 import { hasPlus } from "@/lib/billing/access";
 import { buildPlan } from "@/lib/plan";
 import { getPlanPrefs } from "@/lib/plan-store";
+import { dueForCheckIn, listLeads } from "@/lib/leads";
 
 const FIRST_ROWS = 12;
 
@@ -42,6 +43,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     const shown = new Set(upcoming.map((r) => r.video.id));
     result.ordered = result.ordered.filter((v) => !shown.has(v.id));
   }
+  const checkIn = viewer && showShelves ? dueForCheckIn(await listLeads({ studentId: viewer.user.id }))[0] : undefined;
   const page = pageOf(catalog, result, 0, FIRST_ROWS + 24);
   const head = page.items.slice(0, FIRST_ROWS);
   const rest = page.items.slice(FIRST_ROWS);
@@ -93,6 +95,15 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             <span className="text-ink-2">Connect your class calendar and Merit plans every night around your next quiz or test.</span>
           </span>
           <span className="hidden shrink-0 font-medium text-accent sm:block">Connect</span>
+        </Link>
+      ) : null}
+
+      {checkIn ? (
+        <Link href="/bookings" className="mt-3 flex items-center gap-4 rounded-xl bg-accent-soft px-4 py-3.5 text-sm text-ink hover:opacity-90">
+          <span className="min-w-0 flex-1">
+            <span className="font-medium">Did you end up working with the tutor you contacted?</span> <span className="text-ink-2">Tell us in one tap.</span>
+          </span>
+          <span className="shrink-0 font-medium text-accent">Answer</span>
         </Link>
       ) : null}
 

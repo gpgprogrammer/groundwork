@@ -27,15 +27,15 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
         {plus.kind === "trial" ? (
           <>
             <p className="mt-3 text-[15px] text-ink">
-              Your free year is active. <span className="font-semibold">{plus.daysLeft} days left</span>, until {fmt(plus.endsAt)}.
+              Your free month is active. <span className="font-semibold">{plus.daysLeft} days left</span>, until {fmt(plus.endsAt)}.
             </p>
-            <p className="mt-1 text-sm text-muted">Nothing is charged unless you choose a plan. Lock one in now and billing starts when your free year ends.</p>
+            <p className="mt-1 text-sm text-muted">Nothing is charged unless you choose a plan. Lock one in now and billing starts when your free month ends.</p>
             <div className="mt-5 flex flex-wrap gap-2">
-              <BuyButton product="plus-year" returnTo="/settings/billing">
-                {usd(PLUS.annual)}/year
-              </BuyButton>
-              <BuyButton product="plus-month" returnTo="/settings/billing" variant="outline">
+              <BuyButton product="plus-month" returnTo="/settings/billing">
                 {usd(PLUS.monthly)}/month
+              </BuyButton>
+              <BuyButton product="plus-year" returnTo="/settings/billing" variant="outline">
+                {usd(PLUS.annual)}/year
               </BuyButton>
             </div>
           </>
@@ -61,13 +61,13 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
           </>
         ) : (
           <>
-            <p className="mt-3 text-[15px] text-ink">Your free year has ended. Your plan, calendar sync, and reminders are paused until you pick a plan.</p>
+            <p className="mt-3 text-[15px] text-ink">Your free month has ended. Your plan, calendar sync, and reminders are paused until you pick a plan.</p>
             <div className="mt-5 flex flex-wrap gap-2">
-              <BuyButton product="plus-year" returnTo="/plan">
-                {usd(PLUS.annual)}/year
-              </BuyButton>
-              <BuyButton product="plus-month" returnTo="/plan" variant="outline">
+              <BuyButton product="plus-month" returnTo="/plan">
                 {usd(PLUS.monthly)}/month
+              </BuyButton>
+              <BuyButton product="plus-year" returnTo="/plan" variant="outline">
+                {usd(PLUS.annual)}/year
               </BuyButton>
             </div>
           </>
@@ -79,15 +79,17 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
           <Target className="size-5 text-[#e0531c]" /> Exam Sprints
         </h2>
         <p className="mt-2 text-[15px] text-ink">
-          {billing.sprintCredits ? `${billing.sprintCredits} unused Sprint${billing.sprintCredits > 1 ? "s" : ""}, ready to start.` : "No unused Sprints."}
+          {billing.sprintPass ? "Unlocked for every class and test, for good. Calendar sync is included." : "Not unlocked yet. One purchase unlocks Exam Sprint for every class and test, plus calendar sync."}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Link href="/sprint" className="inline-flex h-10 items-center gap-1.5 rounded-full bg-gradient-to-r from-[#ff8a3d] to-[#e0531c] px-4 text-sm font-semibold text-white">
             Open Exam Sprint <ArrowRight className="size-4" />
           </Link>
-          <BuyButton product="sprint" returnTo="/settings/billing" variant="outline" className="h-10">
-            Buy another · {usd(SPRINT.price)}
-          </BuyButton>
+          {!billing.sprintPass ? (
+            <BuyButton product="sprint" returnTo="/settings/billing" variant="outline" className="h-10">
+              Unlock · {usd(SPRINT.price)} once
+            </BuyButton>
+          ) : null}
         </div>
       </section>
 

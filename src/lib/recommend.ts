@@ -1,3 +1,4 @@
+import { visibleEvents } from "@/lib/schedule-model";
 import type { IndexedCatalog, RankedVideo } from "@/lib/catalog";
 import type { HistoryEntry, ScheduleEvent, Topic, UserState } from "@/lib/types";
 
@@ -34,7 +35,7 @@ const DAY = 86400000;
 
 export function upcomingEvents(state: UserState, days = 21, now = Date.now()): ScheduleEvent[] {
   if (!state.schedule) return [];
-  return state.schedule.events.filter((e) => {
+  return visibleEvents(state.schedule).filter((e) => {
     const t = new Date(e.start).getTime();
     return t >= now - DAY / 2 && t <= now + days * DAY && (e.topicIds.length || e.courseId);
   });

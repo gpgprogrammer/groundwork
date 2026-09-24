@@ -24,7 +24,7 @@ export const env = {
 export const isSupabaseEnabled = Boolean(env.supabaseUrl && env.supabaseAnonKey);
 export const isStripeEnabled = Boolean(env.stripeSecretKey);
 /** On Vercel, the AI Gateway authenticates with the deployment's OIDC token. */
-export const isAiConfigured = Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL);
+export const isAiConfigured = Boolean(process.env.ANTHROPIC_API_KEY || process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL);
 /** Google and Apple sign-in run through Supabase Auth; enable the providers there too. */
 export const oauthProviders = isSupabaseEnabled
   ? (process.env.NEXT_PUBLIC_OAUTH_PROVIDERS ?? "google,apple").split(",").map((p) => p.trim()).filter((p): p is "google" | "apple" => p === "google" || p === "apple")

@@ -1,4 +1,4 @@
-import { ArrowLeft, Clock, ExternalLink, MapPin, MonitorSmartphone } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, MonitorSmartphone } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -152,11 +152,6 @@ export default async function TutorPage({ params, searchParams }: PageProps<"/tu
                     />
                   </div>
                 </details>
-                {tutor.bookingUrl ? (
-                  <a href={`/r/tutor/${tutor.id}`} target="_blank" rel="noopener" className="flex items-center justify-center gap-1.5 text-[13px] text-muted hover:text-ink">
-                    Or use {tutor.name.split(" ")[0]}&apos;s own scheduling page <ExternalLink className="size-3.5" />
-                  </a>
-                ) : null}
               </div>
             )}
             <div className="mt-6">

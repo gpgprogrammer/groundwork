@@ -1,4 +1,5 @@
 import "server-only";
+import { normalizeSchedule } from "@/lib/schedule-model";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -139,7 +140,7 @@ export function createLocalStore(): Store {
         saves: s.saves[userId] ?? {},
         votes: s.votes[userId] ?? {},
         mastered: s.mastered[userId] ?? {},
-        schedule: s.schedules[userId] ?? null,
+        schedule: normalizeSchedule(s.schedules[userId] ?? null),
       } satisfies UserState);
     },
 

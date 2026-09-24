@@ -80,12 +80,11 @@ export function TutorForm({ existing, defaultName, courses, agreed }: Props) {
           </Field>
         </div>
         <div className="grid gap-4 sm:grid-cols-[180px_1fr]">
+          <input type="hidden" name="bookingUrl" value="" />
           <Field label="Rate (USD / hour)" hint="Blank = free">
             <input name="hourlyRate" type="number" min={0} max={1000} defaultValue={e?.hourlyRate ?? ""} className={inputClass} />
           </Field>
-          <Field label="Booking link" hint="Optional, e.g. Calendly">
-            <input name="bookingUrl" type="url" defaultValue={e?.bookingUrl ?? ""} placeholder="https://calendly.com/you" className={inputClass} />
-          </Field>
+
         </div>
       </section>
 
@@ -95,7 +94,7 @@ export function TutorForm({ existing, defaultName, courses, agreed }: Props) {
           <ul className="mt-3 list-disc space-y-1.5 pl-5 text-[14px] leading-relaxed text-ink-2">
             <li>Listing is free. Merit earns a 10% referral fee on sessions students book with you through Merit.</li>
             <li>If students pay through Merit, the fee is deducted automatically and the rest is paid out to you. If they pay you directly, Merit bills the 10% after the session.</li>
-            <li>The fee applies to students who first found you on Merit, for sessions booked here.</li>
+            <li>The fee applies to every session with a student Merit referred to you (anyone who booked or messaged you through Merit) for 12 months, whether they book here or with you directly. Log sessions held outside Merit from your dashboard.</li>
             <li>Keep your profile honest. Reviews come from real Merit students and can&apos;t be edited or bought.</li>
           </ul>
           <label className="mt-4 flex items-start gap-3 text-[14px] font-medium text-ink">

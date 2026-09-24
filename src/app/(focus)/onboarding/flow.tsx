@@ -143,14 +143,17 @@ export function OnboardingFlow({ firstName, initial, courses, focus, next }: Pro
 
           {step === 2 ? (
             <>
-              <h1 className="text-[28px] font-bold tracking-tight text-ink">Sync your schedule</h1>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-1 text-[12px] font-semibold text-accent">
+                Merit Plus or Exam Sprint · included in your free month
+              </span>
+              <h1 className="mt-3 text-[28px] font-bold tracking-tight text-ink">Sync your schedule</h1>
               <p className="mt-2 text-[15px] text-muted">
-                Connect the calendar your class uses. When a quiz or test is coming, your feed will show the videos for those topics first.
+                Connect the calendars your classes use (Blackbaud, Canvas, Schoology, Google, or a PDF). When a quiz or test is coming, Merit lines up the right lessons and a Sprint for it. Calendar sync is part of Merit Plus and Exam Sprint; your first month of Plus is free. You can skip this and do it later.
               </p>
               <div className="mt-6 grid grid-cols-2 gap-3">
                 {(
                   [
-                    ["calendar", "Connect a calendar", "Google, Canvas, Schoology, Apple, Outlook", CalendarDays],
+                    ["calendar", "Connect a calendar", "Blackbaud, Canvas, Schoology, Google, PDF", CalendarDays],
                     ["topics", "Pick topics instead", "Choose what you're covering in class now", ListChecks],
                   ] as const
                 ).map(([k, title, note, Icon]) => (

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { getTutorMeta, saveTutorMeta } from "@/lib/bookings";
+import { createLead } from "@/lib/leads";
 import type { Location, TutoringRequest } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
 
@@ -139,6 +140,7 @@ export async function requestSession(_: FormState, form: FormData): Promise<Form
   if (viewer?.user.id === tutor.userId) return { error: "You can't request a session with yourself." };
   await store.createTutoringRequest({ ...parsed.data, userId: viewer?.user.id ?? null });
   await store.logReferral({ partnerId: tutor.id, kind: "tutor-request", userId: viewer?.user.id ?? null, courseId: parsed.data.courseId });
+  await createLead({ tutorId: tutor.id, tutorUserId: tutor.userId, studentId: viewer?.user.id ?? null, studentName: parsed.data.name, studentEmail: parsed.data.email, courseId: parsed.data.courseId });
   return { ok: true };
 }
 

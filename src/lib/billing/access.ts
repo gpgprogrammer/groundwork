@@ -8,13 +8,15 @@ export const emptyBilling = (userId: string): Billing => ({
   userId,
   stripeCustomerId: null,
   plus: { status: "none", interval: null, currentPeriodEnd: null, cancelAtPeriodEnd: false, source: null, stripeSubscriptionId: null },
+  sprintPass: false,
   sprintCredits: 0,
   purchases: [],
 });
 
 export async function getBilling(userId: string): Promise<Billing> {
   const store = await getStore();
-  return (await store.getDoc<Billing>("billing", userId)) ?? emptyBilling(userId);
+  const b = await store.getDoc<Billing>("billing", userId);
+  return b ? { ...emptyBilling(userId), ...b, sprintPass: Boolean(b.sprintPass || b.sprintCredits > 0) } : emptyBilling(userId);
 }
 
 export async function saveBilling(b: Billing) {
@@ -40,11 +42,14 @@ export function plusAccess(profile: Profile | null, billing: Billing | null, now
 
 export const hasPlus = (a: PlusAccess) => a.kind === "trial" || a.kind === "active";
 
+/** Calendar sync comes with Plus or with the Exam Sprint pass. */
+export const calendarAccess = (v: { plus: PlusAccess; billing: Billing }) => hasPlus(v.plus) || v.billing.sprintPass;
+
 /** Grants a product to a user (after Stripe confirms payment, in test mode, or from a gift). */
 export async function grant(userId: string, product: "plus-month" | "plus-year" | "sprint", source: PaymentSource, amount: number, note?: string) {
   const b = await getBilling(userId);
   if (product === "sprint") {
-    b.sprintCredits += 1;
+    b.sprintPass = true;
   } else if (source !== "stripe") {
     // Stripe subscriptions are synced from webhooks; this covers gifts and test mode.
     const base = Math.max(Date.now(), b.plus.currentPeriodEnd ? new Date(b.plus.currentPeriodEnd).getTime() : 0);

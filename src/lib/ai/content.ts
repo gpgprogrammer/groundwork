@@ -1,10 +1,10 @@
 import "server-only";
+import { contentModel } from "@/lib/ai/model";
 import { randomUUID } from "node:crypto";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
-import { env } from "@/lib/env";
 import type { Question } from "@/lib/types";
 import { aiAvailable } from "./runtime";
 
@@ -51,7 +51,7 @@ export async function questionsForTopic(topicId: string, need = 6): Promise<Ques
     const { topic, unit, course } = await describeTopic(topicId);
     const existing = bank?.questions ?? [];
     const { output } = await generateText({
-      model: env.aiContentModel,
+      model: contentModel(),
       maxOutputTokens: 6000,
       output: Output.object({ schema: questionSchema }),
       instructions:
@@ -109,7 +109,7 @@ export async function cramSheet(unitId: string) {
   const course = catalog.course(unit.courseId)!;
   const topics = catalog.topicsForUnit(unit.id);
   const { text } = await generateText({
-    model: env.aiContentModel,
+    model: contentModel(),
     maxOutputTokens: 2500,
     instructions:
       "You write one-page cram sheets for AP and SAT students the week before the exam. Dense, accurate, scannable. Markdown with ### headings and bullet lists only. No tables, no LaTeX; use Unicode for math.",
@@ -135,7 +135,7 @@ export async function frqPrompt(unitId: string) {
   if (!unit) return null;
   const course = catalog.course(unit.courseId)!;
   const { text } = await generateText({
-    model: env.aiContentModel,
+    model: contentModel(),
     maxOutputTokens: 900,
     instructions: "You write realistic free-response practice prompts for AP and SAT students. Output only the prompt: any setup, data, or source excerpt, then clearly lettered parts. Plain text; Unicode for math.",
     prompt: `Write one ${course.exam === "SAT" ? "short constructed-response practice question" : `AP ${course.title.replace(/^AP /, "")}-style free-response question`} on ${course.title}, Unit ${unit.order}: ${unit.title}. Topics to draw from: ${catalog
@@ -159,7 +159,7 @@ export async function gradeFrq(unitId: string, prompt: string, answer: string) {
   if (!unit) return null;
   const course = catalog.course(unit.courseId)!;
   const { output } = await generateText({
-    model: env.aiContentModel,
+    model: contentModel(),
     maxOutputTokens: 2500,
     output: Output.object({ schema: gradeSchema }),
     instructions: `You are an experienced ${course.title} exam reader. Score the student's answer against a rubric like the real exam's (one point per required element per part), then coach them. Be encouraging and specific. Use Unicode for math.`,

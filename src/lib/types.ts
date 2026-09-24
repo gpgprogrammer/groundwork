@@ -116,15 +116,26 @@ export type ScheduleEvent = {
   kind: "test" | "assignment" | "class" | "other";
   courseId: string | null;
   topicIds: string[];
+  /** Which connected calendar or import this came from. */
+  sourceId?: string;
 };
 
-export type Schedule = {
-  source: "ics-url" | "ics-file";
-  /** Calendar feed URL (kept private to the owner). Null for uploaded files. */
+export type ScheduleSource = {
+  id: string;
+  kind: "ics-url" | "ics-file" | "document" | "text";
+  /** Calendar feed URL (kept private to the owner). Null for uploads. */
   url: string | null;
   label: string;
   syncedAt: string;
+  count: number;
+};
+
+export type Schedule = {
+  sources: ScheduleSource[];
   events: ScheduleEvent[];
+  /** Events the student removed. */
+  hidden: string[];
+  syncedAt: string;
 };
 
 export type Role = "student" | "tutor";
@@ -222,7 +233,9 @@ export type Billing = {
     source: PaymentSource | null;
     stripeSubscriptionId: string | null;
   };
-  /** Exam Sprints paid for but not yet started. */
+  /** Exam Sprint, bought once: unlocks every sprint, for every class and test, permanently (and calendar sync). */
+  sprintPass: boolean;
+  /** Legacy per-sprint credits from before the pass. */
   sprintCredits: number;
   purchases: { id: string; product: "plus-month" | "plus-year" | "sprint"; amount: number; at: string; source: PaymentSource; note?: string }[];
 };
@@ -267,6 +280,13 @@ export type Sprint = {
   id: string;
   userId: string;
   courseId: string;
+  /** "exam": the full AP/SAT exam. "test": a class test or quiz from the student's calendar. */
+  kind?: "exam" | "test";
+  /** For class tests: the event title, e.g. "Unit 3 Test". */
+  title?: string;
+  /** For class tests: the units it covers. Empty means the whole course. */
+  unitIds?: string[];
+  eventUid?: string;
   examDate: string; // YYYY-MM-DD
   minutesPerDay: number;
   createdAt: string;
@@ -343,4 +363,19 @@ export type Booking = {
   feeSettled: boolean;
   source: PaymentSource | null;
   createdAt: string;
+};
+
+/** A student Merit referred to a tutor who might book off-platform. Fees apply for 12 months. */
+export type Lead = {
+  id: string;
+  tutorId: string;
+  tutorUserId: string;
+  studentId: string | null;
+  studentName: string;
+  studentEmail: string;
+  courseId: string | null;
+  createdAt: string;
+  /** open: contacted. reported: the student says they had a session. logged: the tutor logged it. dismissed: no session. */
+  status: "open" | "reported" | "logged" | "dismissed";
+  reportedAt: string | null;
 };

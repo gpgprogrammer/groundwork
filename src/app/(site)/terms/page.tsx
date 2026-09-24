@@ -24,7 +24,7 @@ export default function TermsPage() {
           <strong className="text-ink">Merit Plus</strong> ({usd(PLUS.monthly)}/month or {usd(PLUS.annual)}/year) includes the study plan, calendar sync, reminders, and progress tracking. New accounts get Plus free for their first {PLUS.trialDays === 365 ? "year" : `${PLUS.trialDays} days`}, without a card. Paid plans renew automatically until canceled; you can cancel anytime in Settings and keep Plus until the end of the period you paid for.
         </p>
         <p>
-          <strong className="text-ink">Exam Sprint</strong> ({usd(SPRINT.price)} one-time) unlocks a sprint for one exam until that exam date. It is not a subscription.
+          <strong className="text-ink">Exam Sprint</strong> ({usd(SPRINT.price)} one-time) permanently unlocks Exam Sprint for every class, test, and AP or SAT exam on your account, and includes calendar sync. It is not a subscription.
         </p>
         <p>Purchases can be made by a parent or other adult for a student; they unlock when the student signs in with the email given at checkout. Payments are processed by Stripe. Prices may change for future purchases; we will tell you before any change affects a renewal.</p>
       </Clause>
@@ -33,7 +33,7 @@ export default function TermsPage() {
       </Clause>
       <Clause title="Tutors and tutoring services">
         <p>
-          Tutors on Merit are independent. They set their own rates, hours, and terms, and are responsible for their sessions. &quot;Merit Verified&quot; means our team reviewed the profile; it is not a background check or a guarantee. Merit earns a {Math.round(TUTOR_COMMISSION * 100)}% referral fee on sessions booked with tutors through Merit, and may earn referral fees from partner tutoring services. Fees never affect how tutors or services are ranked.
+          Tutors on Merit are independent. They set their own rates, hours, and terms, and are responsible for their sessions. &quot;Merit Verified&quot; means our team reviewed the profile; it is not a background check or a guarantee. Merit earns a {Math.round(TUTOR_COMMISSION * 100)}% referral fee on sessions with students Merit referred to a tutor, for 12 months after the referral, whether the session is booked on Merit or directly with the tutor. Merit may also earn referral fees from partner tutoring services. Students may be asked to confirm whether they worked with a tutor. Fees never affect how tutors or services are ranked.
         </p>
         <p>When you pay a tutor through Merit, the payment is processed by Stripe and paid out to the tutor after Merit&apos;s fee. Links to outside services take you to sites whose own terms apply.</p>
       </Clause>

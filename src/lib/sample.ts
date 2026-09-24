@@ -40,6 +40,6 @@ export function sampleState(catalog: IndexedCatalog, now = Date.now()): UserStat
     saves: {},
     votes: {},
     mastered: {},
-    schedule: { source: "ics-url", url: null, label: "Sample calendar", syncedAt: new Date(now).toISOString(), events },
+    schedule: { sources: [{ id: "sample", kind: "ics-url", url: null, label: "Sample calendar", syncedAt: new Date(now).toISOString(), count: events.length }], events, hidden: [], syncedAt: new Date(now).toISOString() },
   };
 }

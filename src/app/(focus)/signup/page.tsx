@@ -19,7 +19,7 @@ export default async function SignUpPage({ searchParams }: PageProps<"/signup">)
         <div className="p-8 sm:p-10">
           <LogoMark className="size-10" />
           <h1 className="mt-5 text-[26px] font-bold tracking-tight text-ink">Know what to study tonight.</h1>
-          <p className="mt-1 text-[15px] text-muted">Free account. Merit Plus free for your first year. No card.</p>
+          <p className="mt-1 text-[15px] text-muted">Free account. Merit Plus free for your first month. No card.</p>
           <div className="mt-8">
             <OAuthButtons next={next} />
             <SignUpForm next={next} />

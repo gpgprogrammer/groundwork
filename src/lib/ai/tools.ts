@@ -1,4 +1,5 @@
 import "server-only";
+import { visibleEvents } from "@/lib/schedule-model";
 import { tool } from "ai";
 import { z } from "zod";
 import { hasPlus } from "@/lib/billing/access";
@@ -126,7 +127,7 @@ export function buildTools(catalog: IndexedCatalog, viewer: Viewer | null) {
       description: "The student's own study plan for tonight (Merit Plus). Use when they ask what to study, what's next, or how to prepare for an upcoming test.",
       inputSchema: z.object({}),
       execute: async () => {
-        if (!viewer) return { available: false as const, reason: "Not signed in. Signing up gives a free year of Merit Plus, which includes the plan." };
+        if (!viewer) return { available: false as const, reason: "Not signed in. Signing up gives a free month of Merit Plus, which includes the plan." };
         if (!hasPlus(viewer.plus)) return { available: false as const, reason: "The study plan is part of Merit Plus." };
         const prefs = await getPlanPrefs(viewer.user.id);
         const [today, tomorrow] = buildPlan(catalog, viewer.state, prefs, 2);
@@ -135,7 +136,7 @@ export function buildTools(catalog: IndexedCatalog, viewer: Viewer | null) {
           available: true as const,
           tonight: fmt(today),
           tomorrow: fmt(tomorrow),
-          upcomingTests: (viewer.state.schedule?.events ?? [])
+          upcomingTests: visibleEvents(viewer.state.schedule)
             .filter((e) => e.kind === "test" && new Date(e.start).getTime() > Date.now())
             .slice(0, 5)
             .map((e) => ({ title: e.title, date: e.start.slice(0, 10) })),

@@ -26,10 +26,10 @@ async function signUpAndOnboard(page: Page, opts: { calendar?: boolean } = {}) {
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByRole("heading", { name: "Sync your schedule" })).toBeVisible();
   if (opts.calendar) {
-    await page.getByRole("button", { name: "Upload .ics file" }).click();
+    await page.getByRole("button", { name: "Upload .ics" }).click();
     await page.locator('input[type=file]').setInputFiles({ name: "school.ics", mimeType: "text/calendar", buffer: Buffer.from(ICS) });
     await page.getByRole("button", { name: "Import" }).click();
-    await expect(page.getByText(/Synced\. Found 1 school events/)).toBeVisible();
+    await expect(page.getByText(/Added 1 test or assignment/)).toBeVisible();
     await page.getByRole("button", { name: "Go to my feed" }).click();
   } else {
     await page.getByRole("button", { name: "Skip", exact: true }).click();
@@ -204,7 +204,7 @@ test("pricing shows the three offers and a test-mode Sprint purchase unlocks the
   await expect(page.getByText(/Exam Sprint is ready/)).toBeVisible();
   await expect(page.getByRole("button", { name: /Unlock for/ })).toHaveCount(0);
   await page.goto("/settings/billing");
-  await expect(page.getByText(/Your free year is active/)).toBeVisible();
+  await expect(page.getByText(/Your free month is active/)).toBeVisible();
 });
 
 test("a new account has Plus: tonight's plan, progress, and a reminders feed", async ({ page }) => {
@@ -222,7 +222,7 @@ test("a new account has Plus: tonight's plan, progress, and a reminders feed", a
 test("signed-out visitors see a sample week on My schedule, then the offer", async ({ page }) => {
   await page.goto("/schedule");
   await expect(page.getByText("Sample week")).toBeVisible();
-  await expect(page.getByText(/Calendar sync is part of Merit Plus/)).toBeVisible();
+  await expect(page.getByText(/Calendar sync comes with Merit Plus or Exam Sprint/)).toBeVisible();
 });
 
 test("Merit AI answers with lessons (fallback mode without a model key)", async ({ page }) => {
@@ -288,4 +288,48 @@ test("a student books a tutor's open hour; the tutor confirms and Merit's 10% fe
   await expect(tutor.getByRole("button", { name: "Pay $6" })).toBeVisible();
   await tutor.close();
   await student.close();
+});
+
+test("pasted assignments are reviewed before they're added, and a calendar test gets its own Sprint", async ({ page }) => {
+  await signUpAndOnboard(page);
+  await page.goto("/schedule");
+  await page.getByRole("button", { name: "Paste text" }).click();
+  const soon = new Date(Date.now() + 5 * 86400000);
+  const md = `${soon.getMonth() + 1}/${soon.getDate()}`;
+  await page.locator('textarea[name="text"]').fill(`${md}  AP Calc BC Unit 2 Test\n${md}  Soccer practice`);
+  await page.getByRole("button", { name: "Find the dates" }).click();
+  await expect(page.getByText("We found 2 dated items")).toBeVisible();
+  // Only the test is pre-checked.
+  await expect(page.getByRole("button", { name: "Add 1 to my schedule" })).toBeVisible();
+  await page.getByRole("button", { name: "Add 1 to my schedule" }).click();
+  await expect(page.getByText("AP Calc BC Unit 2 Test").first()).toBeVisible();
+  await expect(page.getByText("Soccer practice")).toHaveCount(0);
+  await page.getByRole("link", { name: "Sprint for this test" }).first().click();
+  await page.waitForURL(/\/sprint\/new\?event=/);
+  await expect(page.locator('input[name="title"]')).toHaveValue("AP Calc BC Unit 2 Test");
+  await page.getByLabel(/Unit 2/).first().check();
+  await page.getByRole("button", { name: /Start the free diagnostic/ }).click();
+  await page.waitForURL(/\/sprint\/spr_[^/]+\/diagnostic/);
+});
+
+test("calendar parsing drops canceled and removed occurrences and keeps only schoolwork", async ({ page }) => {
+  await signUpAndOnboard(page);
+  const d = (n: number) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10).replace(/-/g, "");
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "BEGIN:VEVENT", "UID:quiz-weekly", `DTSTART;VALUE=DATE:${d(2)}`, "RRULE:FREQ=WEEKLY;COUNT=3", `EXDATE;VALUE=DATE:${d(9)}`, "SUMMARY:AP Bio Vocab Quiz", "END:VEVENT",
+    "BEGIN:VEVENT", "UID:cancel", `DTSTART;VALUE=DATE:${d(3)}`, "STATUS:CANCELLED", "SUMMARY:AP Chem Test", "END:VEVENT",
+    "BEGIN:VEVENT", "UID:class", `DTSTART;VALUE=DATE:${d(1)}`, "RRULE:FREQ=DAILY;COUNT=5", "SUMMARY:Period 3 English", "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+  await page.goto("/schedule");
+  await page.getByRole("button", { name: "Upload .ics" }).click();
+  await page.locator('input[type=file]').setInputFiles({ name: "school.ics", mimeType: "text/calendar", buffer: Buffer.from(ics) });
+  await page.getByRole("button", { name: "Import" }).click();
+  await expect(page.getByText(/Added 2 tests and assignments/)).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("AP Bio Vocab Quiz")).toHaveCount(2);
+  await expect(page.getByText("AP Chem Test")).toHaveCount(0);
+  await expect(page.getByText("Period 3 English")).toHaveCount(0);
 });

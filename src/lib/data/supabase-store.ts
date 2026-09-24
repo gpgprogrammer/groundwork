@@ -1,4 +1,5 @@
 import "server-only";
+import { normalizeSchedule } from "@/lib/schedule-model";
 import { createAdminClient, createSessionClient } from "@/lib/supabase/server";
 import type { Profile, SiteStats, Tutor, TutoringRequest, TutorReview } from "@/lib/types";
 import type { Store } from "./store";
@@ -86,7 +87,8 @@ export function createSupabaseStore(): Store {
     },
 
     async getUserState(userId) {
-      const db = await createSessionClient();
+      // Admin client: callers pass an id the server already authorized, and the reminders feed runs without a session.
+      const db = createAdminClient();
       const [profile, history, saves, votes, mastered, schedule] = await Promise.all([
         db.from("profiles").select("*").eq("id", userId).maybeSingle(),
         db.from("history").select("*").eq("user_id", userId),
@@ -103,7 +105,7 @@ export function createSupabaseStore(): Store {
         saves: Object.fromEntries(must(saves).map((r: any) => [r.video_id, r.created_at])),
         votes: Object.fromEntries(must(votes).map((r: any) => [r.video_id, r.value])),
         mastered: Object.fromEntries(must(mastered).map((r: any) => [r.topic_id, r.created_at])),
-        schedule: (must(schedule) as any)?.data ?? null,
+        schedule: normalizeSchedule((must(schedule) as any)?.data ?? null),
       };
     },
 

@@ -13,7 +13,7 @@ import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: `Merit is free to learn. Plus is ${usd(PLUS.monthly)}/month after a free first year. Exam Sprint is ${usd(SPRINT.price)} once.`,
+  description: `Merit is free to learn. Plus is ${usd(PLUS.monthly)}/month after a free first month. Exam Sprint is ${usd(SPRINT.price)} once.`,
 };
 
 export default async function PricingPage({ searchParams }: PageProps<"/pricing">) {
@@ -24,7 +24,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
   const plusCta =
     plus.kind === "anonymous" ? (
       <Link href="/signup?next=/plan" className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold text-[#0f172a] hover:bg-white/90">
-        Start your free year <ArrowRight className="size-4" />
+        Start your free month <ArrowRight className="size-4" />
       </Link>
     ) : plus.kind === "active" ? (
       <Link href="/plan" className="flex h-12 w-full items-center justify-center rounded-full bg-white text-[15px] font-semibold text-[#0f172a] hover:bg-white/90">
@@ -45,7 +45,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
             <BuyButton product={period === "year" ? "plus-year" : "plus-month"} returnTo="/plan" variant="light" className="h-12 w-full text-[15px]">
               {plus.kind === "trial" ? `Lock in ${usd(period === "year" ? PLUS.annual : PLUS.monthly)}/${period}` : `Get Plus for ${usd(period === "year" ? PLUS.annual : PLUS.monthly)}/${period}`}
             </BuyButton>
-            {trialEnds ? <p className="text-center text-[12px] text-white/70">Your free year runs until {trialEnds}. You won&apos;t be charged before then.</p> : null}
+            {trialEnds ? <p className="text-center text-[12px] text-white/70">Your free month runs until {trialEnds}. You won&apos;t be charged before then.</p> : null}
           </div>
         )}
       </div>
@@ -96,7 +96,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
             <h2 className="flex items-center gap-2 text-lg font-bold">
               <Sparkles className="size-5" /> {PLUS.name}
             </h2>
-            <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide">First year free</span>
+            <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide">First month free</span>
           </div>
           <div className="relative mt-4">
             <BillingToggle savings={annualSavings} annual={priceBlock("year")} monthly={priceBlock("month")} />
@@ -131,9 +131,9 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
           </div>
           <p className="mt-4 flex items-baseline gap-1.5">
             <span className="text-5xl font-extrabold tracking-tight text-ink">{usd(SPRINT.price)}</span>
-            <span className="text-muted">per exam</span>
+            <span className="text-muted">once</span>
           </p>
-          <p className="mt-1 text-[13px] text-muted">Pay once. Yours until exam day. The diagnostic is free.</p>
+          <p className="mt-1 text-[13px] text-muted">Pay once. Every class and every test, forever. Includes calendar sync.</p>
           <ul className="mt-6 flex-1 space-y-3 text-[14.5px] text-ink-2">
             {SPRINT.features.map((f) => (
               <li key={f.title} className="flex gap-2.5">
@@ -198,8 +198,8 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
         <Faq
           items={[
             ["Is Merit really free?", "Yes. Every course, every lesson, tutor search, and the AI study partner (with a daily limit) are free forever. You only pay for planning and exam prep tools."],
-            ["What does the free year of Plus mean?", `Every new account gets Merit Plus free for ${PLUS.trialDays === 365 ? "a full year" : `${PLUS.trialDays} days`}. No card needed. After that, Plus is ${usd(PLUS.monthly)}/month or ${usd(PLUS.annual)}/year, and everything free stays free.`],
-            ["Is Exam Sprint a subscription?", `No. You pay ${usd(SPRINT.price)} once for one exam, and it's yours until exam day. The diagnostic and your readiness report are free, so you can see what you'd get first.`],
+            ["What does the free month of Plus mean?", `Every new account gets Merit Plus free for ${PLUS.trialDays === 30 ? "a full month" : `${PLUS.trialDays} days`}. No card needed. After that, Plus is ${usd(PLUS.monthly)}/month or ${usd(PLUS.annual)}/year, and everything free stays free.`],
+            ["Is Exam Sprint a subscription?", `No. You pay ${usd(SPRINT.price)} once and it unlocks Exam Sprint for every class and test, forever, plus calendar sync. The diagnostic and your readiness report are free, so you can see what you'd get first.`],
             ["Can I cancel Plus?", "Anytime, from Settings → Plan and billing. You keep Plus until the end of the period you paid for."],
             ["Can my parent pay?", "Yes. Parent checkout lets anyone pay with their own card. The purchase unlocks when the student signs in with the email you enter."],
             ["Do tutors pay to be ranked higher?", "Never. Tutor and lesson rankings are based on reviews, results, and teaching quality. Merit earns a referral fee from tutors booked here, and that never affects ranking."],

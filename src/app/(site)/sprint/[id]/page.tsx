@@ -28,7 +28,7 @@ export default async function SprintDashboard({ params, searchParams }: PageProp
   const viewer = await requireViewer(`/sprint/${id}`);
   let sprint = await getSprint(id);
   if (!sprint || sprint.userId !== viewer.user.id) notFound();
-  if (!sprint.unlocked && viewer.billing.sprintCredits > 0) sprint = await consumeCredit(sprint);
+  if (!sprint.unlocked && viewer.billing.sprintPass) sprint = await consumeCredit(sprint);
 
   const catalog = await getCatalog();
   const course = catalog.course(sprint.courseId);
@@ -54,9 +54,10 @@ export default async function SprintDashboard({ params, searchParams }: PageProp
               <CourseIcon id={course.id} size={44} />
               <p className="text-[13px] font-bold uppercase tracking-wide text-white/85">{SPRINT.name}</p>
             </div>
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">{course.title}</h1>
+            <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">{sprint.kind === "test" && sprint.title ? sprint.title : course.title}</h1>
+            {sprint.kind === "test" ? <p className="mt-1 text-[15px] font-medium text-white/85">{course.title} · {r.length} {r.length === 1 ? "unit" : "units"}</p> : null}
             <p className="mt-2 text-[16px] text-white/85">
-              <span className="tabular text-2xl font-extrabold text-white">{left}</span> {left === 1 ? "day" : "days"} to exam day ·{" "}
+              <span className="tabular text-2xl font-extrabold text-white">{left}</span> {left === 1 ? "day" : "days"} to {sprint.kind === "test" ? "test" : "exam"} day ·{" "}
               {new Date(`${sprint.examDate}T12:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
@@ -76,6 +77,7 @@ export default async function SprintDashboard({ params, searchParams }: PageProp
           </div>
           <div className="flex items-center gap-6">
             <Gauge value={overall(r)} label={`${Math.round(overall(r) * 100)}%`} sub="ready" />
+            {sprint.kind === "test" ? null : (
             <div>
               <p className="text-[12px] font-semibold uppercase tracking-wide text-white/75">Estimated</p>
               <p className="tabular text-5xl font-extrabold">{est.label}</p>
@@ -86,6 +88,7 @@ export default async function SprintDashboard({ params, searchParams }: PageProp
                 {correct}/{sprint.answers.length} correct so far
               </p>
             </div>
+            )}
           </div>
         </div>
       </header>
@@ -96,8 +99,8 @@ export default async function SprintDashboard({ params, searchParams }: PageProp
             <p className="flex items-center gap-2 text-[13px] font-semibold text-[#ffb489]">
               <Lock className="size-4" /> Your plan is ready
             </p>
-            <p className="mt-1 text-xl font-bold">Unlock your full plan to exam day.</p>
-            <p className="mt-1 max-w-xl text-[14px] text-white/75">Daily lessons and practice, weekly checkpoints, cram sheets for every unit, and the free-response coach. One payment, until exam day.</p>
+            <p className="mt-1 text-xl font-bold">Unlock Exam Sprint for every class, for good.</p>
+            <p className="mt-1 max-w-xl text-[14px] text-white/75">One payment unlocks Sprints for every test and AP exam you&apos;ll ever have on Merit: daily lessons and practice, checkpoints, cram sheets, and the free-response coach. Calendar sync is included.</p>
           </div>
           <div className="flex shrink-0 flex-col items-center gap-2">
             <BuyButton product="sprint" returnTo={`/sprint/${sprint.id}`} variant="sprint" className="h-12 px-7 text-[15px]">

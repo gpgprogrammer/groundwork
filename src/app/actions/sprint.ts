@@ -18,7 +18,7 @@ async function ownSprint(id: string) {
   if (!viewer) redirect(`/login?next=/sprint`);
   const sprint = await (await getStore()).getDoc<Sprint>("sprints", id);
   if (!sprint || sprint.userId !== viewer.user.id) throw new Error("Sprint not found.");
-  return { viewer, sprint };
+  return { viewer, sprint: await consumeCredit(sprint) };
 }
 
 async function save(s: Sprint) {
@@ -93,7 +93,7 @@ export async function loadQuestions(id: string, mode: Mode, topicIds: string[] =
   let count: number;
   if (mode === "diagnostic") {
     // One question per sampled topic.
-    const ts = diagnosticTopics(catalog, sprint.courseId);
+    const ts = diagnosticTopics(catalog, sprint.courseId, 12, sprint.unitIds);
     const banks = await Promise.all(ts.map((t) => questionsForTopic(t.id)));
     const questions = banks.map((b) => b.find((q) => !seen.has(q.id)) ?? b[0]).filter((q): q is Question => Boolean(q));
     return { questions, unavailable: !questions.length && !(await aiAvailable()) };
@@ -193,4 +193,52 @@ export async function deleteSprint(id: string) {
   const { sprint } = await ownSprint(id);
   await (await getStore()).deleteDoc("sprints", sprint.id);
   redirect("/sprint");
+}
+
+const testSchema = z.object({
+  courseId: z.string().min(1, "Pick the class this test is for."),
+  title: z.string().trim().min(2, "Name the test.").max(120),
+  examDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick the test date."),
+  minutesPerDay: z.coerce.number().int().min(15).max(240),
+  eventUid: z.string().max(300).optional(),
+  unitIds: z.array(z.string()).min(1, "Pick at least one unit the test covers."),
+});
+
+/** A Sprint for a class test or quiz on the student's calendar, scoped to the units it covers. */
+export async function createTestSprint(_: CreateState, form: FormData): Promise<CreateState> {
+  const viewer = await getViewer();
+  if (!viewer) redirect("/signup?next=/sprint");
+  const parsed = testSchema.safeParse({ ...Object.fromEntries(form), unitIds: form.getAll("unitIds").map(String) });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const d = parsed.data;
+  const catalog = await getCatalog();
+  if (!catalog.course(d.courseId)) return { error: "Pick a class." };
+  const unitIds = d.unitIds.filter((u) => catalog.unit(u)?.courseId === d.courseId);
+  if (!unitIds.length) return { error: "Pick at least one unit the test covers." };
+  if (new Date(`${d.examDate}T12:00:00`).getTime() < Date.now() - 86400000) return { error: "That test date has passed." };
+  const store = await getStore();
+  if (d.eventUid) {
+    const existing = (await store.listDocs<Sprint>("sprints", { owner: viewer.user.id })).find((s) => s.eventUid === d.eventUid);
+    if (existing) redirect(`/sprint/${existing.id}`);
+  }
+  let sprint: Sprint = {
+    id: `spr_${randomUUID().slice(0, 12)}`,
+    userId: viewer.user.id,
+    courseId: d.courseId,
+    kind: "test",
+    title: d.title,
+    unitIds,
+    eventUid: d.eventUid,
+    examDate: d.examDate,
+    minutesPerDay: d.minutesPerDay,
+    createdAt: new Date().toISOString(),
+    unlocked: false,
+    confidence: {},
+    answers: [],
+    done: {},
+    frq: [],
+  };
+  await save(sprint);
+  sprint = await tryUnlock(sprint);
+  redirect(`/sprint/${sprint.id}/diagnostic`);
 }

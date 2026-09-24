@@ -1,4 +1,5 @@
 import "server-only";
+import { probeModel } from "@/lib/ai/model";
 import { createHash } from "node:crypto";
 import { generateText } from "ai";
 import { hasPlus } from "@/lib/billing/access";
@@ -18,7 +19,7 @@ export async function aiAvailable() {
   const now = Date.now();
   if (status && now - status.at < (status.ok ? 30 : 3) * 60000) return status.ok;
   try {
-    await generateText({ model: "anthropic/claude-haiku-4.5", prompt: "Reply with OK.", maxOutputTokens: 5 });
+    await generateText({ model: probeModel(), prompt: "Reply with OK.", maxOutputTokens: 5 });
     status = { ok: true, at: now };
   } catch (err) {
     status = { ok: false, at: now, reason: err instanceof Error ? err.message.slice(0, 200) : String(err) };

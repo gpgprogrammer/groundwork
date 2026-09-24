@@ -13,6 +13,7 @@ import { examDateFor } from "@/lib/exams";
 import { daysLeft, estimatedScore, overall, readiness } from "@/lib/sprint";
 import type { Sprint } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
+import { upcomingTests } from "@/lib/schedule-model";
 
 export const metadata: Metadata = {
   title: "Exam Sprint",
@@ -24,6 +25,7 @@ const ICONS = [ClipboardCheck, CalendarRange, Zap, GaugeIcon, BookOpenCheck, Not
 export default async function SprintHome({ searchParams }: PageProps<"/sprint">) {
   const [viewer, catalog, sp] = await Promise.all([getViewer(), getCatalog(), searchParams]);
   const sprints = viewer ? (await (await getStore()).listDocs<Sprint>("sprints", { owner: viewer.user.id })).sort((a, b) => b.createdAt.localeCompare(a.createdAt)) : [];
+  const tests = viewer ? upcomingTests(viewer.state.schedule) : [];
   const initial = typeof sp.course === "string" && catalog.course(sp.course) ? sp.course : (viewer?.state.profile.courseIds[0] ?? null);
   const options = catalog.courses.map((c) => ({ id: c.id, title: c.title, category: c.category, defaultDate: examDateFor(c, null) }));
   const example = catalog.course("ap-biology")
@@ -34,6 +36,40 @@ export default async function SprintHome({ searchParams }: PageProps<"/sprint">)
     <div className="pb-20">
       <div className="mx-auto max-w-[1200px] px-4 pt-6 sm:px-6">
         <CheckoutNotice sp={sp} />
+        {viewer ? (
+          <section className="mb-8">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="text-lg font-bold tracking-tight text-ink">Upcoming tests on your calendar</h2>
+              <Link href="/sprint/new" className="text-sm font-medium text-accent hover:underline">
+                + Sprint for a test that&apos;s not on your calendar
+              </Link>
+            </div>
+            {tests.length ? (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {tests.map((e) => {
+                  const existing = sprints.find((x) => x.eventUid === e.uid);
+                  return (
+                    <Link key={e.uid} href={existing ? `/sprint/${existing.id}` : `/sprint/new?event=${encodeURIComponent(e.uid)}`} className="flex items-center gap-4 rounded-2xl p-4 ring-1 ring-line hover:bg-bg-subtle">
+                      {e.courseId ? <CourseIcon id={e.courseId} size={40} /> : <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#fff1e8] text-[#e0531c]"><Target className="size-5" /></span>}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-ink">{e.title}</p>
+                        <p className="text-[13px] text-muted">{new Date(e.start).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</p>
+                      </div>
+                      <span className="shrink-0 text-[13px] font-semibold text-[#e0531c]">{existing ? "Open" : "Start Sprint"}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="mt-3 rounded-2xl bg-bg-subtle p-4 text-sm text-ink-2">
+                {viewer.state.schedule ? "No tests coming up on your calendar." : "Connect your school calendar and every upcoming quiz and test gets its own Sprint."}{" "}
+                <Link href="/schedule" className="font-medium text-accent hover:underline">
+                  {viewer.state.schedule ? "Manage calendars" : "Connect a calendar"}
+                </Link>
+              </p>
+            )}
+          </section>
+        ) : null}
         {sprints.length ? (
           <section className="mb-8">
             <h2 className="text-lg font-bold tracking-tight text-ink">Your Sprints</h2>
@@ -47,9 +83,9 @@ export default async function SprintHome({ searchParams }: PageProps<"/sprint">)
                   <Link key={s.id} href={`/sprint/${s.id}`} className="flex items-center gap-4 rounded-2xl p-4 ring-1 ring-line hover:bg-bg-subtle">
                     <CourseIcon id={c.id} size={44} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-ink">{c.title}</p>
+                      <p className="truncate font-semibold text-ink">{s.kind === "test" && s.title ? s.title : c.title}</p>
                       <p className="tabular text-[13px] text-muted">
-                        {daysLeft(s)} days left · {Math.round(overall(r) * 100)}% ready · est. {est.label}
+                        {daysLeft(s)} days left · {Math.round(overall(r) * 100)}% ready{s.kind === "test" ? ` · ${c.shortTitle}` : ` · est. ${est.label}`}
                       </p>
                     </div>
                     <ArrowRight className="size-4 text-muted" />
@@ -69,10 +105,10 @@ export default async function SprintHome({ searchParams }: PageProps<"/sprint">)
               </p>
               <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">Your exam, planned day by day.</h1>
               <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-white/85">
-                Find out where you stand in 10 minutes. Then get exactly what to watch and practice every day until exam day, with a readiness score that climbs as you go.
+                Find out where you stand in 10 minutes. Then get exactly what to watch and practice every day until test day, for your AP exam or any quiz or test on your calendar, with a readiness score that climbs as you go.
               </p>
               <p className="mt-6 text-[15px] font-semibold">
-                Diagnostic free · then {usd(SPRINT.price)} once <span className="font-normal text-white/75">· not a subscription</span>
+                Diagnostic free · then {usd(SPRINT.price)} once, for every class, forever <span className="font-normal text-white/75">· not a subscription</span>
               </p>
             </div>
             <div className="rounded-3xl bg-black/15 p-6 backdrop-blur">
@@ -116,7 +152,7 @@ export default async function SprintHome({ searchParams }: PageProps<"/sprint">)
             })}
             <div className="flex flex-col justify-center rounded-2xl bg-gradient-to-br from-[#ff8a3d] to-[#c2410c] p-6 text-white">
               <p className="text-4xl font-extrabold">{usd(SPRINT.price)}</p>
-              <p className="mt-1 text-[14px] text-white/85">Once, for one exam. Less than a single hour of tutoring.</p>
+              <p className="mt-1 text-[14px] text-white/85">Once, for every class and every test, forever. Includes calendar sync. Less than a single hour of tutoring.</p>
               <Link href="/pricing/parents" className="mt-4 text-[13px] font-semibold underline underline-offset-2">
                 A parent can pay for it →
               </Link>

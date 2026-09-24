@@ -30,10 +30,9 @@ export default async function CoursesPage() {
     <div className="mx-auto max-w-[1280px] px-4 pb-20 pt-6 sm:px-6">
       <h1 className="text-[32px] font-bold tracking-tight text-ink">Courses</h1>
       <p className="mb-6 mt-1 max-w-2xl text-[15px] text-muted">
-        Every AP course and the SAT, organized the way the exam is: units, then the exact topics you&apos;ll be tested on, each with the best
-        videos for it.
+        Every AP course and the SAT, organized the way the exam is: units, then the exact topics you&apos;ll be tested on.
       </p>
-      <CoursesBrowser courses={tiles} categories={[...CATEGORIES]} />
+      <CoursesBrowser courses={tiles} categories={[...CATEGORIES]} signedIn={Boolean(viewer)} />
     </div>
   );
 }

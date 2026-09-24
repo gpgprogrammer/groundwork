@@ -85,15 +85,15 @@ export function PlusLocked({ access, feature, returnTo }: { access: PlusAccess; 
         <div className="mt-7 flex flex-wrap items-center gap-3">
           {access.kind === "anonymous" ? (
             <Link href={`/signup?next=${encodeURIComponent(returnTo)}`} className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[#0f172a] hover:bg-white/90">
-              Get your first year free <ArrowRight className="size-4" />
+              Get your first month free <ArrowRight className="size-4" />
             </Link>
           ) : (
             <>
-              <BuyButton product="plus-year" returnTo={returnTo} variant="light">
-                {usd(PLUS.annual)}/year
-              </BuyButton>
-              <BuyButton product="plus-month" returnTo={returnTo} variant="glass">
+              <BuyButton product="plus-month" returnTo={returnTo} variant="light">
                 {usd(PLUS.monthly)}/month
+              </BuyButton>
+              <BuyButton product="plus-year" returnTo={returnTo} variant="glass">
+                {usd(PLUS.annual)}/year
               </BuyButton>
             </>
           )}
@@ -101,7 +101,7 @@ export function PlusLocked({ access, feature, returnTo }: { access: PlusAccess; 
             Compare plans
           </Link>
         </div>
-        {access.kind === "anonymous" ? <p className="mt-3 text-xs text-white/55">No card needed. Plus is free for your first year.</p> : null}
+        {access.kind === "anonymous" ? <p className="mt-3 text-xs text-white/55">No card needed. Plus is free for your first month.</p> : null}
       </div>
     </div>
   );
@@ -151,7 +151,7 @@ export function PlusFeedCard() {
         </span>
         <div className="min-w-0">
           <p className="text-[15px] font-semibold leading-snug text-ink group-hover:underline">Build your study plan with Merit Plus</p>
-          <p className="mt-1 text-sm text-muted">Merit · first year free</p>
+          <p className="mt-1 text-sm text-muted">Merit · first month free</p>
         </div>
       </div>
     </Link>

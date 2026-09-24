@@ -5,11 +5,11 @@ import { cn } from "./ui";
 
 /** Monthly/annual switch that swaps between two server-rendered price blocks. */
 export function BillingToggle({ monthly, annual, savings }: { monthly: ReactNode; annual: ReactNode; savings: number }) {
-  const [period, setPeriod] = useState<"year" | "month">("year");
+  const [period, setPeriod] = useState<"year" | "month">("month");
   return (
     <div>
       <div className="inline-flex rounded-full bg-bg-subtle p-1 text-[13px] font-medium" role="tablist" aria-label="Billing period">
-        {(["year", "month"] as const).map((p) => (
+        {(["month", "year"] as const).map((p) => (
           <button
             key={p}
             role="tab"

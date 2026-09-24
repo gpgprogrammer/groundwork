@@ -10,6 +10,7 @@ import { PLUS } from "@/lib/billing/plans";
 import { getStore } from "@/lib/data/store";
 import { isAiConfigured, isStripeEnabled, isSupabaseEnabled } from "@/lib/env";
 import { allServices, listPartnerApps } from "@/lib/partners";
+import { listLeads } from "@/lib/leads";
 import type { Billing, Contribution, Gift, Sprint } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
 
@@ -31,6 +32,8 @@ export default async function AdminPage() {
     allServices(),
     aiAvailable(),
   ]);
+  const leads = await listLeads();
+  const followUps = leads.filter((l) => l.status === "reported");
   const referrals = await store.referralCounts([...services.map((s) => s.id), ...tutors.map((t) => t.id)]);
 
   const paid = billing.filter((b) => b.plus.status === "active" && b.plus.source === "stripe");
@@ -104,6 +107,21 @@ export default async function AdminPage() {
         ) : (
           <p className="text-sm text-muted">No applications yet. Share /tutors/partners with tutoring businesses.</p>
         )}
+      </Section>
+
+      <Section title={`Referred students (${leads.length}) · ${followUps.length} need follow-up`}>
+        <p className="mb-3 text-sm text-muted">Students who said they had a session with a tutor that the tutor hasn&apos;t logged yet. Follow up with the tutor to collect the 10% fee.</p>
+        <ul className="divide-y divide-line text-sm">
+          {followUps.map((l) => (
+            <li key={l.id} className="flex justify-between gap-3 py-2">
+              <span className="text-ink">
+                {l.studentName} → {tutors.find((t) => t.id === l.tutorId)?.name ?? "tutor"}
+              </span>
+              <span className="text-muted">reported {l.reportedAt?.slice(0, 10)}</span>
+            </li>
+          ))}
+        </ul>
+        {!followUps.length ? <p className="text-sm text-muted">Nothing to follow up on.</p> : null}
       </Section>
 
       <Section title="Referral clicks by partner">

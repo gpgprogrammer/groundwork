@@ -362,6 +362,7 @@ function UserMenu({ data }: { data: ShellData }) {
           <MenuRow href="/plan" icon={<CalendarCheck className="size-5" />}>Tonight&apos;s plan</MenuRow>
           <MenuRow href="/progress" icon={<ChartColumn className="size-5" />}>Progress</MenuRow>
           <MenuRow href="/library" icon={<Clock className="size-5" />}>Your library</MenuRow>
+          <MenuRow href="/bookings" icon={<Users className="size-5" />}>My tutoring sessions</MenuRow>
           <MenuRow href="/schedule" icon={<CalendarDays className="size-5" />}>My schedule</MenuRow>
           <MenuRow href="/studio" icon={<NotebookPen className="size-5" />}>{data.isEducator ? "Teacher studio" : "Add lessons (teachers)"}</MenuRow>
           <MenuRow href={isTutor ? "/tutor" : "/tutors/join"} icon={<GraduationCap className="size-5" />}>
@@ -546,7 +547,7 @@ function SidebarPromo({ plus }: { plus: ShellData["plus"] }) {
       {plus === "anonymous" || plus === "expired" ? (
         <Link href={plus === "anonymous" ? "/signup?next=/plan" : "/pricing"} className="mt-2 block rounded-xl bg-accent-soft p-3 text-[13px] text-ink hover:opacity-90">
         <span className="font-semibold text-accent">Know what to study tonight.</span>{" "}
-        {plus === "anonymous" ? "Merit Plus is free for your first year." : "Get your plan back with Plus."}
+        {plus === "anonymous" ? "Merit Plus is free for your first month." : "Get your plan back with Plus."}
         </Link>
       ) : null}
     </div>

@@ -19,18 +19,40 @@ export type CourseTile = {
   progress: number | null;
 };
 
-export function CoursesBrowser({ courses, categories }: { courses: CourseTile[]; categories: string[] }) {
+export function CoursesBrowser({ courses, categories, signedIn }: { courses: CourseTile[]; categories: string[]; signedIn: boolean }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("All");
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return courses.filter((c) => (cat === "All" || c.category === cat) && (!needle || `${c.title} ${c.shortTitle}`.toLowerCase().includes(needle)));
   }, [courses, q, cat]);
-  const mine = filtered.filter((c) => c.studying);
+  const mine = courses.filter((c) => c.studying);
   const groups = categories.map((g) => ({ g, items: filtered.filter((c) => c.category === g) })).filter((x) => x.items.length);
 
   return (
     <div>
+      {mine.length ? (
+        <section className="mb-10 rounded-3xl bg-bg-subtle p-5 sm:p-6">
+          <div className="mb-4 flex items-baseline justify-between gap-3">
+            <h2 className="text-xl font-bold tracking-tight text-ink">
+              My courses <span className="text-sm font-normal text-muted">{mine.length}</span>
+            </h2>
+            <Link href="/settings" className="text-sm font-medium text-accent hover:underline">
+              Edit my courses
+            </Link>
+          </div>
+          <Grid items={mine} />
+        </section>
+      ) : signedIn ? (
+        <Link href="/settings" className="mb-10 flex items-center justify-between gap-4 rounded-3xl bg-accent-soft p-5 hover:opacity-90 sm:p-6">
+          <span>
+            <span className="block text-lg font-bold text-ink">My courses</span>
+            <span className="block text-sm text-ink-2">Pick the courses you&apos;re taking and they&apos;ll live right here.</span>
+          </span>
+          <span className="shrink-0 text-sm font-semibold text-accent">Choose courses →</span>
+        </Link>
+      ) : null}
+      <h2 className="mb-4 text-xl font-bold tracking-tight text-ink">All courses</h2>
       <div className="flex flex-col gap-4">
         <label className="relative w-full max-w-md">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
@@ -55,12 +77,6 @@ export function CoursesBrowser({ courses, categories }: { courses: CourseTile[];
         </div>
       </div>
 
-      {mine.length ? (
-        <section className="mt-10">
-          <h2 className="mb-4 text-lg font-bold tracking-tight text-ink">Your courses</h2>
-          <Grid items={mine} />
-        </section>
-      ) : null}
 
       {groups.map(({ g, items }) => (
         <section key={g} className="mt-10">

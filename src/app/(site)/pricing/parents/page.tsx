@@ -39,7 +39,7 @@ export default async function ParentsPage({ searchParams }: PageProps<"/pricing/
                 {PLUS.name} · {usd(PLUS.annual)} for a year
               </p>
               <p className="mt-1 text-[14px] leading-relaxed text-muted">
-                A nightly study plan built from their class calendar, reminders before every test, and progress tracking across all their courses. (Every student already gets their first year of Plus free; a gift adds a year on top.)
+                A nightly study plan built from their class calendar, reminders before every test, and progress tracking across all their courses. (Every student already gets their first month of Plus free; a gift adds a full year.)
               </p>
             </div>
           </div>

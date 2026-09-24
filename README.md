@@ -31,6 +31,9 @@ Clicking a video goes through `/go/:id`, which records the open in the student's
 
 ## Calendar sync
 
+Calendar sync needs Plus or the Exam Sprint pass. Students can connect several calendars at once: iCal links (Blackbaud, Canvas, Schoology, Veracross, Google/Classroom, Outlook, Apple, Brightspace, Moodle), `.ics` uploads, PDF or CSV exports, or pasted text. PDFs and text are read into a review list; nothing is added until the student checks it. Only tests, quizzes, and assignments are kept; canceled events, removed dates, and moved occurrences are honored; a class or topic is attached only when the event names it. Students can hide events or clear a wrong match. Linked calendars refresh every six hours.
+
+
 Students paste a private iCal link (Google Calendar, Canvas, Schoology, Apple Calendar, Outlook) or upload an `.ics` file during onboarding or on `/schedule`. `src/lib/ics.ts` parses events (folded lines, all-day dates, weekly recurrences), keeps school-related ones, and matches them to courses and topics. Upcoming tests and assignments drive the "Coming up on your calendar" shelf and the For you feed. Fetching is SSRF-guarded (`src/lib/schedule.ts`): https only, public IPs only, every redirect checked, 3 MB cap.
 
 ## Courses
@@ -68,15 +71,15 @@ The database stores only per-student data (profiles, history, saves, votes, mast
 Defined in `src/lib/billing/plans.ts`.
 
 - **Free**: courses, lessons, tutor search, Merit AI (30 questions/day; 5 signed out).
-- **Merit Plus**: $4.99/month or $39.99/year. Includes the study plan (`/plan`), calendar sync (`/schedule`), reminders (a private iCal feed with alarms), and progress (`/progress`). Every new account gets Plus free for `NEXT_PUBLIC_PLUS_TRIAL_DAYS` days (default 365, no card). If a student subscribes during the free year, billing starts when it ends.
-- **Exam Sprint**: $14.99 once per exam (`/sprint`). The diagnostic and readiness report are free. Paying unlocks the day-by-day plan, unlimited AI-written practice with per-choice explanations, weekly checkpoints, cram sheets, and the free-response coach.
+- **Merit Plus**: $4.99/month or $39.99/year: study plan (`/plan`), calendar sync (`/schedule`), reminders (a private iCal feed with alarms), and progress (`/progress`). New accounts get Plus free for `NEXT_PUBLIC_PLUS_TRIAL_DAYS` days (default 30, no card).
+- **Exam Sprint**: $14.99 once, **permanently** unlocks Sprints for every class: the AP/SAT exam or any quiz or test on the student's calendar (scoped to the units it covers). Also unlocks calendar sync. The diagnostic is free.
 - **Parent checkout** (`/pricing/parents`): anyone can pay for a student's Plus year or Sprint. It unlocks when the student signs in with that email.
 
 Stripe: set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, then point a webhook at `/api/billing/webhook` (events: `checkout.session.completed`, `customer.subscription.*`, `account.updated`). Prices are sent inline, so no Stripe products need to be created. **Without a key, checkout runs in labeled test mode**: purchases are granted with no charge.
 
 ## Merit AI
 
-`/ask` plus the floating "Ask Merit" panel on every page (Cmd/Ctrl+J). It uses the AI SDK with the Vercel AI Gateway (`MERIT_AI_MODEL`, default `anthropic/claude-sonnet-5`). Its tools search the lesson library, look up curriculum topics and outlines, read the student's plan, find tutors, and render interactive quizzes. On Vercel it authenticates with the deployment's OIDC token. **The Vercel team needs a card on file to unlock AI Gateway credits.** Until then, Merit AI answers with the best-ranked lessons instead of an explanation. Sprint questions and cram sheets are generated once per topic or unit and cached for everyone.
+`/ask` plus the floating "Ask Merit" panel on every page (Cmd/Ctrl+J). It uses the AI SDK with the Vercel AI Gateway (`MERIT_AI_MODEL`, default `anthropic/claude-sonnet-5`). Its tools search the lesson library, look up curriculum topics and outlines, read the student's plan, find tutors, and render interactive quizzes. On Vercel it authenticates with the deployment's OIDC token. **The Vercel team needs a card on file to unlock AI Gateway credits, or set `ANTHROPIC_API_KEY` to call Anthropic directly.** Until then, Merit AI answers with the best-ranked lessons instead of an explanation. Sprint questions and cram sheets are generated once per topic or unit and cached for everyone.
 
 ## Teacher studio
 

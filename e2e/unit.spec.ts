@@ -145,13 +145,14 @@ test.describe("calendar sync", () => {
     expect(dbq.courseId).toBe("ap-world-history");
     expect(dbq.topicIds).toContain("ap-world-history/champa-rice");
 
-    const chemClasses = events.filter((e) => e.uid.startsWith("class-chem"));
-    expect(chemClasses.length).toBeGreaterThan(3);
-    expect(chemClasses[0].kind).toBe("class");
+    // Class periods are not schoolwork; they never appear on the schedule.
+    expect(events.filter((e) => e.uid.startsWith("class-chem"))).toHaveLength(0);
 
     const folded = events.find((e) => e.uid === "folded")!;
     expect(folded.title).toBe("Unit 6 test: Le Chatelier's principle and ICE tables");
-    expect(folded.topicIds).toEqual(expect.arrayContaining(["ap-chemistry/le-chatelier", "ap-chemistry/ice-tables"]));
+    // It doesn't name a class, so no class or topic is guessed for it.
+    expect(folded.courseId).toBeNull();
+    expect(folded.topicIds).toEqual([]);
   });
 });
 

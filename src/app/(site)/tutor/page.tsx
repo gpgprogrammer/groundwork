@@ -8,6 +8,8 @@ import { RequestStatus } from "@/components/request-status";
 import { Initials, RatingLine } from "@/components/tutoring-ui";
 import { ago } from "@/components/ui";
 import { getTutorMeta, ledger, listBookings } from "@/lib/bookings";
+import { listLeads } from "@/lib/leads";
+import { LogSessionForm } from "@/components/lead-ui";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { rankTutors } from "@/lib/tutoring";
@@ -23,13 +25,15 @@ export default async function TutorDashboard() {
   const [viewer, catalog, store] = await Promise.all([requireViewer("/tutor"), getCatalog(), getStore()]);
   const mine = (await store.listTutors()).find((t) => t.userId === viewer.user.id);
   if (!mine) redirect("/tutors/join");
-  const [reviews, requests, referrals, bookings, meta] = await Promise.all([
+  const [reviews, requests, referrals, bookings, meta, leads] = await Promise.all([
     store.listReviews(mine.id),
     store.listTutoringRequests(mine.id),
     store.referralCounts([mine.id]),
     listBookings({ tutorId: mine.id }),
     getTutorMeta(mine.id),
+    listLeads({ tutorId: mine.id }),
   ]);
+  const openLeads = leads.filter((l) => l.status === "open" || l.status === "reported");
   const t = rankTutors([mine], reviews)[0];
   const money$ = ledger(bookings);
   const upcoming = upcomingOf(bookings);
@@ -118,6 +122,27 @@ export default async function TutorDashboard() {
               </div>
             </>
           ) : null}
+
+          <h2 className="mt-10 text-xl font-bold tracking-tight text-ink">Students Merit referred</h2>
+          <p className="mt-1 text-[13px] text-muted">If you work with any of these students outside Merit in the next 12 months, log the session here. The 10% referral fee is added to your fees due.</p>
+          <div className="mt-4 space-y-3">
+            {openLeads.map((l) => (
+              <div key={l.id} className="rounded-2xl p-4 ring-1 ring-line">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold text-ink">
+                    {l.studentName} <span className="font-normal text-muted">· {l.studentEmail}</span>
+                  </p>
+                  {l.status === "reported" ? (
+                    <span className="rounded-full bg-warn-soft px-2.5 py-0.5 text-[12px] font-semibold text-warn">Student reported a session</span>
+                  ) : (
+                    <span className="text-[12px] text-muted">Referred {ago(l.createdAt)}</span>
+                  )}
+                </div>
+                <LogSessionForm leadId={l.id} />
+              </div>
+            ))}
+            {!openLeads.length ? <p className="rounded-2xl bg-bg-subtle px-5 py-6 text-sm text-muted">No open referrals.</p> : null}
+          </div>
 
           <h2 className="mt-10 text-xl font-bold tracking-tight text-ink">Messages</h2>
           <div className="mt-4 space-y-3">

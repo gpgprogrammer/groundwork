@@ -27,7 +27,7 @@ async function ensureCustomer(viewer: Viewer) {
 
 /**
  * Checkout for Plus (monthly or annual) or an Exam Sprint. If the student is
- * still inside their free year, the subscription starts billing when it ends,
+ * still inside their free month, the subscription starts billing when it ends,
  * so upgrading early never costs them free time.
  */
 export async function createCheckoutUrl(viewer: Viewer, product: Product, origin: string, returnTo: string) {

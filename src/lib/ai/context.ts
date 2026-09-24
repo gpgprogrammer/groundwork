@@ -1,4 +1,5 @@
 import "server-only";
+import { visibleEvents } from "@/lib/schedule-model";
 import type { IndexedCatalog } from "@/lib/catalog";
 import { daysUntil, examDateFor } from "@/lib/exams";
 import type { Viewer } from "@/lib/viewer";
@@ -33,7 +34,7 @@ export function studentContext(catalog: IndexedCatalog, viewer: Viewer | null) {
         .join("; ")}.`,
     );
   }
-  const tests = (viewer.state.schedule?.events ?? []).filter((e) => e.kind === "test" && new Date(e.start).getTime() > Date.now()).slice(0, 4);
+  const tests = visibleEvents(viewer.state.schedule).filter((e) => e.kind === "test" && new Date(e.start).getTime() > Date.now()).slice(0, 4);
   if (tests.length) lines.push(`Upcoming tests on their calendar: ${tests.map((e) => `${e.title} on ${e.start.slice(0, 10)}`).join("; ")}.`);
   const mastered = Object.keys(viewer.state.mastered).length;
   if (mastered) lines.push(`They've marked ${mastered} topics as understood.`);

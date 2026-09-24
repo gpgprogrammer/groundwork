@@ -123,7 +123,7 @@ export function SprintRunner({
         <Sparkles className="mx-auto size-8 text-accent" />
         <p className="mt-3 font-semibold text-ink">{stage === "locked" ? "Unlock your Sprint to practice." : "Practice questions are almost ready."}</p>
         <p className="mt-1 text-sm text-muted">
-          {stage === "locked" ? "Your diagnostic is free. Daily practice, checkpoints, and cram sheets come with the Sprint." : "Merit AI is being switched on for question writing. Your ratings are saved, so your plan still works; come back soon for questions."}
+          {stage === "locked" ? "Your diagnostic is free. Daily practice, checkpoints, and cram sheets come with the Sprint." : "Merit AI isn't writing questions right now. Your ratings are saved, so your plan still works; questions will appear here once it's back."}
         </p>
         <Link href={`/sprint/${sprintId}`} className="mt-5 inline-flex h-10 items-center rounded-full bg-ink px-4 text-sm font-semibold text-bg">
           Back to my Sprint
