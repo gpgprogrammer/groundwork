@@ -23,18 +23,16 @@ async function signUpAndOnboard(page: Page, opts: { calendar?: boolean } = {}) {
   await page.getByRole("button", { name: /AP Calculus BC/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: /AP exams/ }).click();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await expect(page.getByRole("heading", { name: "Sync your schedule" })).toBeVisible();
+  await page.getByRole("button", { name: "Start learning" }).click();
+  await page.waitForURL((u) => u.pathname === "/");
   if (opts.calendar) {
+    await page.goto("/schedule");
     await page.getByRole("button", { name: "Upload .ics" }).click();
     await page.locator('input[type=file]').setInputFiles({ name: "school.ics", mimeType: "text/calendar", buffer: Buffer.from(ICS) });
     await page.getByRole("button", { name: "Import" }).click();
     await expect(page.getByText(/Added 1 test or assignment/)).toBeVisible();
-    await page.getByRole("button", { name: "Go to my feed" }).click();
-  } else {
-    await page.getByRole("button", { name: "Skip", exact: true }).click();
+    await page.goto("/");
   }
-  await page.waitForURL((u) => u.pathname === "/");
 }
 
 test("anonymous home: chips, sorting, and real YouTube thumbnails", async ({ page }) => {
@@ -85,7 +83,7 @@ test("save to Watch later from the card menu", async ({ page }) => {
   await expect(page.locator(`a[href="${href}"]`).first()).toBeVisible();
 });
 
-test("calendar sync in onboarding puts the quiz's videos on the home page", async ({ page }) => {
+test("calendar sync puts the quiz's videos on the home page", async ({ page }) => {
   await signUpAndOnboard(page, { calendar: true });
   await expect(page.getByRole("heading", { name: "Tonight's plan" })).toBeVisible();
   await expect(page.getByText(/AP Calc BC quiz: Chain Rule/).first()).toBeVisible();
@@ -397,4 +395,20 @@ test("a tutor uploads a video; it plays on Merit and shows on their profile", as
   await page.getByText("Stoichiometry in five steps").first().click();
   await page.getByRole("button", { name: "Delete video" }).click();
   await page.waitForURL(/\/studio\/upload/);
+});
+
+test("signup skips calendar setup; the sync popup appears 5 minutes later and the X closes it for good", async ({ page }) => {
+  await page.clock.install();
+  await signUpAndOnboard(page);
+  const popup = page.getByRole("dialog", { name: "Sync your schedule" });
+  await expect(popup).toHaveCount(0);
+  await page.clock.fastForward("05:05");
+  await expect(popup).toBeVisible();
+  await expect(popup.getByText(/Included with Merit Plus or Exam Sprint/)).toBeVisible();
+  await popup.getByRole("button", { name: "Close" }).click();
+  await expect(popup).toHaveCount(0);
+  await page.reload();
+  await page.clock.fastForward("01:00");
+  await expect(page.getByRole("heading", { name: /./ }).first()).toBeAttached();
+  await expect(popup).toHaveCount(0);
 });

@@ -1,23 +1,20 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, CalendarDays, Check, ListChecks } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { completeOnboarding } from "@/app/actions/learning";
-import { FocusPicker, type FocusCourse } from "@/components/focus-picker";
 import { inputClass } from "@/components/form";
 import { CourseIcon } from "@/components/course-icon";
-import { ScheduleConnect } from "@/components/schedule-connect";
 import { Button, cn } from "@/components/ui";
 
 type CourseOption = { id: string; title: string; exam: string; category: string; hue: number; topics: number; videos: number };
 
 type Props = {
   firstName: string;
-  initial: { courseIds: string[]; examDate: string | null; focusTopicIds: string[] };
+  initial: { courseIds: string[]; examDate: string | null };
   courses: CourseOption[];
-  focus: FocusCourse[];
   next: string;
 };
 
@@ -37,13 +34,11 @@ function upcomingExamDates() {
 
 const pretty = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-export function OnboardingFlow({ firstName, initial, courses, focus, next }: Props) {
+export function OnboardingFlow({ firstName, initial, courses, next }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<string[]>(initial.courseIds);
   const [examDate, setExamDate] = useState<string | null>(initial.examDate);
-  const [syncMode, setSyncMode] = useState<"calendar" | "topics">("calendar");
-  const [synced, setSynced] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const dates = useMemo(() => upcomingExamDates(), []);
@@ -52,25 +47,21 @@ export function OnboardingFlow({ firstName, initial, courses, focus, next }: Pro
   const hasSAT = selected.some((id) => courses.find((c) => c.id === id)?.exam === "SAT");
   const toggle = (id: string) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
-  // Save courses + exam date before the schedule step, so calendar events can be matched to them.
-  const saveBasics = () => {
+  // Save and go straight into Merit. Calendar sync is offered later, once they've looked around.
+  const finish = () => {
     setError(null);
     start(async () => {
       try {
         await completeOnboarding({ courseIds: selected, examDate });
-        setStep(2);
+        router.push(next);
+        router.refresh();
       } catch {
         setError("Something went wrong saving that. Please try again.");
       }
     });
   };
 
-  const finish = () => {
-    router.push(next);
-    router.refresh();
-  };
-
-  const steps = ["Courses", "Exam date", "Your schedule"];
+  const steps = ["Courses", "Exam date"];
 
   return (
     <div className="flex flex-1 justify-center px-5 pb-20 pt-[4vh]">
@@ -141,44 +132,6 @@ export function OnboardingFlow({ firstName, initial, courses, focus, next }: Pro
             </>
           ) : null}
 
-          {step === 2 ? (
-            <>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-1 text-[12px] font-semibold text-accent">
-                Merit Plus or Exam Sprint · included in your free month
-              </span>
-              <h1 className="mt-3 text-[28px] font-bold tracking-tight text-ink">Sync your schedule</h1>
-              <p className="mt-2 text-[15px] text-muted">
-                Connect the calendars your classes use (Blackbaud, Canvas, Schoology, Google, or a PDF). When a quiz or test is coming, Merit lines up the right lessons and a Sprint for it. Calendar sync is part of Merit Plus and Exam Sprint; your first month of Plus is free. You can skip this and do it later.
-              </p>
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                {(
-                  [
-                    ["calendar", "Connect a calendar", "Blackbaud, Canvas, Schoology, Google, PDF", CalendarDays],
-                    ["topics", "Pick topics instead", "Choose what you're covering in class now", ListChecks],
-                  ] as const
-                ).map(([k, title, note, Icon]) => (
-                  <button
-                    key={k}
-                    type="button"
-                    onClick={() => setSyncMode(k)}
-                    aria-pressed={syncMode === k}
-                    className={cn("rounded-xl p-4 text-left transition-all", syncMode === k ? "bg-accent-soft ring-2 ring-accent" : "bg-bg-subtle hover:bg-line")}
-                  >
-                    <Icon className={cn("size-5", syncMode === k ? "text-accent" : "text-ink")} />
-                    <span className="mt-3 block text-[15px] font-medium text-ink">{title}</span>
-                    <span className="block text-xs text-muted">{note}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="mt-6">
-                {syncMode === "calendar" ? (
-                  <ScheduleConnect onDone={() => setSynced(true)} />
-                ) : (
-                  <FocusPicker courses={focus.filter((f) => selected.includes(f.id))} initial={initial.focusTopicIds} onSaved={() => setSynced(true)} />
-                )}
-              </div>
-            </>
-          ) : null}
         </div>
 
         {error ? <p className="mt-6 text-sm text-[#c2410c]">{error}</p> : null}
@@ -197,21 +150,10 @@ export function OnboardingFlow({ firstName, initial, courses, focus, next }: Pro
             <Button onClick={() => setStep(1)} disabled={!selected.length}>
               Continue <ArrowRight className="size-4" />
             </Button>
-          ) : step === 1 ? (
-            <Button onClick={saveBasics} disabled={pending}>
-              {pending ? "Saving…" : "Continue"} <ArrowRight className="size-4" />
-            </Button>
           ) : (
-            <div className="flex items-center gap-2">
-              {!synced ? (
-                <Button variant="ghost" onClick={finish}>
-                  Skip
-                </Button>
-              ) : null}
-              <Button onClick={finish}>
-                {synced ? "Go to my feed" : "Finish"} <ArrowRight className="size-4" />
-              </Button>
-            </div>
+            <Button onClick={finish} disabled={pending}>
+              {pending ? "Saving…" : "Start learning"} <ArrowRight className="size-4" />
+            </Button>
           )}
         </div>
       </div>
