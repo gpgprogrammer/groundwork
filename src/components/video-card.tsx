@@ -79,7 +79,7 @@ export function VideoCard({ v }: { v: FeedVideo }) {
               {v.channelTitle}
             </Link>
             <p className="tabular truncate">
-              {formatViews(v.views)} views{ago(v.publishedAt) ? ` · ${ago(v.publishedAt)}` : ""}
+              {formatViews(v.views)} views on YouTube{ago(v.publishedAt) ? ` · ${ago(v.publishedAt)}` : ""}
             </p>
             {v.addedBy ? (
               <Link href={v.addedBy.href} className="mt-0.5 flex items-center gap-1 truncate text-[12.5px] font-medium text-positive hover:underline">
@@ -116,7 +116,7 @@ export function VideoRow({ v, rank, extra }: { v: FeedVideo; rank?: number; extr
           </h3>
         </a>
         <p className="tabular mt-1 text-[12.5px] text-muted">
-          {formatViews(v.views)} views{ago(v.publishedAt) ? ` · ${ago(v.publishedAt)}` : ""}
+          {formatViews(v.views)} views on YouTube{ago(v.publishedAt) ? ` · ${ago(v.publishedAt)}` : ""}
         </p>
         <Link href={`/channel/${v.channelId}`} className="mt-2 flex items-center gap-2 text-[12.5px] text-muted hover:text-ink sm:mt-3">
           <ChannelAvatar title={v.channelTitle} src={v.channelThumb} size={24} />
@@ -142,7 +142,7 @@ export function VideoRow({ v, rank, extra }: { v: FeedVideo; rank?: number; extr
   );
 }
 
-/** Vertical card for Shorts. */
+/** Vertical card for quick lessons (YouTube Shorts). */
 export function ShortCard({ v }: { v: FeedVideo }) {
   return (
     <a href={videoHref(v)} target="_blank" rel="noopener" className="group block min-w-0">
@@ -150,7 +150,7 @@ export function ShortCard({ v }: { v: FeedVideo }) {
         <img src={v.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
       </div>
       <h3 className="mt-2 line-clamp-2 text-[14px] font-medium leading-snug text-ink">{v.title}</h3>
-      <p className="tabular mt-0.5 text-[13px] text-muted">{formatViews(v.views)} views</p>
+      <p className="tabular mt-0.5 text-[13px] text-muted">{formatViews(v.views)} views on YouTube</p>
     </a>
   );
 }

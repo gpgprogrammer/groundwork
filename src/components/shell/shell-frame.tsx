@@ -436,7 +436,7 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
     <nav aria-label="Main">
       <Section>
         <NavRow href="/" icon={<House className="size-5" />} label="Home" pathname={pathname} />
-        <NavRow href="/shorts" icon={<Clapperboard className="size-5" />} label="Shorts" pathname={pathname} />
+        <NavRow href="/shorts" icon={<Clapperboard className="size-5" />} label="Quick lessons" pathname={pathname} />
         <NavRow href="/courses" icon={<GraduationCap className="size-5" />} label="Courses" pathname={pathname} />
         <NavRow href="/ask" icon={<Sparkles className="size-5" />} label="Ask Merit AI" pathname={pathname} />
         <NavRow href="/tutors" icon={<Users className="size-5" />} label="Tutors" pathname={pathname} />

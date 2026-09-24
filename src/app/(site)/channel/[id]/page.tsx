@@ -61,7 +61,7 @@ export default async function ChannelPage({ params, searchParams }: PageProps<"/
 
       <div className="sticky top-14 z-20 -mx-4 flex items-center gap-3 border-b border-line bg-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
         <Chips chips={[{ key: "all", label: "All courses" }, ...courseIds.map((c) => ({ key: c, label: catalog.course(c)!.shortTitle }))]} active={course ?? "all"} param="course" />
-        <Chips chips={[{ key: "all", label: "Videos" }, { key: "shorts", label: "Shorts" }]} active={shortsOnly ? "shorts" : "all"} param="tab" />
+        <Chips chips={[{ key: "all", label: "Videos" }, { key: "shorts", label: "Quick lessons" }]} active={shortsOnly ? "shorts" : "all"} param="tab" />
         <SortControls sort={result.sort} length={result.length} defaultSort="views" />
       </div>
       <div className="pt-6">

@@ -110,6 +110,8 @@ type ChannelItem = {
   contentDetails: { relatedPlaylists: { uploads: string } };
 };
 
+const WORLD_LANGUAGE = /^ap-(spanish|french|german|italian|chinese|japanese|latin)/;
+
 const COURSE_QUERY: Record<string, string> = {
   "ap-calculus-bc": "AP Calculus",
   "ap-world-history": "AP World History",
@@ -141,6 +143,7 @@ async function main() {
   for (const v of existing.videos) found.set(v.id, { topicId: v.topicId ?? undefined, courseId: v.courseId, source: "search" });
 
   const refreshOnly = flag("refresh");
+  const prevById = new Map(existing.videos.map((v) => [v.id, v]));
   let stoppedEarly = "";
 
   try {
@@ -276,16 +279,40 @@ async function main() {
   for (const [id, hint] of found) {
     const d = details.get(id);
     if (!d) {
-      const prev = existing.videos.find((v) => v.id === id);
-      if (prev) videos.push(prev); // keep last-known data if we couldn't refresh
+      // Only keep last-known data when the run stopped early. A video YouTube no longer returns
+      // (deleted, private, blocked) is removed, as the YouTube API policies require.
+      if (!stoppedEarly) continue;
+      const prev = prevById.get(id);
+      if (prev) videos.push(prev);
       continue;
     }
     if (d.snippet.liveBroadcastContent && d.snippet.liveBroadcastContent !== "none") continue;
     if (d.status?.privacyStatus && d.status.privacyStatus !== "public") continue;
-    const lang = d.snippet.defaultAudioLanguage ?? d.snippet.defaultLanguage;
-    if (lang && !lang.startsWith("en")) continue;
     const durationSec = parseIsoDuration(d.contentDetails.duration);
     if (!durationSec || durationSec > 4 * 3600) continue;
+    const th0 = d.snippet.thumbnails;
+    // A refresh updates what YouTube reports and keeps the video's place in the curriculum.
+    const prevVideo = refreshOnly ? prevById.get(id) : undefined;
+    if (prevVideo) {
+      videos.push({
+        ...prevVideo,
+        title: decode(d.snippet.title),
+        description: decode(d.snippet.description ?? "").slice(0, 280),
+        channelId: d.snippet.channelId,
+        channelTitle: decode(d.snippet.channelTitle),
+        publishedAt: d.snippet.publishedAt,
+        durationSec,
+        views: Number(d.statistics.viewCount ?? 0),
+        likes: d.statistics.likeCount != null ? Number(d.statistics.likeCount) : null,
+        comments: d.statistics.commentCount != null ? Number(d.statistics.commentCount) : null,
+        thumbnail: (th0.maxres ?? th0.high ?? th0.medium ?? th0.default).url,
+        isShort: durationSec <= 60,
+      });
+      continue;
+    }
+    const lang = d.snippet.defaultAudioLanguage ?? d.snippet.defaultLanguage;
+    // World-language courses are taught partly in that language.
+    if (lang && !lang.startsWith("en") && !WORLD_LANGUAGE.test(hint.courseId ?? "")) continue;
 
     const title = decode(d.snippet.title);
     const description = decode(d.snippet.description ?? "");

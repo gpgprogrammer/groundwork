@@ -146,7 +146,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         <div className="mt-10 border-t border-line pt-6">
           <Shelf
             icon={<Clapperboard className="size-5 text-[#e5484d]" />}
-            title="Shorts"
+            title="Quick lessons"
             action={
               <Link href="/shorts" className="rounded-full px-3 py-1.5 text-sm font-medium text-ink hover:bg-bg-subtle">
                 See all

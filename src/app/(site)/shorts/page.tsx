@@ -4,7 +4,7 @@ import { EmptyState } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
 import { pageOf, queryFeed } from "@/lib/feed";
 
-export const metadata: Metadata = { title: "Shorts" };
+export const metadata: Metadata = { title: "Quick lessons" };
 
 export default async function ShortsPage({ searchParams }: PageProps<"/shorts">) {
   const [catalog, sp] = await Promise.all([getCatalog(), searchParams]);
@@ -17,7 +17,7 @@ export default async function ShortsPage({ searchParams }: PageProps<"/shorts">)
       <div className="sticky top-14 z-20 -mx-4 bg-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
         <Chips chips={[{ key: "all", label: "All" }, ...catalog.courses.map((c) => ({ key: c.id, label: c.title }))]} active={course ?? "all"} param="course" />
       </div>
-      <h1 className="sr-only">Shorts</h1>
+      <h1 className="sr-only">Quick lessons</h1>
       <div className="pt-4">
         <FeedGrid
           key={query}
@@ -25,7 +25,7 @@ export default async function ShortsPage({ searchParams }: PageProps<"/shorts">)
           initial={page.items}
           nextOffset={page.nextOffset}
           query={query}
-          empty={<EmptyState title="No Shorts here yet" body="Quick explainers under a minute show up here as they're added." />}
+          empty={<EmptyState title="No quick lessons here yet" body="Quick explainers under a minute show up here as they're added." />}
         />
       </div>
     </div>
