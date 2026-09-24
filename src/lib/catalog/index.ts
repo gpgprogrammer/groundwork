@@ -17,7 +17,9 @@ export type IndexedCatalog = Curriculum & {
   course: (idOrSlug: string) => Course | undefined;
   unit: (id: string) => Unit | undefined;
   concept: (id: string) => Concept | undefined;
-  topic: (idOrSlug: string) => Topic | undefined;
+  topic: (id: string) => Topic | undefined;
+  /** A topic by its URL slug within a course. */
+  topicIn: (courseId: string, slug: string) => Topic | undefined;
   video: (id: string) => RankedVideo | undefined;
   channel: (id: string) => Channel | undefined;
   videosForTopic: (topicId: string) => RankedVideo[];
@@ -69,11 +71,23 @@ export function indexCatalog(lib: Library, stats: Record<string, SiteStats>): In
   const unitMap = byId(units);
   const conceptMap = byId(concepts);
   const topicMap = byId(topics);
-  const topicSlugs = new Map(topics.map((t) => [t.slug, t]));
+  const topicSlugs = new Map(topics.map((t) => [`${t.courseId}/${t.slug}`, t]));
   const videoMap = byId(videos);
   const channelMap = byId(lib.channels);
   const byTopic = group(videos, (v) => v.topicId);
   const byCourse = group(videos, (v) => v.courseId);
+  // Cross-listed topics (Calc AB) borrow their twin's videos, and so does their course.
+  for (const t of topics) {
+    if (!t.sameAs) continue;
+    const shared = byTopic.get(t.sameAs) ?? [];
+    byTopic.set(t.id, shared);
+    const list = byCourse.get(t.courseId) ?? [];
+    list.push(...shared);
+    byCourse.set(t.courseId, list);
+  }
+  for (const [k, list] of byCourse) {
+    if (topics.some((t) => t.courseId === k && t.sameAs)) byCourse.set(k, [...new Map(list.map((v) => [v.id, v])).values()].sort((a, b) => b.rank.score - a.rank.score));
+  }
   const byChannel = group(videos, (v) => v.channelId);
   const sorted = <T extends { order: number }>(xs: T[]) => [...xs].sort((a, b) => a.order - b.order);
   const topicsByCourse = group(sorted(topics), (t) => t.courseId);
@@ -93,7 +107,8 @@ export function indexCatalog(lib: Library, stats: Record<string, SiteStats>): In
     course: (k) => courseMap.get(k) ?? courseSlugs.get(k),
     unit: (id) => unitMap.get(id),
     concept: (id) => conceptMap.get(id),
-    topic: (k) => topicMap.get(k) ?? topicSlugs.get(k),
+    topic: (id) => topicMap.get(id),
+    topicIn: (courseId, slug) => topicSlugs.get(`${courseId}/${slug}`),
     video: (id) => videoMap.get(id),
     channel: (id) => channelMap.get(id),
     videosForTopic: (id) => byTopic.get(id) ?? [],

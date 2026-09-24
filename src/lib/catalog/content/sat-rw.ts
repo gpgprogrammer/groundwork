@@ -6,11 +6,13 @@ export const satRW: CourseSpec = {
     title: "SAT Reading and Writing",
     shortTitle: "SAT R&W",
     exam: "SAT",
-    subject: "English",
+    category: "SAT",
     description:
       "Short passages and one question each. Vocabulary in context, evidence, structure, and the grammar rules that come up again and again.",
     hue: 330,
     examMonth: "Mar · May · Jun · Aug · Oct · Nov · Dec",
+    query: "SAT Reading and Writing",
+    keywords: ["sat reading", "sat writing", "sat english", "sat verbal", "sat rw", "sat r w"],
   },
   units: [
     {

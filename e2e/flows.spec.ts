@@ -39,7 +39,7 @@ async function signUpAndOnboard(page: Page, opts: { calendar?: boolean } = {}) {
 
 test("anonymous home: chips, sorting, and real YouTube thumbnails", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /best AP and SAT lessons on YouTube/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Every AP course\. The best lessons\. The best tutors\. Free\./ })).toBeVisible();
   const firstThumb = page.locator('main img[src*="ytimg.com"]').first();
   await expect(firstThumb).toBeVisible();
   await page.getByRole("tab", { name: "AP World History: Modern" }).click();
@@ -99,7 +99,7 @@ test("topic mastery updates course progress", async ({ page }) => {
   await page.getByRole("button", { name: "I understand this" }).click();
   await expect(page.getByRole("button", { name: "Understood" })).toBeVisible();
   await page.goto("/courses/ap-calculus-bc");
-  await expect(page.getByText(/1\/\d+ topics/)).toBeVisible();
+  await expect(page.locator("p", { hasText: "topics understood" }).first()).toHaveText(/^1 \/ \d+ topics understood/);
 });
 
 test("search suggestions tolerate typos", async ({ page }) => {
@@ -122,4 +122,61 @@ test("wrong password shows a clear error", async ({ page }) => {
   await page.getByLabel("Password").fill("nope-nope-nope");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByText("That email and password don't match.")).toBeVisible();
+});
+
+test("tutor lists themselves, a student finds them, requests a session, and reviews them", async ({ browser }) => {
+  const tutorPage = await browser.newPage();
+  await signUpAndOnboard(tutorPage);
+  await tutorPage.goto("/tutors/join");
+  await tutorPage.getByRole("textbox", { name: "Name", exact: true }).fill("Dana Whitfield");
+  await tutorPage.getByLabel(/Headline/).fill("AP Chemistry teacher, 9 years in the classroom");
+  await tutorPage.getByLabel("About you").fill("I break chemistry down into the few ideas that explain everything else. Equilibrium and kinetics are my specialty.");
+  await tutorPage.locator('label:has(input[value="ap-chemistry"])').click();
+  await tutorPage.getByLabel("In person").check();
+  await tutorPage.getByRole("textbox", { name: "City" }).fill("Atlanta");
+  await tutorPage.getByLabel("State / region").fill("GA");
+  await tutorPage.getByLabel(/Rate/).fill("55");
+  await tutorPage.getByRole("button", { name: "Publish my listing" }).click();
+  await tutorPage.waitForURL(/\/tutors\/[^/]+\?saved=1/);
+  const tutorUrl = new URL(tutorPage.url()).pathname;
+
+  const student = await browser.newPage();
+  await signUpAndOnboard(student);
+  await student.goto("/tutors?course=ap-chemistry");
+  await student.getByLabel("City").fill("Atlanta");
+  await student.getByLabel("State or region").fill("GA");
+  await student.getByLabel("ZIP code").fill("30305");
+  await student.getByRole("button", { name: "Set", exact: true }).click();
+  await expect(student.getByRole("heading", { name: /Top tutors near Atlanta, GA/ })).toBeVisible();
+  await student.locator(`a[href="${tutorUrl}"]`).first().click();
+  await student.waitForURL(`**${tutorUrl}`);
+  await student.getByLabel("What do you need help with?").fill("Equilibrium and ICE tables before my unit test.");
+  await student.getByRole("button", { name: "Request a session" }).click();
+  await expect(student.getByText("Request sent to Dana")).toBeVisible();
+  await student.getByRole("radio", { name: "5 stars" }).click();
+  await student.getByRole("button", { name: "Post review" }).click();
+  await expect(student.getByText("(1)").first()).toBeVisible();
+
+  await tutorPage.goto("/tutor");
+  await expect(tutorPage.getByText("Equilibrium and ICE tables before my unit test.")).toBeVisible();
+  await tutorPage.close();
+  await student.close();
+});
+
+test("tutoring service links redirect with the course and ZIP, and count the referral", async ({ page }) => {
+  const res = await page.request.get("/r/wyzant?course=ap-chemistry&zip=30305", { maxRedirects: 0 });
+  expect(res.status()).toBe(302);
+  expect(res.headers().location).toBe("https://www.wyzant.com/match/search?kw=AP%20Chemistry&z=30305");
+  const vt = await page.request.get("/r/varsity-tutors?course=ap-psychology", { maxRedirects: 0 });
+  expect(vt.headers().location).toBe("https://www.varsitytutors.com/ap-psychology-tutoring");
+});
+
+test("courses page lists every AP course, grouped and searchable", async ({ page }) => {
+  await page.goto("/courses");
+  for (const name of ["AP Calculus AB", "AP Psychology", "AP Japanese Language and Culture", "AP Research", "AP Physics C: Mechanics"]) {
+    await expect(page.getByRole("link", { name: new RegExp(name.replace(/[:()]/g, ".")) }).first()).toBeVisible();
+  }
+  await page.getByLabel("Find a course").fill("psych");
+  await expect(page.locator("main").getByRole("link", { name: /AP Psychology/ })).toBeVisible();
+  await expect(page.locator("main").getByRole("link", { name: /AP Biology/ })).toHaveCount(0);
 });

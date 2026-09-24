@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/ui";
-import { PLAN } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
@@ -44,12 +43,16 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">Subscription and billing</h2>
+          <h2 className="text-lg font-semibold text-ink">Price</h2>
+          <p className="mt-2">Groundwork is free for students. If we introduce paid features, we will tell you before anything is charged.</p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold text-ink">Tutors and tutoring services</h2>
           <p className="mt-2">
-            Browsing and search are free. New accounts include a {PLAN.trialDays}-day free trial of Groundwork Plus (calendar sync and the
-            personalized feed). After the trial, Plus requires a paid subscription currently priced at ${PLAN.priceMonthly}/month unless otherwise stated at checkout. Payments are
-            processed by Stripe. You may cancel through the billing portal; access continues through the end of the paid period unless
-            otherwise required by law.
+            Tutors listed on Groundwork are independent and set their own rates, schedules, and terms. Links to tutoring services take you to
+            third-party sites whose terms apply. Groundwork may receive a referral fee from some partners; this never affects how tutors or
+            videos are ranked. We don&apos;t guarantee any tutor&apos;s qualifications or results, so please review profiles and reviews carefully.
           </p>
         </section>
 

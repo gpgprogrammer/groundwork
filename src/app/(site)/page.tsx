@@ -130,18 +130,18 @@ function Welcome({ videoCount, channelCount }: { videoCount: number; channelCoun
     <section className="mt-3 overflow-hidden rounded-2xl bg-[#0f0f0f] px-6 py-8 text-white sm:px-10 sm:py-10">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-2xl">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">The best AP and SAT lessons on YouTube, organized.</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Every AP course. The best lessons. The best tutors. Free.</h1>
           <p className="mt-2 text-[15px] leading-relaxed text-white/70">
-            {videoCount.toLocaleString()} lessons from {channelCount.toLocaleString()} educators, sorted into every course, unit, and topic.
-            Ranked by how well they teach, and matched to your class calendar.
+            {videoCount.toLocaleString()} lessons from {channelCount.toLocaleString()} educators, sorted into every course, unit, and topic and
+            ranked by how well they teach. Matched to your class calendar, with top tutors a click away.
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
           <Link href="/signup" className="flex h-10 items-center rounded-full bg-white px-5 text-sm font-medium text-[#0f0f0f] hover:bg-white/90">
             Sign up free
           </Link>
-          <Link href="/courses" className="flex h-10 items-center rounded-full bg-white/10 px-5 text-sm font-medium text-white hover:bg-white/20">
-            Browse courses
+          <Link href="/tutors" className="flex h-10 items-center rounded-full bg-white/10 px-5 text-sm font-medium text-white hover:bg-white/20">
+            Find a tutor
           </Link>
         </div>
       </div>

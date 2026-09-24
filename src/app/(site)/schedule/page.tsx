@@ -1,4 +1,4 @@
-import { CalendarDays, CircleAlert, RefreshCw } from "lucide-react";
+import { CalendarDays, RefreshCw } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { disconnectCalendar } from "@/app/actions/learning";
@@ -12,7 +12,7 @@ import { focusCourses } from "@/lib/focus";
 import { toFeedVideo } from "@/lib/feed";
 import { futureEvents, whenLabel } from "@/lib/recommend";
 import type { ScheduleEvent } from "@/lib/types";
-import { hasPlus, requireViewer } from "@/lib/viewer";
+import { requireViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "My schedule" };
 
@@ -21,7 +21,6 @@ const KIND: Record<ScheduleEvent["kind"], string> = { test: "Test", assignment: 
 export default async function SchedulePage() {
   const [viewer, catalog] = await Promise.all([requireViewer("/schedule"), getCatalog()]);
   const schedule = viewer.state.schedule;
-  const plus = hasPlus(viewer.access);
   const upcoming = futureEvents(schedule?.events ?? []).slice(0, 40);
 
   // Group by day.
@@ -39,18 +38,6 @@ export default async function SchedulePage() {
       <p className="mt-1 max-w-2xl text-[15px] text-muted">
         Connect your class calendar and Groundwork lines up the right videos before each quiz, test, and assignment.
       </p>
-
-      {!plus ? (
-        <div className="mt-6 flex flex-col gap-3 rounded-xl bg-warn-soft px-5 py-4 text-sm text-ink sm:flex-row sm:items-center sm:justify-between">
-          <p className="flex items-start gap-2">
-            <CircleAlert className="mt-0.5 size-4 shrink-0 text-warn" />
-            Calendar sync is part of Groundwork Plus. Your free month has ended.
-          </p>
-          <Link href="/settings/billing" className="shrink-0 rounded-full bg-ink px-4 py-2 font-medium text-bg">
-            Continue with Plus
-          </Link>
-        </div>
-      ) : null}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_420px]">
         <section className="min-w-0">
@@ -90,7 +77,9 @@ export default async function SchedulePage() {
                 <h2 className="text-lg font-bold tracking-tight text-ink">Connect a calendar</h2>
                 <p className="mt-0.5 text-sm text-muted">Google Calendar, Canvas, Schoology, Apple Calendar, Outlook, or any .ics file.</p>
               </div>
-              <div className="p-5">{plus ? <ScheduleConnect /> : <p className="text-sm text-muted">Available with Groundwork Plus.</p>}</div>
+              <div className="p-5">
+                <ScheduleConnect />
+              </div>
             </div>
           )}
         </section>
@@ -105,13 +94,15 @@ export default async function SchedulePage() {
                     {schedule.events.length} school events · {schedule.events.filter((e) => e.topicIds.length).length} matched to topics
                   </p>
                 </div>
-                {schedule.url && plus ? <ResyncButton /> : null}
+                {schedule.url ? <ResyncButton /> : null}
               </div>
               <details className="group px-5 py-3">
                 <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-accent">
                   <RefreshCw className="size-4" /> Connect a different calendar
                 </summary>
-                <div className="pt-4">{plus ? <ScheduleConnect compact /> : null}</div>
+                <div className="pt-4">
+                  <ScheduleConnect compact />
+                </div>
               </details>
               <form action={disconnectCalendar} className="border-t border-line px-5 py-3">
                 <button className="text-sm text-muted hover:text-ink">Disconnect calendar</button>

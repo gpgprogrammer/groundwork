@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-import { computeAccess } from "../src/lib/access";
 import { buildCurriculum } from "../src/lib/catalog/build";
 import { detectCourse, matchTopics } from "../src/lib/catalog/match";
 import { eventsFromIcs } from "../src/lib/ics";
@@ -19,7 +18,7 @@ const video = (over: Partial<YtVideo>): YtVideo => ({
   comments: 200,
   thumbnail: "",
   courseId: "ap-calculus-bc",
-  topicId: "chain-rule",
+  topicId: "ap-calculus-bc/chain-rule",
   relevance: 1,
   isShort: false,
   ...over,
@@ -61,39 +60,29 @@ test.describe("ranking", () => {
 test.describe("topic matching", () => {
   const c = buildCurriculum();
   test("titles and calendar events find their topics", () => {
-    expect(matchTopics(c, "The Chain Rule - Calculus in 10 minutes")[0]?.topicId).toBe("chain-rule");
-    expect(matchTopics(c, "Champa Rice and the Song Dynasty [AP World Review]")[0]?.topicId).toBe("champa-rice");
-    expect(matchTopics(c, "Unit 6 quiz: Le Chatelier's principle", { courseIds: ["ap-chemistry"] })[0]?.topicId).toBe("le-chatelier");
-    expect(matchTopics(c, "Hardy Weinberg practice problems")[0]?.topicId).toBe("hardy-weinberg");
+    expect(matchTopics(c, "The Chain Rule - Calculus in 10 minutes", { courseIds: ["ap-calculus-bc"] })[0]?.topicId).toBe("ap-calculus-bc/chain-rule");
+    expect(matchTopics(c, "Champa Rice and the Song Dynasty [AP World Review]")[0]?.topicId).toBe("ap-world-history/champa-rice");
+    expect(matchTopics(c, "Unit 6 quiz: Le Chatelier's principle", { courseIds: ["ap-chemistry"] })[0]?.topicId).toBe("ap-chemistry/le-chatelier");
+    expect(matchTopics(c, "Hardy Weinberg practice problems")[0]?.topicId).toBe("ap-biology/hardy-weinberg");
+    expect(matchTopics(c, "Operant conditioning and reinforcement schedules", { courseIds: ["ap-psychology"] })[0]?.topicId).toBe("ap-psychology/operant-conditioning-and-social-learning");
   });
   test("ambiguous one-word aliases don't over-match", () => {
     const m = matchTopics(c, "food chain and energy pyramids");
-    expect(m.find((x) => x.topicId === "chain-rule" && x.score >= 0.75)).toBeUndefined();
+    expect(m.find((x) => x.topicId.endsWith("/chain-rule") && x.score >= 0.75)).toBeUndefined();
   });
   test("course detection from event titles", () => {
-    expect(detectCourse("AP Calc BC - Unit 3 test")).toBe("ap-calculus-bc");
-    expect(detectCourse("APWH DBQ practice")).toBe("ap-world-history");
-    expect(detectCourse("Chem lab report due")).toBe("ap-chemistry");
-    expect(detectCourse("Soccer practice")).toBeNull();
+    expect(detectCourse(c, "AP Calc BC - Unit 3 test")).toBe("ap-calculus-bc");
+    expect(detectCourse(c, "Calc quiz Friday", ["ap-calculus-ab"])).toBe("ap-calculus-ab");
+    expect(detectCourse(c, "Calc quiz Friday", ["ap-calculus-bc"])).toBe("ap-calculus-bc");
+    expect(detectCourse(c, "APWH DBQ practice")).toBe("ap-world-history");
+    expect(detectCourse(c, "Chem lab report due")).toBe("ap-chemistry");
+    expect(detectCourse(c, "APUSH period 3 test")).toBe("ap-us-history");
+    expect(detectCourse(c, "AP Psych unit 2 quiz")).toBe("ap-psychology");
+    expect(detectCourse(c, "Physics C E&M exam")).toBe("ap-physics-c-electricity-and-magnetism");
+    expect(detectCourse(c, "Soccer practice")).toBeNull();
   });
 });
 
-test.describe("access", () => {
-  const now = Date.parse("2026-09-01T00:00:00Z");
-  const state = (over: { trialEndsAt?: string; status?: "none" | "active" | "canceled"; role?: "student" | "creator" }) =>
-    ({
-      profile: { role: over.role ?? "student", trialEndsAt: over.trialEndsAt ?? "2026-09-10T00:00:00Z" },
-      subscription: { status: over.status ?? "none", currentPeriodEnd: null, cancelAtPeriodEnd: false },
-    }) as unknown as Parameters<typeof computeAccess>[0];
-
-  test("trial, expired, subscribed", () => {
-    expect(computeAccess(null, now).kind).toBe("anonymous");
-    expect(computeAccess(state({}), now)).toMatchObject({ kind: "trial", daysLeft: 9 });
-    expect(computeAccess(state({ trialEndsAt: "2026-08-01T00:00:00Z" }), now).kind).toBe("expired");
-    expect(computeAccess(state({ trialEndsAt: "2026-08-01T00:00:00Z", status: "active" }), now).kind).toBe("active");
-    expect(computeAccess(state({ trialEndsAt: "2026-08-01T00:00:00Z", status: "canceled" }), now).kind).toBe("expired");
-  });
-});
 
 test.describe("calendar sync", () => {
   const c = buildCurriculum();
@@ -150,11 +139,11 @@ test.describe("calendar sync", () => {
     expect(quiz.kind).toBe("test");
     expect(quiz.allDay).toBe(true);
     expect(quiz.courseId).toBe("ap-calculus-bc");
-    expect(quiz.topicIds).toEqual(expect.arrayContaining(["chain-rule", "implicit-differentiation"]));
+    expect(quiz.topicIds).toEqual(expect.arrayContaining(["ap-calculus-bc/chain-rule", "ap-calculus-bc/implicit-differentiation"]));
 
     const dbq = events.find((e) => e.uid === "canvas-assignment-9")!;
     expect(dbq.courseId).toBe("ap-world-history");
-    expect(dbq.topicIds).toContain("champa-rice");
+    expect(dbq.topicIds).toContain("ap-world-history/champa-rice");
 
     const chemClasses = events.filter((e) => e.uid.startsWith("class-chem"));
     expect(chemClasses.length).toBeGreaterThan(3);
@@ -162,6 +151,17 @@ test.describe("calendar sync", () => {
 
     const folded = events.find((e) => e.uid === "folded")!;
     expect(folded.title).toBe("Unit 6 test: Le Chatelier's principle and ICE tables");
-    expect(folded.topicIds).toEqual(expect.arrayContaining(["le-chatelier", "ice-tables"]));
+    expect(folded.topicIds).toEqual(expect.arrayContaining(["ap-chemistry/le-chatelier", "ap-chemistry/ice-tables"]));
   });
+});
+
+test("every course has units, topics, search keywords, and unique ids", () => {
+  const c = buildCurriculum();
+  expect(c.courses.length).toBeGreaterThanOrEqual(40);
+  expect(new Set(c.topics.map((t) => t.id)).size).toBe(c.topics.length);
+  for (const course of c.courses) {
+    expect(course.keywords.length, course.slug).toBeGreaterThan(0);
+    expect(c.topics.filter((t) => t.courseId === course.id).length, course.slug).toBeGreaterThan(3);
+  }
+  for (const t of c.topics.filter((t) => t.sameAs)) expect(c.topics.some((x) => x.id === t.sameAs), t.id).toBe(true);
 });

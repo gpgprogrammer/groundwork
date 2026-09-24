@@ -17,6 +17,7 @@ export default async function OnboardingPage() {
         id: c.id,
         title: c.title,
         exam: c.exam,
+        category: c.category,
         hue: c.hue,
         topics: catalog.topicsForCourse(c.id).length,
         videos: catalog.videosForCourse(c.id).length,

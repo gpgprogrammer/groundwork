@@ -20,6 +20,14 @@ const PRIOR_VIEWS = 3000;
 const PRIOR_LIKE_RATE = 0.025;
 const GOOD_LIKE_RATE = 0.06;
 
+/**
+ * Songs, parodies, and ASMR draw huge like rates for reasons other than teaching.
+ * They stay findable (and sort normally by views or likes), but rank below real lessons.
+ */
+const ENTERTAINMENT = /\b(parody|song|music video|rap|asmr|reacts?|reaction|meme|skit|musical)\b/i;
+const ENTERTAINMENT_FACTOR = 0.8;
+export const isEntertainment = (v: Pick<YtVideo, "title" | "courseId">) => v.courseId !== "ap-music-theory" && ENTERTAINMENT.test(v.title);
+
 export function wilsonLowerBound(positive: number, total: number, z = 1.96) {
   if (total === 0) return 0;
   const p = positive / total;
@@ -65,7 +73,8 @@ export function rankVideo(v: YtVideo, s: SiteStats = EMPTY_SITE_STATS): RankBrea
   const w = RANKING_WEIGHTS;
   const score =
     100 * (w.helpful * helpful + w.likeRate * lr + w.relevance * relevance + w.reach * reach + w.saves * saves + w.discussion * discussion);
-  return { score: Math.round(score * 10) / 10, helpful, likeRate: lr, relevance, reach, saves, discussion };
+  const adjusted = isEntertainment(v) ? score * ENTERTAINMENT_FACTOR : score;
+  return { score: Math.round(adjusted * 10) / 10, helpful, likeRate: lr, relevance, reach, saves, discussion };
 }
 
 export const SORTS = {

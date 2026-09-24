@@ -34,8 +34,8 @@ export default function PrivacyPage() {
               and topics you mark as understood, used to rank videos and personalize recommendations.
             </li>
             <li>
-              <strong className="font-medium text-ink">Payment data</strong>: subscription status and Stripe customer identifiers. Card
-              numbers are handled by Stripe, not stored on our servers.
+              <strong className="font-medium text-ink">Tutoring</strong>: if you list yourself as a tutor, your profile is public. If you
+              request a session, your name, email, and message go to that tutor. We record referrals to tutors and partner services.
             </li>
             <li>
               <strong className="font-medium text-ink">Calendar data</strong>: if you connect a calendar, we store the calendar link you
@@ -51,14 +51,13 @@ export default function PrivacyPage() {
 
         <section>
           <h2 className="text-lg font-semibold text-ink">How we use information</h2>
-          <p className="mt-2">We use your information to operate the service, including authentication, lesson ranking, recommendations, billing, fraud prevention, and support. We do not sell your personal information.</p>
+          <p className="mt-2">We use your information to operate the service, including authentication, lesson ranking, recommendations, tutor matching, fraud prevention, and support. We do not sell your personal information.</p>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold text-ink">Sharing</h2>
           <p className="mt-2">
-            We share data with service providers that help us run Groundwork (for example Supabase for auth/database and Stripe for
-            payments). When you open a video you go to YouTube, which handles your viewing under Google&apos;s Privacy Policy. We may disclose information if required by law or to protect
+            We share data with service providers that help us run Groundwork (for example Supabase for auth and database). When you open a video you go to YouTube, which handles your viewing under Google&apos;s Privacy Policy. We may disclose information if required by law or to protect
             users and the service.
           </p>
         </section>

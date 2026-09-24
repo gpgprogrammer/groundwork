@@ -1,16 +1,32 @@
 export type Exam = "AP" | "SAT";
 
+export const CATEGORIES = [
+  "Math & Computer Science",
+  "Sciences",
+  "History & Social Sciences",
+  "English",
+  "World Languages & Cultures",
+  "Arts",
+  "AP Capstone",
+  "SAT",
+] as const;
+export type Category = (typeof CATEGORIES)[number];
+
 export type Course = {
   id: string;
   slug: string;
   title: string;
   shortTitle: string;
   exam: Exam;
-  subject: "Math" | "Science" | "History" | "English";
+  category: Category;
   description: string;
   /** Hue (0–360) used for subtle per-course accents. */
   hue: number;
   examMonth: string;
+  /** Appended to topic titles when searching YouTube, e.g. "AP Psychology". */
+  query: string;
+  /** Lowercase phrases that identify the course in titles and calendar events. */
+  keywords: string[];
 };
 
 export type Unit = {
@@ -40,10 +56,11 @@ export type Topic = {
   title: string;
   /** One or two sentences, shown at the top of the topic page. */
   summary: string;
-  glyph: string;
   keyPoints: string[];
   aliases: string[];
   order: number;
+  /** Cross-listed topic whose videos this one shares (e.g. Calc AB → Calc BC). */
+  sameAs?: string;
 };
 
 /** A YouTube channel that publishes lessons in the library. */
@@ -88,8 +105,6 @@ export type Curriculum = {
 
 export type Library = { generatedAt: string | null; channels: Channel[]; videos: YtVideo[] };
 
-export type Role = "student" | "creator";
-
 export type ScheduleEvent = {
   uid: string;
   title: string;
@@ -110,6 +125,10 @@ export type Schedule = {
   events: ScheduleEvent[];
 };
 
+export type Role = "student" | "tutor";
+
+export type Location = { city: string; region: string; country: string; zip: string };
+
 export type Profile = {
   id: string;
   email: string;
@@ -121,21 +140,11 @@ export type Profile = {
   goal: string | null;
   /** Topics the student says they're covering in class right now. */
   focusTopicIds: string[];
+  location: Location | null;
   createdAt: string;
-  trialEndsAt: string;
 };
 
 export type HistoryEntry = { videoId: string; openedAt: string; opens: number };
-
-export type SubscriptionStatus = "none" | "trialing" | "active" | "past_due" | "canceled";
-
-export type Subscription = {
-  status: SubscriptionStatus;
-  stripeCustomerId: string | null;
-  stripeSubscriptionId: string | null;
-  currentPeriodEnd: string | null;
-  cancelAtPeriodEnd: boolean;
-};
 
 export type UserState = {
   profile: Profile;
@@ -145,11 +154,53 @@ export type UserState = {
   /** Topics the student marked as understood (Khan-style mastery). */
   mastered: Record<string, string>; // topicId -> at
   schedule: Schedule | null;
-  subscription: Subscription;
 };
 
-export type Access =
-  | { kind: "anonymous" }
-  | { kind: "trial"; daysLeft: number; endsAt: string }
-  | { kind: "active"; renewsAt: string | null; cancelAtPeriodEnd: boolean }
-  | { kind: "expired" };
+/** An independent tutor who listed themselves on Groundwork. */
+export type Tutor = {
+  id: string;
+  userId: string;
+  name: string;
+  headline: string;
+  bio: string;
+  courseIds: string[];
+  /** USD per hour; null means free or volunteer. */
+  hourlyRate: number | null;
+  city: string;
+  region: string;
+  country: string;
+  online: boolean;
+  inPerson: boolean;
+  /** Optional external scheduling link (Calendly, etc.). */
+  bookingUrl: string | null;
+  yearsExperience: number;
+  credentials: string;
+  createdAt: string;
+};
+
+export type TutorReview = { id: string; tutorId: string; userId: string; userName: string; rating: number; text: string; createdAt: string };
+
+export type TutorWithStats = Tutor & { rating: number | null; reviewCount: number; score: number };
+
+export type TutoringRequest = {
+  id: string;
+  tutorId: string;
+  userId: string | null;
+  name: string;
+  email: string;
+  courseId: string | null;
+  message: string;
+  availability: string;
+  status: "new" | "replied" | "scheduled" | "archived";
+  createdAt: string;
+};
+
+/** A tracked referral to a tutor or tutoring service (basis for partner commission). */
+export type Referral = {
+  id: string;
+  partnerId: string;
+  kind: "service" | "tutor-booking" | "tutor-request";
+  userId: string | null;
+  courseId: string | null;
+  createdAt: string;
+};

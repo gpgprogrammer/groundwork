@@ -71,18 +71,28 @@ export function matchTopics(m: TopicMatcher, text: string, opts: { courseIds?: s
   return results.sort((a, b) => b.score - a.score).slice(0, opts.limit ?? 5);
 }
 
-const COURSE_PATTERNS: [string, RegExp][] = [
-  ["ap-calculus-bc", /\b(calc(ulus)?( bc| ab)?|ap calc)\b/],
-  ["ap-world-history", /\b(ap world|world history|apwh|whap)\b/],
-  ["sat-math", /\bsat math\b|\bsat\b.*\bmath\b/],
-  ["sat-reading-writing", /\bsat (reading|writing|verbal|english|r ?w)\b/],
-  ["ap-biology", /\b(ap bio(logy)?|biology|bio)\b/],
-  ["ap-chemistry", /\b(ap chem(istry)?|chemistry|chem)\b/],
-];
-
-/** Guess the course from text like "AP Calc — Unit 3 quiz". */
-export function detectCourse(text: string): string | null {
+/**
+ * Guess the course from text like "AP Calc — Unit 3 quiz" using each course's
+ * keywords. The longest matching keyword wins; ties go to the student's own
+ * courses (so a Calc AB student's "calc quiz" maps to AB, not BC).
+ */
+export function detectCourse(m: TopicMatcher, text: string, preferred: string[] = []): string | null {
   const hay = norm(text);
-  for (const [id, re] of COURSE_PATTERNS) if (re.test(hay)) return id;
-  return null;
+  let best: { id: string; len: number; pref: boolean } | null = null;
+  for (const c of m.courses) {
+    for (const k of c.keywords) {
+      const kw = norm(k);
+      if (!kw || !has(hay, kw)) continue;
+      const cand = { id: c.id, len: kw.length, pref: preferred.includes(c.id) };
+      if (!best || cand.len > best.len || (cand.len === best.len && cand.pref && !best.pref)) best = cand;
+    }
+  }
+  return best?.id ?? null;
+}
+
+/** Whether text mentions a specific course by any of its keywords. */
+export function mentionsCourse(m: TopicMatcher, text: string, courseId: string | null): boolean {
+  if (!courseId) return false;
+  const hay = norm(text);
+  return m.courses.find((c) => c.id === courseId)?.keywords.some((k) => has(hay, norm(k))) ?? false;
 }

@@ -10,7 +10,7 @@ import { inputClass } from "@/components/form";
 import { ScheduleConnect } from "@/components/schedule-connect";
 import { Button, cn } from "@/components/ui";
 
-type CourseOption = { id: string; title: string; exam: string; hue: number; topics: number; videos: number };
+type CourseOption = { id: string; title: string; exam: string; category: string; hue: number; topics: number; videos: number };
 
 type Props = {
   firstName: string;
@@ -87,8 +87,12 @@ export function OnboardingFlow({ firstName, initial, courses, focus }: Props) {
             <>
               <h1 className="text-[28px] font-bold tracking-tight text-ink">Welcome, {firstName}. What are you studying?</h1>
               <p className="mt-2 text-[15px] text-muted">Pick everything you&apos;re preparing for this year. You can change this later.</p>
-              <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                {courses.map((c) => {
+              <div className="mt-8 space-y-6">
+                {[...new Set(courses.map((c) => c.category))].map((cat) => (
+                  <div key={cat}>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{cat}</p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                {courses.filter((c) => c.category === cat).map((c) => {
                   const on = selected.includes(c.id);
                   return (
                     <button
@@ -97,16 +101,14 @@ export function OnboardingFlow({ firstName, initial, courses, focus }: Props) {
                       onClick={() => toggle(c.id)}
                       aria-pressed={on}
                       className={cn(
-                        "flex items-center gap-4 rounded-xl p-4 text-left transition-all",
+                        "flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all",
                         on ? "bg-accent-soft ring-2 ring-accent" : "bg-bg-subtle hover:bg-line",
                       )}
                     >
                       <span className="size-3 shrink-0 rounded-full" style={{ background: `oklch(0.6 0.14 ${c.hue})` }} />
                       <span className="min-w-0 flex-1">
                         <span className="block text-[15px] font-medium text-ink">{c.title}</span>
-                        <span className="tabular block text-xs text-muted">
-                          {c.topics} topics · {c.videos.toLocaleString()} videos
-                        </span>
+                        <span className="tabular block text-xs text-muted">{c.videos.toLocaleString()} videos</span>
                       </span>
                       <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-full", on ? "bg-accent text-white" : "ring-1 ring-line-strong")}>
                         {on ? <Check className="size-3" strokeWidth={3} /> : null}
@@ -114,6 +116,9 @@ export function OnboardingFlow({ firstName, initial, courses, focus }: Props) {
                     </button>
                   );
                 })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </>
           ) : null}

@@ -6,11 +6,13 @@ export const calcBC: CourseSpec = {
     title: "AP Calculus BC",
     shortTitle: "Calc BC",
     exam: "AP",
-    subject: "Math",
+    category: "Math & Computer Science",
     description:
       "Limits through infinite series. Everything in AB, plus parametric, polar, and vector motion, and the series unit that decides most 5s.",
     hue: 232,
     examMonth: "May",
+    query: "AP Calculus BC",
+    keywords: ["ap calculus bc", "ap calc bc", "calc bc", "calculus bc", "ap calc", "calculus", "calc"],
   },
   units: [
     {

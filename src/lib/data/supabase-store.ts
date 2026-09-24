@@ -1,8 +1,7 @@
 import "server-only";
-import { PLAN } from "@/lib/env";
 import { createAdminClient, createSessionClient } from "@/lib/supabase/server";
-import type { Profile, SiteStats, Subscription } from "@/lib/types";
-import { emptySubscription, type Store } from "./store";
+import type { Profile, SiteStats, Tutor, TutoringRequest, TutorReview } from "@/lib/types";
+import type { Store } from "./store";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- rows are mapped explicitly below */
 
@@ -21,20 +20,51 @@ const toProfile = (r: any): Profile => ({
   examDate: r.exam_date,
   goal: r.goal,
   focusTopicIds: r.focus_topic_ids ?? [],
+  location: r.location ?? null,
   createdAt: r.created_at,
-  trialEndsAt: r.trial_ends_at,
 });
 
-const toSubscription = (r: any): Subscription =>
-  r
-    ? {
-        status: r.status,
-        stripeCustomerId: r.stripe_customer_id,
-        stripeSubscriptionId: r.stripe_subscription_id,
-        currentPeriodEnd: r.current_period_end,
-        cancelAtPeriodEnd: r.cancel_at_period_end,
-      }
-    : emptySubscription();
+const toTutor = (r: any): Tutor => ({
+  id: r.id,
+  userId: r.user_id,
+  name: r.name,
+  headline: r.headline,
+  bio: r.bio,
+  courseIds: r.course_ids ?? [],
+  hourlyRate: r.hourly_rate,
+  city: r.city,
+  region: r.region,
+  country: r.country,
+  online: r.online,
+  inPerson: r.in_person,
+  bookingUrl: r.booking_url,
+  yearsExperience: r.years_experience,
+  credentials: r.credentials,
+  createdAt: r.created_at,
+});
+
+const toReview = (r: any): TutorReview => ({
+  id: r.id,
+  tutorId: r.tutor_id,
+  userId: r.user_id,
+  userName: r.user_name,
+  rating: r.rating,
+  text: r.text,
+  createdAt: r.created_at,
+});
+
+const toRequest = (r: any): TutoringRequest => ({
+  id: r.id,
+  tutorId: r.tutor_id,
+  userId: r.user_id,
+  name: r.name,
+  email: r.email,
+  courseId: r.course_id,
+  message: r.message,
+  availability: r.availability,
+  status: r.status,
+  createdAt: r.created_at,
+});
 
 const STATS_TTL_MS = 60_000;
 let statsCache: { at: number; value: Promise<Record<string, SiteStats>> } | null = null;
@@ -57,14 +87,13 @@ export function createSupabaseStore(): Store {
 
     async getUserState(userId) {
       const db = await createSessionClient();
-      const [profile, history, saves, votes, mastered, schedule, sub] = await Promise.all([
+      const [profile, history, saves, votes, mastered, schedule] = await Promise.all([
         db.from("profiles").select("*").eq("id", userId).maybeSingle(),
         db.from("history").select("*").eq("user_id", userId),
         db.from("saves").select("video_id, created_at").eq("user_id", userId),
         db.from("votes").select("video_id, value").eq("user_id", userId),
         db.from("mastery").select("topic_id, created_at").eq("user_id", userId),
         db.from("schedules").select("data").eq("user_id", userId).maybeSingle(),
-        db.from("subscriptions").select("*").eq("user_id", userId).maybeSingle(),
       ]);
       const p = must(profile);
       if (!p) return null;
@@ -75,7 +104,6 @@ export function createSupabaseStore(): Store {
         votes: Object.fromEntries(must(votes).map((r: any) => [r.video_id, r.value])),
         mastered: Object.fromEntries(must(mastered).map((r: any) => [r.topic_id, r.created_at])),
         schedule: (must(schedule) as any)?.data ?? null,
-        subscription: toSubscription(must(sub)),
       };
     },
 
@@ -84,15 +112,7 @@ export function createSupabaseStore(): Store {
       const existing = must(await db.from("profiles").select("*").eq("id", user.id).maybeSingle());
       if (existing) return toProfile(existing);
       // The auth trigger normally creates this row; this is a fallback.
-      const admin = createAdminClient();
-      const row = must(
-        await admin
-          .from("profiles")
-          .upsert({ id: user.id, email: user.email, name: user.name, trial_ends_at: new Date(Date.now() + PLAN.trialDays * 86400000).toISOString() })
-          .select("*")
-          .single(),
-      );
-      await admin.from("subscriptions").upsert({ user_id: user.id }, { onConflict: "user_id", ignoreDuplicates: true });
+      const row = must(await createAdminClient().from("profiles").upsert({ id: user.id, email: user.email, name: user.name }).select("*").single());
       return toProfile(row);
     },
 
@@ -104,15 +124,15 @@ export function createSupabaseStore(): Store {
       if (patch.examDate !== undefined) cols.exam_date = patch.examDate;
       if (patch.goal !== undefined) cols.goal = patch.goal;
       if (patch.focusTopicIds !== undefined) cols.focus_topic_ids = patch.focusTopicIds;
+      if (patch.location !== undefined) cols.location = patch.location;
       if (!Object.keys(cols).length) return;
       const db = await createSessionClient();
       must(await db.from("profiles").update(cols).eq("id", userId).select("id"));
     },
 
-    async recordOpen(userId, videoId) {
+    async recordOpen(_userId, videoId) {
       const db = await createSessionClient();
       must(await db.rpc("record_open", { p_video_id: videoId }));
-      void userId;
     },
 
     async toggleSave(userId, videoId) {
@@ -149,26 +169,98 @@ export function createSupabaseStore(): Store {
       else must(await db.from("schedules").upsert({ user_id: userId, data: schedule, updated_at: new Date().toISOString() }).select("user_id"));
     },
 
-    async setSubscription(userId, sub) {
+    async listTutors() {
+      const rows = must(await createAdminClient().from("tutors").select("*").limit(5000));
+      return rows.map(toTutor);
+    },
+
+    async listReviews(tutorId) {
+      let q = createAdminClient().from("tutor_reviews").select("*").order("created_at", { ascending: false }).limit(5000);
+      if (tutorId) q = q.eq("tutor_id", tutorId);
+      return must(await q).map(toReview);
+    },
+
+    async saveTutor(userId, input) {
+      const db = await createSessionClient();
+      const row = must(
+        await db
+          .from("tutors")
+          .upsert(
+            {
+              user_id: userId,
+              name: input.name,
+              headline: input.headline,
+              bio: input.bio,
+              course_ids: input.courseIds,
+              hourly_rate: input.hourlyRate,
+              city: input.city,
+              region: input.region,
+              country: input.country,
+              online: input.online,
+              in_person: input.inPerson,
+              booking_url: input.bookingUrl,
+              years_experience: input.yearsExperience,
+              credentials: input.credentials,
+            },
+            { onConflict: "user_id" },
+          )
+          .select("*")
+          .single(),
+      );
+      await createAdminClient().from("profiles").update({ role: "tutor" }).eq("id", userId);
+      return toTutor(row);
+    },
+
+    async removeTutor(userId) {
+      const db = await createSessionClient();
+      must(await db.from("tutors").delete().eq("user_id", userId).select("id"));
+      await createAdminClient().from("profiles").update({ role: "student" }).eq("id", userId);
+    },
+
+    async saveReview(r) {
+      const db = await createSessionClient();
       must(
-        await createAdminClient()
-          .from("subscriptions")
-          .upsert({
-            user_id: userId,
-            status: sub.status,
-            stripe_customer_id: sub.stripeCustomerId,
-            stripe_subscription_id: sub.stripeSubscriptionId,
-            current_period_end: sub.currentPeriodEnd,
-            cancel_at_period_end: sub.cancelAtPeriodEnd,
-            updated_at: new Date().toISOString(),
-          })
-          .select("user_id"),
+        await db
+          .from("tutor_reviews")
+          .upsert({ tutor_id: r.tutorId, user_id: r.userId, user_name: r.userName, rating: r.rating, text: r.text }, { onConflict: "tutor_id,user_id" })
+          .select("id"),
       );
     },
 
-    async findUserIdByStripeCustomer(customerId) {
-      const row = must(await createAdminClient().from("subscriptions").select("user_id").eq("stripe_customer_id", customerId).maybeSingle()) as any;
-      return row?.user_id ?? null;
+    async createTutoringRequest(req) {
+      // Insert without reading back: the requester can't select rows they sent.
+      must(
+        await createAdminClient().from("tutoring_requests").insert({
+          tutor_id: req.tutorId,
+          user_id: req.userId,
+          name: req.name,
+          email: req.email,
+          course_id: req.courseId,
+          message: req.message,
+          availability: req.availability,
+        }),
+      );
+    },
+
+    async listTutoringRequests(tutorId) {
+      const db = await createSessionClient();
+      return must(await db.from("tutoring_requests").select("*").eq("tutor_id", tutorId).order("created_at", { ascending: false })).map(toRequest);
+    },
+
+    async updateTutoringStatus(tutorId, id, status) {
+      const db = await createSessionClient();
+      must(await db.from("tutoring_requests").update({ status }).eq("id", id).eq("tutor_id", tutorId).select("id"));
+    },
+
+    async logReferral(ref) {
+      must(await createAdminClient().from("referrals").insert({ partner_id: ref.partnerId, kind: ref.kind, user_id: ref.userId, course_id: ref.courseId }));
+    },
+
+    async referralCounts(partnerIds) {
+      const rows = must(await createAdminClient().from("referrals").select("partner_id").in("partner_id", partnerIds).limit(100000));
+      const out: Record<string, number> = Object.fromEntries(partnerIds.map((p) => [p, 0]));
+      for (const r of rows as any[]) out[r.partner_id]++;
+      return out;
     },
   };
 }

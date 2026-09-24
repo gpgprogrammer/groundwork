@@ -106,7 +106,7 @@ export function search(catalog: IndexedCatalog, query: string, filters: SearchFi
   if (want("course"))
     for (const course of catalog.courses) {
       if (!courseOk(course.id)) continue;
-      const score = scoreDoc(qTokens, qPhrase, fieldsFor(course, () => [[course.title, 9], [course.shortTitle, 9], [`${course.exam} ${course.subject}`, 4]]));
+      const score = scoreDoc(qTokens, qPhrase, fieldsFor(course, () => [[course.title, 9], [course.shortTitle, 9], [`${course.exam} ${course.category}`, 4]]));
       if (score) hits.push({ kind: "course", score: score * 1.1, course });
     }
 

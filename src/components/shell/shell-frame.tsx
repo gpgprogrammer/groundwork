@@ -3,7 +3,6 @@
 import {
   CalendarDays,
   Clapperboard,
-  CreditCard,
   GraduationCap,
   History,
   House,
@@ -15,6 +14,7 @@ import {
   Sigma,
   ThumbsUp,
   UserRound,
+  Users,
   X,
   Clock,
   ChevronRight,
@@ -30,8 +30,7 @@ import { ChannelAvatar } from "../video-card";
 
 export type ShellData = {
   user: { name: string; email: string } | null;
-  trialDaysLeft: number | null;
-  expired: boolean;
+  isTutor: boolean;
   hasSchedule: boolean;
   courses: { slug: string; title: string; hue: number }[];
   myCourses: string[];
@@ -140,15 +139,6 @@ function TopBar({ data, onMenu }: { data: ShellData; onMenu: () => void }) {
             </button>
             {data.user ? (
               <>
-                {data.expired ? (
-                  <Link href="/settings/billing" className="hidden h-9 items-center rounded-full bg-accent px-4 text-sm font-medium text-white hover:bg-accent/90 md:flex">
-                    Continue with Plus
-                  </Link>
-                ) : data.trialDaysLeft !== null ? (
-                  <Link href="/settings/billing" className="tabular hidden h-9 items-center rounded-full px-3 text-[13px] text-muted hover:bg-bg-subtle lg:flex">
-                    {data.trialDaysLeft} days of Plus left
-                  </Link>
-                ) : null}
                 <Link
                   href="/schedule"
                   className="relative flex size-10 items-center justify-center rounded-full hover:bg-bg-subtle"
@@ -158,7 +148,7 @@ function TopBar({ data, onMenu }: { data: ShellData; onMenu: () => void }) {
                   <CalendarDays className="size-5" />
                   {!data.hasSchedule ? <span className="absolute right-2 top-2 size-2 rounded-full bg-accent ring-2 ring-bg" /> : null}
                 </Link>
-                <UserMenu user={data.user} />
+                <UserMenu user={data.user} isTutor={data.isTutor} />
               </>
             ) : (
               <Link
@@ -312,7 +302,7 @@ function SearchBox({ autoFocus }: { autoFocus?: boolean }) {
   );
 }
 
-function UserMenu({ user }: { user: { name: string; email: string } }) {
+function UserMenu({ user, isTutor }: { user: { name: string; email: string }; isTutor: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -350,7 +340,9 @@ function UserMenu({ user }: { user: { name: string; email: string } }) {
           <div className="my-2 h-px bg-line" />
           <MenuRow href="/library" icon={<Clock className="size-5" />}>Your library</MenuRow>
           <MenuRow href="/schedule" icon={<CalendarDays className="size-5" />}>My schedule</MenuRow>
-          <MenuRow href="/settings/billing" icon={<CreditCard className="size-5" />}>Plan and billing</MenuRow>
+          <MenuRow href={isTutor ? "/tutor" : "/tutors/join"} icon={<GraduationCap className="size-5" />}>
+            {isTutor ? "Tutor dashboard" : "Become a tutor"}
+          </MenuRow>
           <MenuRow href="/settings" icon={<Settings className="size-5" />}>Settings</MenuRow>
           <div className="my-2 h-px bg-line" />
           <form action={signOut}>
@@ -411,13 +403,14 @@ function Section({ title, href, children }: { title?: string; href?: string; chi
 
 function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
   const mine = data.courses.filter((c) => data.myCourses.includes(c.slug));
-  const others = data.courses.filter((c) => !data.myCourses.includes(c.slug));
+  const shown = mine.length ? mine : data.courses.slice(0, 7);
   return (
     <nav aria-label="Main">
       <Section>
         <NavRow href="/" icon={<House className="size-5" />} label="Home" pathname={pathname} />
         <NavRow href="/shorts" icon={<Clapperboard className="size-5" />} label="Shorts" pathname={pathname} />
         <NavRow href="/courses" icon={<GraduationCap className="size-5" />} label="Courses" pathname={pathname} />
+        <NavRow href="/tutors" icon={<Users className="size-5" />} label="Tutors" pathname={pathname} />
         <NavRow href="/schedule" icon={<CalendarDays className="size-5" />} label="My schedule" pathname={pathname} />
       </Section>
       {data.user ? (
@@ -437,8 +430,8 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
           </Link>
         </Section>
       )}
-      <Section title="Courses">
-        {[...mine, ...others].map((c) => (
+      <Section title={mine.length ? "Your courses" : "Popular courses"} href="/courses">
+        {shown.map((c) => (
           <NavRow
             key={c.slug}
             href={`/courses/${c.slug}`}
@@ -458,7 +451,6 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
       <Section>
         <NavRow href="/how-ranking-works" icon={<Sigma className="size-5" />} label="How ranking works" pathname={pathname} />
         <NavRow href="/about" icon={<Info className="size-5" />} label="About Groundwork" pathname={pathname} />
-        <NavRow href="/pricing" icon={<CreditCard className="size-5" />} label="Groundwork Plus" pathname={pathname} />
       </Section>
       <div className="px-6 pt-3 text-xs leading-5 text-muted">
         <p className="flex flex-wrap gap-x-2">
@@ -478,6 +470,7 @@ function MiniNav({ pathname }: { pathname: string }) {
     { href: "/", label: "Home", icon: <House className="size-5" /> },
     { href: "/shorts", label: "Shorts", icon: <Clapperboard className="size-5" /> },
     { href: "/courses", label: "Courses", icon: <GraduationCap className="size-5" /> },
+    { href: "/tutors", label: "Tutors", icon: <Users className="size-5" /> },
     { href: "/schedule", label: "Schedule", icon: <CalendarDays className="size-5" /> },
     { href: "/library", label: "You", icon: <UserRound className="size-5" /> },
   ];

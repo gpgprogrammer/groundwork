@@ -6,11 +6,13 @@ export const satMath: CourseSpec = {
     title: "SAT Math",
     shortTitle: "SAT Math",
     exam: "SAT",
-    subject: "Math",
+    category: "SAT",
     description:
       "The four domains of the digital SAT: Algebra, Advanced Math, Problem-Solving and Data Analysis, and Geometry and Trigonometry. Taught for speed and for Desmos.",
     hue: 160,
     examMonth: "Mar · May · Jun · Aug · Oct · Nov · Dec",
+    query: "SAT Math",
+    keywords: ["sat math"],
   },
   units: [
     {

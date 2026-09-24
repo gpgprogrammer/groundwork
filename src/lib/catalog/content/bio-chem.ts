@@ -6,11 +6,13 @@ export const bio: CourseSpec = {
     title: "AP Biology",
     shortTitle: "AP Bio",
     exam: "AP",
-    subject: "Science",
+    category: "Sciences",
     description:
       "From cells to ecosystems, taught through the four big ideas: evolution, energetics, information storage, and systems interactions.",
     hue: 140,
     examMonth: "May",
+    query: "AP Biology",
+    keywords: ["ap bio", "ap biology", "biology", "bio"],
   },
   units: [
     {
@@ -147,11 +149,13 @@ export const chem: CourseSpec = {
     title: "AP Chemistry",
     shortTitle: "AP Chem",
     exam: "AP",
-    subject: "Science",
+    category: "Sciences",
     description:
       "Atomic structure through thermodynamics, with the quantitative reasoning and particle-level explanations the free response requires.",
     hue: 196,
     examMonth: "May",
+    query: "AP Chemistry",
+    keywords: ["ap chem", "ap chemistry", "chemistry", "chem"],
   },
   units: [
     {

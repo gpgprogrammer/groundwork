@@ -1,4 +1,4 @@
-import { CalendarDays, Check, ListTree, Sigma } from "lucide-react";
+import { CalendarDays, Check, ListTree, Sigma, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Faq } from "@/components/marketing";
@@ -23,9 +23,10 @@ export default async function AboutPage() {
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] via-[#0f0f0f]/85 to-[#0f0f0f]/60" />
         <div className="relative mx-auto max-w-4xl px-6 py-24 text-center sm:py-32">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">YouTube has the best teachers. Groundwork makes them a course.</h1>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">The best teachers in the world, organized around your exam.</h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-white/70">
-            Every AP and SAT topic, the best lessons for it, ranked by how well they teach, and lined up with your class calendar.
+            Every AP course and the SAT: the best lessons for every topic, ranked by how well they teach, lined up with your class calendar, and
+            the best tutors near you or online when you want a person. Free for every student.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <LinkButton href="/signup" size="lg" className="bg-white text-[#0f0f0f] hover:bg-white/90">
@@ -51,11 +52,12 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-6 px-6 py-20 md:grid-cols-3">
+      <section className="mx-auto grid max-w-6xl gap-6 px-6 py-20 md:grid-cols-2">
         {[
           [ListTree, "Organized like the exam", "Course, unit, concept, topic. Go from “AP Calc” to “Chain Rule” in two clicks, then see every good lesson on it in one place."],
           [Sigma, "Ranked by teaching", "Helpfulness from students, YouTube likes per view, topic fit, and reach, not just view counts. Sort by any of them yourself."],
           [CalendarDays, "Synced to your class", "Connect Google, Canvas, Schoology, Apple, or Outlook. Quiz Friday? Those videos are on your home page Wednesday."],
+          [Users, "The best tutors, one click away", "See the top-rated tutors near you and online for every subject, the best free teachers on YouTube, and trusted tutoring services."],
         ].map(([Icon, t, d]) => {
           const I = Icon as typeof Check;
           return (

@@ -48,6 +48,7 @@ export default function HowRankingWorksPage() {
       <h2 className="mt-14 text-2xl font-bold tracking-tight text-ink">What we don&apos;t do</h2>
       <ul className="mt-4 list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-ink-2">
         <li>Channels can&apos;t pay for placement.</li>
+        <li>Songs, parodies, and ASMR get lots of likes for reasons that have nothing to do with teaching, so they rank below real lessons. They&apos;re still there, and sorting by views or likes treats them like any other video.</li>
         <li>We don&apos;t rank on thumbnails or click-through rate.</li>
         <li>Your individual activity is never shown to other students. Only totals feed into rankings.</li>
       </ul>

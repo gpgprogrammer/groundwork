@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getCatalog } from "@/lib/catalog";
+import { getStore } from "@/lib/data/store";
 import { env } from "@/lib/env";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -12,11 +13,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page("/courses", 0.9),
     page("/shorts", 0.6),
     page("/about", 0.6, "monthly"),
-    page("/pricing", 0.6, "monthly"),
+    page("/tutors", 0.9),
     page("/how-ranking-works", 0.5, "monthly"),
     page("/privacy", 0.3, "monthly"),
     page("/terms", 0.3, "monthly"),
     ...catalog.courses.flatMap((c) => [page(`/courses/${c.slug}`, 0.8), ...catalog.topicsForCourse(c.id).map((t) => page(`/courses/${c.slug}/${t.slug}`, 0.75))]),
     ...catalog.channels.map((c) => page(`/channel/${c.id}`, 0.5)),
+    ...(await (await getStore()).listTutors().catch(() => [])).map((t) => page(`/tutors/${t.id}`, 0.6)),
   ];
 }

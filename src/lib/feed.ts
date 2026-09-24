@@ -97,7 +97,7 @@ export function queryFeed(catalog: IndexedCatalog, state: UserState | null, para
         ? catalog.videosForCourse(courseFilter)
         : catalog.videos;
   if (params.channelId) pool = pool.filter((v) => v.channelId === params.channelId);
-  if (courseFilter) pool = pool.filter((v) => v.courseId === courseFilter);
+  if (courseFilter && (params.topicId || params.channelId)) pool = pool.filter((v) => v.courseId === courseFilter);
 
   const wantShorts = chip === "shorts";
   pool = pool.filter((v) => v.isShort === wantShorts && inLength(v, length));

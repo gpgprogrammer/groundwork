@@ -16,10 +16,11 @@ export async function AppShell({ children }: { children: ReactNode }) {
 
   const data: ShellData = {
     user: viewer ? { name: viewer.user.name, email: viewer.user.email } : null,
-    trialDaysLeft: viewer?.access.kind === "trial" ? viewer.access.daysLeft : null,
-    expired: viewer?.access.kind === "expired",
+    isTutor: viewer?.state.profile.role === "tutor",
     hasSchedule: Boolean(viewer?.state.schedule),
-    courses: catalog.courses.map((c) => ({ slug: c.slug, title: c.title, hue: c.hue })),
+    courses: [...catalog.courses]
+      .sort((a, b) => catalog.videosForCourse(b.id).length - catalog.videosForCourse(a.id).length)
+      .map((c) => ({ slug: c.slug, title: c.title, hue: c.hue })),
     myCourses: viewer?.state.profile.courseIds ?? [],
     channels: topChannels,
   };

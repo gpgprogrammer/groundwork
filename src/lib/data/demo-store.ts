@@ -2,9 +2,8 @@ import "server-only";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { PLAN } from "@/lib/env";
-import type { HistoryEntry, Profile, Schedule, SiteStats, Subscription, UserState } from "@/lib/types";
-import { emptySubscription, type Store } from "./store";
+import type { HistoryEntry, Profile, Referral, Schedule, SiteStats, Tutor, TutoringRequest, TutorReview, UserState } from "@/lib/types";
+import type { Store } from "./store";
 
 /**
  * Local persistence for development and single-server hosting: one JSON file.
@@ -22,10 +21,13 @@ type LocalState = {
   votes: Record<string, Record<string, 1 | -1>>;
   mastered: Record<string, Record<string, string>>;
   schedules: Record<string, Schedule | null>;
-  subscriptions: Record<string, Subscription>;
+  tutors: Record<string, Tutor>; // by tutor id
+  reviews: TutorReview[];
+  requests: TutoringRequest[];
+  referrals: Referral[];
 };
 
-const STATE_VERSION = 10;
+const STATE_VERSION = 11;
 const DATA_DIR = process.env.DEMO_DATA_DIR || (process.env.VERCEL ? "/tmp/groundwork" : path.join(process.cwd(), ".data"));
 const FILE = path.join(DATA_DIR, "state.json");
 
@@ -48,7 +50,10 @@ const empty = (): LocalState => ({
   votes: {},
   mastered: {},
   schedules: {},
-  subscriptions: {},
+  tutors: {},
+  reviews: [],
+  requests: [],
+  referrals: [],
 });
 
 let cache: LocalState | null = null;
@@ -128,13 +133,12 @@ export function createLocalStore(): Store {
       const profile = s.profiles[userId];
       if (!profile) return null;
       return structuredClone({
-        profile,
+        profile: { ...profile, location: profile.location ?? null },
         history: s.history[userId] ?? {},
         saves: s.saves[userId] ?? {},
         votes: s.votes[userId] ?? {},
         mastered: s.mastered[userId] ?? {},
         schedule: s.schedules[userId] ?? null,
-        subscription: s.subscriptions[userId] ?? emptySubscription(),
       } satisfies UserState);
     },
 
@@ -151,10 +155,9 @@ export function createLocalStore(): Store {
           examDate: null,
           goal: null,
           focusTopicIds: [],
+          location: null,
           createdAt: new Date().toISOString(),
-          trialEndsAt: new Date(Date.now() + PLAN.trialDays * 86400000).toISOString(),
         };
-        s.subscriptions[user.id] = emptySubscription();
         await persist();
       }
       return structuredClone(s.profiles[user.id]);
@@ -214,15 +217,67 @@ export function createLocalStore(): Store {
       await persist();
     },
 
-    async setSubscription(userId, sub) {
+    async listTutors() {
+      return structuredClone(Object.values((await load()).tutors));
+    },
+
+    async listReviews(tutorId) {
       const s = await load();
-      s.subscriptions[userId] = sub;
+      return structuredClone(tutorId ? s.reviews.filter((r) => r.tutorId === tutorId) : s.reviews);
+    },
+
+    async saveTutor(userId, input) {
+      const s = await load();
+      const existing = Object.values(s.tutors).find((t) => t.userId === userId);
+      const tutor: Tutor = { ...input, id: existing?.id ?? `tutor_${randomUUID().slice(0, 12)}`, userId, createdAt: existing?.createdAt ?? new Date().toISOString() };
+      s.tutors[tutor.id] = tutor;
+      if (s.profiles[userId]) s.profiles[userId].role = "tutor";
+      await persist();
+      return structuredClone(tutor);
+    },
+
+    async removeTutor(userId) {
+      const s = await load();
+      for (const [id, t] of Object.entries(s.tutors)) if (t.userId === userId) delete s.tutors[id];
+      if (s.profiles[userId]) s.profiles[userId].role = "student";
       await persist();
     },
 
-    async findUserIdByStripeCustomer(customerId) {
+    async saveReview(review) {
       const s = await load();
-      return Object.entries(s.subscriptions).find(([, sub]) => sub.stripeCustomerId === customerId)?.[0] ?? null;
+      s.reviews = s.reviews.filter((r) => !(r.tutorId === review.tutorId && r.userId === review.userId));
+      s.reviews.unshift({ ...review, id: `rev_${randomUUID()}`, createdAt: new Date().toISOString() });
+      await persist();
+    },
+
+    async createTutoringRequest(req) {
+      const s = await load();
+      s.requests.unshift({ ...req, id: `req_${randomUUID()}`, status: "new", createdAt: new Date().toISOString() });
+      await persist();
+    },
+
+    async listTutoringRequests(tutorId) {
+      return structuredClone((await load()).requests.filter((r) => r.tutorId === tutorId));
+    },
+
+    async updateTutoringStatus(tutorId, id, status) {
+      const s = await load();
+      const r = s.requests.find((x) => x.id === id && x.tutorId === tutorId);
+      if (r) r.status = status;
+      await persist();
+    },
+
+    async logReferral(ref) {
+      const s = await load();
+      s.referrals.push({ ...ref, id: `ref_${randomUUID()}`, createdAt: new Date().toISOString() });
+      await persist();
+    },
+
+    async referralCounts(partnerIds) {
+      const s = await load();
+      const out: Record<string, number> = Object.fromEntries(partnerIds.map((p) => [p, 0]));
+      for (const r of s.referrals) if (r.partnerId in out) out[r.partnerId]++;
+      return out;
     },
   };
 }

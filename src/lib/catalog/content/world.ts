@@ -6,11 +6,13 @@ export const world: CourseSpec = {
     title: "AP World History: Modern",
     shortTitle: "AP World",
     exam: "AP",
-    subject: "History",
+    category: "History & Social Sciences",
     description:
       "1200 to the present through networks of exchange, state building, revolution, and global conflict. It's built around the reasoning the DBQ and LEQ reward.",
     hue: 28,
     examMonth: "May",
+    query: "AP World History",
+    keywords: ["ap world", "world history", "apwh", "whap"],
   },
   units: [
     {

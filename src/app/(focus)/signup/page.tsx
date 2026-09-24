@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LogoMark } from "@/components/logo";
-import { PLAN } from "@/lib/env";
 import { getViewer } from "@/lib/viewer";
 import { SignUpForm } from "../auth-forms";
 
@@ -17,7 +16,7 @@ export default async function SignUpPage() {
         <div className="p-8 sm:p-10">
           <LogoMark className="size-10" />
           <h1 className="mt-5 text-[26px] font-bold tracking-tight text-ink">Create your account</h1>
-          <p className="mt-1 text-[15px] text-muted">Free to browse. Plus is free for {PLAN.trialDays} days, no card needed.</p>
+          <p className="mt-1 text-[15px] text-muted">Free for every student. No card, no trial.</p>
           <div className="mt-8">
             <SignUpForm />
           </div>

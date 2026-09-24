@@ -1,6 +1,6 @@
 # Groundwork
 
-The best AP and SAT lessons on YouTube, organized by course, unit, and topic, ranked by how well they teach, and matched to each student's class calendar. YouTube's feed meets Khan Academy's structure.
+Every AP course and the SAT, with the best YouTube lessons organized by course, unit, and topic, ranked by how well they teach, and matched to each student's class calendar. Plus a tutoring hub: the best tutors near you and online, the best free teachers on each topic, and trusted tutoring services. Free for students.
 
 ## Run it
 
@@ -33,6 +33,22 @@ Clicking a video goes through `/go/:id`, which records the open in the student's
 
 Students paste a private iCal link (Google Calendar, Canvas, Schoology, Apple Calendar, Outlook) or upload an `.ics` file during onboarding or on `/schedule`. `src/lib/ics.ts` parses events (folded lines, all-day dates, weekly recurrences), keeps school-related ones, and matches them to courses and topics. Upcoming tests and assignments drive the "Coming up on your calendar" shelf and the For you feed. Fetching is SSRF-guarded (`src/lib/schedule.ts`): https only, public IPs only, every redirect checked, 3 MB cap.
 
+## Courses
+
+All 40 AP courses plus SAT Math and SAT Reading & Writing (42 total, about 240 units and 570 topics), defined in `src/lib/catalog/content/` and assembled by `src/lib/catalog/build.ts`. Topic ids are scoped as `course-id/topic-slug`. AP Calculus AB is derived from BC (minus the BC-only units) and shares BC's videos for the overlapping topics. Adding a course is one `course(meta, units)` entry. The ingest scripts read the curriculum, so a new course gets videos on the next ingest (`--courses ap-foo,ap-bar` limits a run to specific courses).
+
+## Tutoring and referrals
+
+`/tutors` shows, per subject:
+
+- **Tutors near you and online**, ranked by a Bayesian average of Groundwork student reviews (a tutor with one 5-star review doesn't outrank one with forty 4.8s). Location comes from the student's profile, or a cookie for visitors.
+- **Best free teachers**: the YouTube creators whose lessons rank highest for that course or topic.
+- **Tutoring services** (Wyzant, Varsity Tutors, The Princeton Review, Tutor.com, Schoolhouse.world, PrepScholar), deep-linked to the right subject and ZIP.
+
+Tutors list themselves at `/tutors/join`. Students request sessions from a tutor's profile, and requests appear on the tutor's dashboard at `/tutor`. Students can review tutors (but tutors can't review themselves).
+
+**Referrals.** Every outbound link goes through `/r/<service>` or `/r/tutor/<id>`, which logs a row in `referrals` (service, course, user if signed in, time) before redirecting. That's the ledger for commission deals. When a partner gives you an affiliate code, set `PARTNER_REF_<SERVICE_ID>` (e.g. `PARTNER_REF_WYZANT`) and it's appended to every link. Rankings never take payment into account.
+
 ## Accounts and data
 
 Without Supabase, accounts and activity are stored in `.data/state.json` (local development). **For real users, connect Supabase**:
@@ -41,11 +57,11 @@ Without Supabase, accounts and activity are stored in `.data/state.json` (local 
 2. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 3. Add `{APP_URL}/auth/callback` as an Auth redirect URL; enable Google if you want the Google button.
 
-The database stores only per-student data (profiles, history, saves, votes, mastery, schedules, subscriptions) under row-level security.
+The database stores only per-student data (profiles, history, saves, votes, mastery, schedules, tutor listings, reviews, session requests, referrals) under row-level security.
 
-## Billing
+## Pricing
 
-Browsing is free. Groundwork Plus ($10/month, 30 days free) unlocks calendar sync. `npm run stripe:setup` creates the price; point a webhook at `/api/billing/webhook`. Without Stripe keys, checkout is simulated and labeled as such.
+Everything is free for students: no plan, no trial, no card. Revenue later comes from tutoring referrals (above).
 
 ## Quality checks
 

@@ -15,7 +15,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { buildCurriculum } from "../src/lib/catalog/build";
-import { matchTopics } from "../src/lib/catalog/match";
+import { matchTopics, mentionsCourse as mentions } from "../src/lib/catalog/match";
 import type { Channel, Library, YtVideo } from "../src/lib/types";
 
 const args = process.argv.slice(2);
@@ -217,51 +217,34 @@ async function channelUploads(id: string, limit: number): Promise<ChannelPage> {
   });
 }
 
-const COURSE_QUERY: Record<string, string> = {
-  "ap-calculus-bc": "AP Calculus",
-  "ap-world-history": "AP World History",
-  "sat-math": "SAT Math",
-  "ap-biology": "AP Biology",
-  "ap-chemistry": "AP Chemistry",
-  "sat-reading-writing": "SAT Reading and Writing",
-};
-const BROAD: Record<string, string[]> = {
-  "ap-calculus-bc": ["AP Calculus BC review", "AP Calculus BC FRQ", "AP Calculus BC series review", "AP Calculus BC unit review"],
-  "ap-world-history": ["AP World History review", "AP World History DBQ", "AP World History LEQ", "AP World History unit review"],
-  "sat-math": ["digital SAT math", "SAT math Desmos", "SAT math hardest questions", "SAT math full review"],
-  "ap-biology": ["AP Biology review", "AP Biology FRQ", "AP Biology unit review"],
-  "ap-chemistry": ["AP Chemistry review", "AP Chemistry FRQ", "AP Chemistry unit review"],
-  "sat-reading-writing": ["digital SAT reading and writing", "SAT grammar rules", "SAT reading tips"],
-};
-const COURSE_WORDS: Record<string, RegExp> = {
-  "ap-calculus-bc": /\b(calc(ulus)?|derivative|integral|limit|series)\b/i,
-  "ap-world-history": /\b(world history|apwh|ap world|dbq|leq)\b/i,
-  "sat-math": /\bsat\b.*\bmath\b|\bmath\b.*\bsat\b|\bdesmos\b/i,
-  "ap-biology": /\b(ap bio|biology)\b/i,
-  "ap-chemistry": /\b(ap chem|chemistry)\b/i,
-  "sat-reading-writing": /\bsat\b.*\b(reading|writing|grammar|english|verbal)\b/i,
-};
-const mentionsCourse = (t: string, courseId: string | null) => (courseId ? (COURSE_WORDS[courseId]?.test(t) ?? false) : false);
 const mostlyLatin = (s: string) => (s.match(/[A-Za-z]/g)?.length ?? 0) >= s.replace(/\s/g, "").length * 0.6;
 
 async function discover() {
-  const cur = buildCurriculum();
+  const full = buildCurriculum();
+  // Cross-listed topics (Calc AB) share another course's videos; don't search or classify them.
+  const cur = { ...full, topics: full.topics.filter((t) => !t.sameAs) };
+  const courseOf = new Map(cur.courses.map((c) => [c.id, c]));
+  const mentionsCourse = (text: string, courseId: string | null) => mentions(cur, text, courseId);
+  const only = args.includes("--courses") ? new Set(args[args.indexOf("--courses") + 1].split(",")) : null;
   const found = new Map<string, { raw: Raw; topicId?: string; courseId?: string; source: "search" | "channel"; channelCourses?: string[] }>();
   const add = (raw: Raw, hint: { topicId?: string; courseId?: string; source: "search" | "channel"; channelCourses?: string[] }) => {
     if (!found.has(raw.id)) found.set(raw.id, { raw, ...hint });
   };
 
   let n = 0;
-  for (const topic of cur.topics) {
+  const searchTopics = cur.topics.filter((t) => !only || only.has(t.courseId));
+  for (const topic of searchTopics) {
     try {
-      for (const r of await search(`${topic.title} ${COURSE_QUERY[topic.courseId]}`, PAGES_PER_TOPIC)) add(r, { topicId: topic.id, courseId: topic.courseId, source: "search" });
+      for (const r of await search(`${topic.title} ${courseOf.get(topic.courseId)!.query}`, PAGES_PER_TOPIC)) add(r, { topicId: topic.id, courseId: topic.courseId, source: "search" });
     } catch (e) {
       console.warn(`\n  search failed for ${topic.title}: ${(e as Error).message}`);
     }
-    process.stdout.write(`\rtopics searched ${++n}/${cur.topics.length} · candidates ${found.size}   `);
+    process.stdout.write(`\rtopics searched ${++n}/${searchTopics.length} · candidates ${found.size}   `);
   }
-  for (const [courseId, qs] of Object.entries(BROAD)) {
-    for (const q of qs) {
+  for (const c of cur.courses.filter((c) => !only || only.has(c.id))) {
+    if (full.topics.some((t) => t.courseId === c.id && t.sameAs)) continue;
+    const courseId = c.id;
+    for (const q of [`${c.query} review`, `${c.query} exam review`]) {
       try {
         for (const r of await search(q, PAGES_PER_TOPIC)) add(r, { courseId, source: "search" });
       } catch (e) {
@@ -303,7 +286,8 @@ async function discover() {
   // Classify, exactly like the API ingester.
   const videos: YtVideo[] = [];
   for (const { raw, topicId: hintTopic, courseId: hintCourse, source, channelCourses } of found.values()) {
-    if (!raw.durationSec || raw.durationSec > 4 * 3600 || !raw.title || !mostlyLatin(raw.title)) continue;
+    const langCourse = hintCourse ? courseOf.get(hintCourse)?.category === "World Languages & Cultures" : false;
+    if (!raw.durationSec || raw.durationSec > 4 * 3600 || !raw.title || (!langCourse && !mostlyLatin(raw.title))) continue;
     const allowed = source === "channel" ? (channelCourses ?? []) : hintCourse ? [hintCourse] : [];
     if (source === "channel" && !allowed.length) continue;
     const matches = matchTopics(cur, `${raw.title}\n${raw.snippet}`, { courseIds: allowed });

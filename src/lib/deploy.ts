@@ -25,6 +25,6 @@ export function validateDeploymentConfig() {
   }
 
   if (isSupabaseEnabled && !env.supabaseServiceRoleKey) {
-    console.warn("[groundwork] SUPABASE_SERVICE_ROLE_KEY is missing; webhooks, billing sync, and creator onboarding may fail.");
+    console.warn("[groundwork] SUPABASE_SERVICE_ROLE_KEY is missing; server-side account writes may fail.");
   }
 }

@@ -1,8 +1,9 @@
 import "server-only";
 import { isSupabaseEnabled } from "@/lib/env";
-import type { Profile, Schedule, SiteStats, Subscription, UserState } from "@/lib/types";
+import type { Profile, Referral, Schedule, SiteStats, Tutor, TutoringRequest, TutorReview, UserState } from "@/lib/types";
 
-export type ProfilePatch = Partial<Pick<Profile, "name" | "onboarded" | "courseIds" | "examDate" | "goal" | "focusTopicIds">>;
+export type ProfilePatch = Partial<Pick<Profile, "name" | "onboarded" | "courseIds" | "examDate" | "goal" | "focusTopicIds" | "location">>;
+export type TutorInput = Omit<Tutor, "id" | "userId" | "createdAt">;
 
 /** Per-user data. The video library itself is static (src/data/youtube.json). */
 export interface Store {
@@ -17,8 +18,18 @@ export interface Store {
   setMastered(userId: string, topicId: string, mastered: boolean): Promise<void>;
   clearHistory(userId: string): Promise<void>;
   setSchedule(userId: string, schedule: Schedule | null): Promise<void>;
-  setSubscription(userId: string, sub: Subscription): Promise<void>;
-  findUserIdByStripeCustomer(customerId: string): Promise<string | null>;
+
+  // Tutoring marketplace
+  listTutors(): Promise<Tutor[]>;
+  listReviews(tutorId?: string): Promise<TutorReview[]>;
+  saveTutor(userId: string, input: TutorInput): Promise<Tutor>;
+  removeTutor(userId: string): Promise<void>;
+  saveReview(review: Omit<TutorReview, "id" | "createdAt">): Promise<void>;
+  createTutoringRequest(req: Omit<TutoringRequest, "id" | "createdAt" | "status">): Promise<void>;
+  listTutoringRequests(tutorId: string): Promise<TutoringRequest[]>;
+  updateTutoringStatus(tutorId: string, id: string, status: TutoringRequest["status"]): Promise<void>;
+  logReferral(ref: Omit<Referral, "id" | "createdAt">): Promise<void>;
+  referralCounts(partnerIds: string[]): Promise<Record<string, number>>;
 }
 
 let instance: Promise<Store> | null = null;
@@ -29,11 +40,3 @@ export function getStore(): Promise<Store> {
     : import("./demo-store").then((m) => m.createLocalStore());
   return instance;
 }
-
-export const emptySubscription = (): Subscription => ({
-  status: "none",
-  stripeCustomerId: null,
-  stripeSubscriptionId: null,
-  currentPeriodEnd: null,
-  cancelAtPeriodEnd: false,
-});

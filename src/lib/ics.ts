@@ -100,7 +100,7 @@ export function eventsFromIcs(ics: string, curriculum: TopicMatcher, courseHints
     const t = new Date(e.start).getTime();
     if (Number.isNaN(t) || t < from || t > to) continue;
     const text = `${e.summary}\n${e.description}`;
-    const courseId = detectCourse(text);
+    const courseId = detectCourse(curriculum, text, courseHints);
     const topics = matchTopics(curriculum, text, { courseIds: courseId ? [courseId] : courseHints, limit: 3 }).filter((m) => m.score >= 0.7);
     const resolvedCourse = courseId ?? (topics[0] ? curriculum.topics.find((x) => x.id === topics[0].topicId)!.courseId : null);
     const kind: ScheduleEvent["kind"] = TEST.test(text) ? "test" : ASSIGNMENT.test(text) ? "assignment" : CLASS.test(text) || e.uid.includes("#") ? "class" : "other";

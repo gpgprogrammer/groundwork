@@ -1,14 +1,8 @@
-import { Container } from "@/components/ui";
-import { SettingsNav } from "./settings-nav";
-
 export default function SettingsLayout({ children }: LayoutProps<"/settings">) {
   return (
-    <Container size="lg" className="py-12">
-      <h1 className="headline text-3xl text-ink">Settings</h1>
-      <div className="mt-8 grid gap-10 md:grid-cols-[180px_1fr]">
-        <SettingsNav />
-        <div className="min-w-0">{children}</div>
-      </div>
-    </Container>
+    <div className="mx-auto max-w-3xl px-4 pb-16 pt-6 sm:px-6">
+      <h1 className="text-[28px] font-bold tracking-tight text-ink">Settings</h1>
+      <div className="mt-8">{children}</div>
+    </div>
   );
 }
