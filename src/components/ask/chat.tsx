@@ -265,7 +265,7 @@ function Lessons({ lessons, compact }: { lessons: LessonCard[]; compact: boolean
           <span className="min-w-0">
             <span className="line-clamp-2 text-[13px] font-medium leading-snug text-ink group-hover:underline">{l.title}</span>
             <span className="mt-0.5 block truncate text-[12px] text-muted">
-              {l.channel} · {formatViews(l.views)} views · {l.helpfulPct}% helpful
+              {l.channel} · {formatViews(l.views)} views{l.helpfulPct != null ? ` · ${l.helpfulPct}% of Merit students found it helpful` : ""}
             </span>
           </span>
         </a>

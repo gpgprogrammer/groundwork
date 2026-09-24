@@ -19,7 +19,7 @@ export type LessonCard = {
   thumbnail: string;
   minutes: number;
   views: number;
-  helpfulPct: number;
+  helpfulPct: number | null;
   topic: string | null;
   topicHref: string | null;
 };
@@ -36,7 +36,7 @@ export function lessonCard(catalog: IndexedCatalog, v: RankedVideo): LessonCard 
     thumbnail: v.thumbnail,
     minutes: Math.max(1, Math.round(v.durationSec / 60)),
     views: v.views,
-    helpfulPct: Math.round(v.rank.helpful * 100),
+    helpfulPct: v.rank.helpfulPct,
     topic: t?.title ?? null,
     topicHref: t && c ? `/courses/${c.slug}/${t.slug}` : null,
   };

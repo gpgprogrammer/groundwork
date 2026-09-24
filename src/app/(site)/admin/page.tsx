@@ -48,7 +48,12 @@ export default async function AdminPage() {
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 pb-20 pt-8 sm:px-6">
-      <h1 className="text-3xl font-extrabold tracking-tight text-ink">Admin</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-extrabold tracking-tight text-ink">Admin</h1>
+        <Link href="/admin/analytics" className="inline-flex h-10 items-center rounded-full bg-accent px-5 text-sm font-semibold text-white">
+          Open analytics
+        </Link>
+      </div>
       <p className="mt-1 text-sm text-muted">
         Payments: {isStripeEnabled ? "Stripe live" : "test mode"} · Database: {isSupabaseEnabled ? "Supabase" : "local file"} · AI: {aiOk ? "on" : isAiConfigured ? `unavailable${status?.reason ? ` (${status.reason.slice(0, 90)})` : ""}` : "not configured"}
       </p>
@@ -174,7 +179,7 @@ export default async function AdminPage() {
             .map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 py-2 text-sm">
                 <span className="truncate text-ink">
-                  {c.kind === "guide" ? `Guide: ${c.title}` : `Video: ${c.video?.title}`} <span className="text-muted">· {c.topicId}</span>
+                  {c.kind === "guide" ? `Guide: ${c.title}` : c.kind === "upload" ? `Upload: ${c.title}` : `Video: ${c.video?.title}`} <span className="text-muted">· {c.topicId}</span>
                 </span>
                 <form action={removeContribution.bind(null, c.id)}>
                   <button className="h-8 shrink-0 rounded-full px-3 text-[13px] text-muted ring-1 ring-line">Remove</button>

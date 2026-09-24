@@ -88,7 +88,7 @@ export function CreatorCard({ c, rank }: { c: CreatorStat; rank: number }) {
       </div>
       <p className="mt-3 line-clamp-2 min-h-[2.5em] text-[15px] font-semibold leading-tight text-ink group-hover:underline">{c.channel.title}</p>
       <p className="tabular mt-0.5 text-[12.5px] text-muted">
-        {c.lessons} lessons · {formatViews(c.views)} views
+        {c.lessons} lessons · {c.topics} topics
       </p>
       {c.channel.subscribers ? <p className="tabular text-[12.5px] text-muted">{formatViews(c.channel.subscribers)} subscribers</p> : null}
     </Link>

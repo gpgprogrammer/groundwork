@@ -108,7 +108,7 @@ export default async function SprintHome({ searchParams }: PageProps<"/sprint">)
                 Find out where you stand in 10 minutes. Then get exactly what to watch and practice every day until test day, for your AP exam or any quiz or test on your calendar, with a readiness score that climbs as you go.
               </p>
               <p className="mt-6 text-[15px] font-semibold">
-                Diagnostic free · then {usd(SPRINT.price)} once, for every class, forever <span className="font-normal text-white/75">· not a subscription</span>
+                7 days free · then {usd(SPRINT.price)} once, for every class, forever <span className="font-normal text-white/75">· not a subscription</span>
               </p>
             </div>
             <div className="rounded-3xl bg-black/15 p-6 backdrop-blur">

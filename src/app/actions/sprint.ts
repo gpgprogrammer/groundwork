@@ -7,6 +7,7 @@ import { z } from "zod";
 import { gradeFrq, frqPrompt, practiceSet, questionsForTopic } from "@/lib/ai/content";
 import { aiAvailable } from "@/lib/ai/runtime";
 import { consumeCredit } from "@/lib/sprint-store";
+import { startSprintTrial } from "@/lib/billing/access";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { diagnosticTopics, readiness, topicAccuracy } from "@/lib/sprint";
@@ -241,4 +242,13 @@ export async function createTestSprint(_: CreateState, form: FormData): Promise<
   await save(sprint);
   sprint = await tryUnlock(sprint);
   redirect(`/sprint/${sprint.id}/diagnostic`);
+}
+
+/** Starts the one free week of Exam Sprint for this account. */
+export async function beginSprintTrial(returnTo: string) {
+  const viewer = await getViewer();
+  if (!viewer) redirect(`/signup?next=${encodeURIComponent(returnTo)}`);
+  await startSprintTrial(viewer.user.id);
+  revalidatePath("/", "layout");
+  redirect(returnTo.startsWith("/") && !returnTo.startsWith("//") ? `${returnTo}${returnTo.includes("?") ? "&" : "?"}trial=started` : "/sprint");
 }

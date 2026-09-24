@@ -117,7 +117,6 @@ export function VideoRow({ v, rank, extra }: { v: FeedVideo; rank?: number; extr
         </a>
         <p className="tabular mt-1 text-[12.5px] text-muted">
           {formatViews(v.views)} views{ago(v.publishedAt) ? ` · ${ago(v.publishedAt)}` : ""}
-          {v.likes != null ? <> · {formatViews(v.likes)} likes</> : null}
         </p>
         <Link href={`/channel/${v.channelId}`} className="mt-2 flex items-center gap-2 text-[12.5px] text-muted hover:text-ink sm:mt-3">
           <ChannelAvatar title={v.channelTitle} src={v.channelThumb} size={24} />
@@ -129,7 +128,7 @@ export function VideoRow({ v, rank, extra }: { v: FeedVideo; rank?: number; extr
               {v.topicTitle}
             </Link>
           ) : null}
-          <span className="rounded bg-bg-subtle px-1.5 py-0.5 text-[12px] text-ink-2">{v.helpfulPct}% helpful</span>
+          {v.helpfulPct != null ? <span className="rounded bg-bg-subtle px-1.5 py-0.5 text-[12px] text-ink-2" title="From Merit students' votes">{v.helpfulPct}% helpful on Merit</span> : null}
           {v.addedBy ? (
             <Link href={v.addedBy.href} className="inline-flex items-center gap-1 rounded bg-positive-soft px-1.5 py-0.5 text-[12px] font-medium text-positive hover:underline">
               <GraduationCap className="size-3" /> Picked by {v.addedBy.name}

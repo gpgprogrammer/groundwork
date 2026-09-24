@@ -5,6 +5,7 @@ import { PRODUCTS, type Product } from "@/lib/billing/plans";
 import { createCheckoutUrl } from "@/lib/billing/stripe";
 import { isStripeEnabled } from "@/lib/env";
 import { getViewer } from "@/lib/viewer";
+import { trackServer } from "@/lib/analytics";
 
 const safePath = (p: unknown) => (typeof p === "string" && p.startsWith("/") && !p.startsWith("//") ? p : "/settings/billing");
 
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
   if (!(product in PRODUCTS)) return NextResponse.redirect(`${origin}/pricing`, 303);
 
   const viewer = await getViewer();
+  await trackServer("checkout", { u: viewer?.user.id ?? null, x: product });
   if (!viewer) return NextResponse.redirect(`${origin}/signup?next=${encodeURIComponent(`/pricing?buy=${product}`)}`, 303);
 
   const sep = returnTo.includes("?") ? "&" : "?";

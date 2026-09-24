@@ -235,6 +235,8 @@ export type Billing = {
   };
   /** Exam Sprint, bought once: unlocks every sprint, for every class and test, permanently (and calendar sync). */
   sprintPass: boolean;
+  /** One free week of Exam Sprint per account. */
+  sprintTrialEndsAt?: string | null;
   /** Legacy per-sprint credits from before the pass. */
   sprintCredits: number;
   purchases: { id: string; product: "plus-month" | "plus-year" | "sprint"; amount: number; at: string; source: PaymentSource; note?: string }[];
@@ -314,7 +316,8 @@ export type Educator = {
 export type Contribution = {
   id: string;
   educatorId: string;
-  kind: "video" | "guide";
+  /** video: a YouTube lesson a teacher recommends. guide: a written study guide. upload: a video hosted on Merit. */
+  kind: "video" | "guide" | "upload";
   courseId: string;
   topicId: string;
   status: "published" | "removed";
@@ -322,9 +325,12 @@ export type Contribution = {
   /** For videos: why it's worth watching, what to look for, timestamps. */
   note: string;
   video?: Pick<YtVideo, "id" | "title" | "channelId" | "channelTitle" | "thumbnail" | "durationSec" | "views" | "publishedAt" | "isShort"> & { description: string };
-  /** For study guides. */
+  /** For study guides and uploads. */
   title?: string;
   body?: string;
+  /** For videos uploaded to Merit. */
+  media?: { videoUrl: string; posterUrl: string | null; durationSec: number; bytes: number; path: string };
+  views?: number;
 };
 
 // ── Tutor bookings and commission ────────────────────────────────────────────

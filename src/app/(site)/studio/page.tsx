@@ -1,4 +1,4 @@
-import { ArrowRight, BadgeCheck, FileText, Film, Plus, Trash2, Users } from "lucide-react";
+import { ArrowRight, BadgeCheck, FileText, Film, Plus, Trash2, Upload, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { removeContribution } from "@/app/actions/educator";
@@ -31,8 +31,9 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
             Sign in
           </Link>
         </div>
-        <div className="mt-14 grid gap-4 md:grid-cols-3">
+        <div className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[
+            [Upload, "Publish your own videos", "Upload lessons you record. They're Merit exclusives, shown under your name on the topic page and your profile."],
             [Film, "Add any YouTube lesson", "Paste a link. Merit suggests the right topic; you add a note on why it works."],
             [FileText, "Write study guides", "Step-by-step methods, worked examples, common mistakes. Published on the topic page."],
             [Users, "Reach students everywhere", "Your picks show up in feeds, study plans, and Exam Sprints for every student on that topic."],
@@ -66,6 +67,7 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
 
   const items = await contributionsBy(educator.id);
   const videos = items.filter((c) => c.kind === "video");
+  const uploads = items.filter((c) => c.kind === "upload");
   const guides = items.filter((c) => c.kind === "guide");
   const opens = videos.reduce((s, c) => s + (catalog.video(c.video!.id)?.site.opens ?? 0), 0);
 
@@ -93,8 +95,11 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
           </div>
         </div>
         <div className="flex gap-2">
-          <Link href="/studio/video" className="inline-flex h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-white">
-            <Plus className="size-4" /> Add a video
+          <Link href="/studio/upload" className="inline-flex h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-white">
+            <Upload className="size-4" /> Upload a video
+          </Link>
+          <Link href="/studio/video" className="inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold text-ink ring-1 ring-line-strong hover:bg-bg-subtle">
+            <Plus className="size-4" /> Add from YouTube
           </Link>
           <Link href="/studio/guide" className="inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold text-ink ring-1 ring-line-strong hover:bg-bg-subtle">
             <FileText className="size-4" /> Write a guide
@@ -104,7 +109,7 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
 
       <div className="mt-8 grid grid-cols-3 gap-3">
         {[
-          ["Videos added", videos.length],
+          ["Videos added", videos.length + uploads.length],
           ["Study guides", guides.length],
           ["Student opens", opens],
         ].map(([l, v]) => (
@@ -123,7 +128,9 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
             const course = catalog.course(c.courseId);
             return (
               <li key={c.id} className="flex items-center gap-4 px-4 py-3">
-                {c.kind === "video" ? (
+                {c.kind === "upload" ? (
+                  c.media?.posterUrl ? <img src={c.media.posterUrl} alt="" className="aspect-video w-24 shrink-0 rounded-md object-cover" /> : <span className="flex aspect-video w-24 shrink-0 items-center justify-center rounded-md bg-accent-soft"><Film className="size-6 text-accent" /></span>
+                ) : c.kind === "video" ? (
                   <img src={c.video!.thumbnail} alt="" className="aspect-video w-24 shrink-0 rounded-md object-cover" referrerPolicy="no-referrer" />
                 ) : (
                   <span className="flex aspect-video w-24 shrink-0 items-center justify-center rounded-md bg-accent-soft">
@@ -131,8 +138,8 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <Link href={c.kind === "guide" ? `/guides/${c.id}` : `/go/${c.video!.id}`} className="line-clamp-1 font-medium text-ink hover:underline">
-                    {c.kind === "guide" ? c.title : c.video!.title}
+                  <Link href={c.kind === "guide" ? `/guides/${c.id}` : c.kind === "upload" ? `/videos/${c.id}` : `/go/${c.video!.id}`} className="line-clamp-1 font-medium text-ink hover:underline">
+                    {c.kind === "video" ? c.video!.title : c.title}
                   </Link>
                   {topic && course ? (
                     <Link href={`/courses/${course.slug}/${topic.slug}`} className="mt-0.5 flex items-center gap-1.5 text-[12.5px] text-muted hover:text-ink">

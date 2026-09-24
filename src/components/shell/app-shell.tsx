@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { getCatalog } from "@/lib/catalog";
 import { getViewer } from "@/lib/viewer";
 import { getStore } from "@/lib/data/store";
+import { Tracker } from "../tracker";
 import { ViewerMarksProvider } from "../viewer-marks";
 import { ShellFrame, type ShellData } from "./shell-frame";
 
@@ -34,6 +35,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
       value={{ signedIn: Boolean(viewer), saved: Object.keys(viewer?.state.saves ?? {}), votes: viewer?.state.votes ?? {} }}
     >
       <ShellFrame data={data}>{children}</ShellFrame>
+      <Tracker uid={viewer?.user.id ?? null} />
     </ViewerMarksProvider>
   );
 }

@@ -133,7 +133,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
             <span className="text-5xl font-extrabold tracking-tight text-ink">{usd(SPRINT.price)}</span>
             <span className="text-muted">once</span>
           </p>
-          <p className="mt-1 text-[13px] text-muted">Pay once. Every class and every test, forever. Includes calendar sync.</p>
+          <p className="mt-1 text-[13px] text-muted">Try it free for 7 days. Then pay once: every class and every test, forever, with calendar sync.</p>
           <ul className="mt-6 flex-1 space-y-3 text-[14.5px] text-ink-2">
             {SPRINT.features.map((f) => (
               <li key={f.title} className="flex gap-2.5">

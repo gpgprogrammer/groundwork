@@ -7,13 +7,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Chips, FeedGrid, SortControls } from "@/components/feed";
 import { ChannelAvatar } from "@/components/video-card";
-import { cn, formatViews } from "@/components/ui";
+import { cn } from "@/components/ui";
 import { getCatalog, type IndexedCatalog } from "@/lib/catalog";
 import { pageOf, queryFeed } from "@/lib/feed";
 import { courseProgress, nextTopicInCourse, topicStatus } from "@/lib/recommend";
 import { topCreators } from "@/lib/tutoring";
 import type { Course } from "@/lib/types";
 import { getViewer, type Viewer } from "@/lib/viewer";
+import { CourseSearch } from "@/components/course-search";
 
 export async function generateMetadata({ params }: PageProps<"/courses/[course]">): Promise<Metadata> {
   const course = (await getCatalog()).course((await params).course);
@@ -49,6 +50,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
           <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-[40px]">{course.title}</h1>
         </div>
         <p className="mt-2 max-w-3xl text-[16px] leading-relaxed text-ink-2">{course.description}</p>
+        <CourseSearch courseId={course.id} courseTitle={course.shortTitle} className="mt-5" />
         <div className="mt-4 flex flex-wrap gap-2 text-[13px]">
           {[`${units.length} units`, `${topics.length} topics`, `${videoCount.toLocaleString()} videos`, `Exam: ${course.examMonth}`].map((p) => (
             <span key={p} className="tabular rounded-full bg-bg px-3 py-1 font-medium text-ink-2 ring-1 ring-line">
@@ -183,7 +185,7 @@ function TopCreators({ course, catalog }: { course: Course; catalog: IndexedCata
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium text-ink">{c.channel.title}</span>
                 <span className="tabular block text-xs text-muted">
-                  {c.lessons} lessons · {formatViews(c.views)} views
+                  {c.lessons} lessons · {c.topics} topics
                 </span>
               </span>
             </Link>

@@ -7,6 +7,7 @@ import { getStore } from "@/lib/data/store";
 import { isAiConfigured } from "@/lib/env";
 import type { Viewer } from "@/lib/viewer";
 import { AI_LIMITS } from "./limits";
+import { trackServer } from "@/lib/analytics";
 
 let status: { ok: boolean; at: number; reason?: string } | null = null;
 
@@ -48,5 +49,6 @@ export async function spendMessage(viewer: Viewer | null, ip: string) {
   const limit = dailyLimit(viewer);
   if (row.n >= limit) return -1;
   await store.putDoc("aiUsage", id, { n: row.n + 1 });
+  await trackServer("ai_question", { u: viewer?.user.id ?? null });
   return limit - row.n - 1;
 }

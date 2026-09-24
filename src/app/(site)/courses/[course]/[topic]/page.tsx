@@ -12,10 +12,13 @@ import { topCreators } from "@/lib/tutoring";
 import { ChannelAvatar } from "@/components/video-card";
 import { FileText, Sparkles, Users } from "lucide-react";
 import { guidesForTopic } from "@/lib/educators";
+import { UploadCard } from "@/components/upload-card";
+import { listUploads, toUploadCards } from "@/lib/uploads";
 import { OpenAskButton } from "@/components/ask/quick-ask";
 import { ExamCta } from "@/components/upgrade";
 import { daysUntil, examDateFor } from "@/lib/exams";
 import { getViewer } from "@/lib/viewer";
+import { CourseSearch } from "@/components/course-search";
 
 export async function generateMetadata({ params }: PageProps<"/courses/[course]/[topic]">): Promise<Metadata> {
   const { course, topic: slug } = await params;
@@ -31,7 +34,7 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
 
   const unit = catalog.unit(topic.unitId)!;
   const examDate = examDateFor(course, viewer?.state.profile ?? null);
-  const guides = await guidesForTopic(topic.id);
+  const [guides, uploads] = await Promise.all([guidesForTopic(topic.id), listUploads({ topicId: topic.id }).then(toUploadCards)]);
   const concept = catalog.concept(topic.conceptId)!;
   const str = (v: unknown) => (typeof v === "string" ? v : undefined);
   const result = queryFeed(catalog, null, { topicId: topic.id, sort: str(sp.sort), length: str(sp.length) });
@@ -79,6 +82,7 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
           </div>
         </div>
         <p className="mt-3 max-w-3xl text-[17px] leading-relaxed text-ink-2">{topic.summary}</p>
+        <CourseSearch courseId={course.id} courseTitle={course.shortTitle} className="mt-4" />
         <div className="mt-4 flex flex-wrap gap-2">
           {topic.keyPoints.map((k) => (
             <span key={k} className="rounded-lg bg-bg-subtle px-3 py-1.5 text-[13px] font-medium text-ink-2">
@@ -98,6 +102,17 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
                   <p className="font-semibold text-ink">{g.title}</p>
                   <p className="mt-1 line-clamp-2 text-[13px] text-muted">{(g.body ?? "").replace(/[#*`>\[\]()-]/g, "").slice(0, 160)}</p>
                 </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {uploads.length ? (
+          <section className="mt-8">
+            <h2 className="text-[15px] font-semibold text-ink">From Merit tutors</h2>
+            <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
+              {uploads.slice(0, 6).map((u) => (
+                <UploadCard key={u.id} u={u} />
               ))}
             </div>
           </section>

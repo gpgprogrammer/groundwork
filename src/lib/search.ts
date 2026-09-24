@@ -161,3 +161,9 @@ export function search(catalog: IndexedCatalog, query: string, filters: SearchFi
 
   return hits.sort((a, b) => b.score - a.score).slice(0, limit);
 }
+
+/** Scores any text fields against a query with the same rules as catalog search (0 = no match). */
+export function matchScore(query: string, fields: [string, number][]) {
+  const q = tokens(query);
+  return q.length ? scoreDoc(q, normalize(query), fields.map(([text, weight]) => ({ tokens: tokens(text), text: normalize(text), weight }))) : 0;
+}

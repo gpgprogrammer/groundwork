@@ -12,6 +12,8 @@ import { getViewer } from "@/lib/viewer";
 import { BookingForm } from "@/components/booking-client";
 import { getTutorMeta, listBookings, openSlots } from "@/lib/bookings";
 import { BadgeCheck } from "lucide-react";
+import { UploadCard } from "@/components/upload-card";
+import { listUploads, toUploadCards } from "@/lib/uploads";
 
 async function load(id: string) {
   const store = await getStore();
@@ -33,6 +35,7 @@ export default async function TutorPage({ params, searchParams }: PageProps<"/tu
   const own = viewer?.user.id === tutor.userId;
   const [meta, booked] = await Promise.all([getTutorMeta(tutor.id), listBookings({ tutorId: tutor.id })]);
   const slots = Object.fromEntries([30, 60, 90].map((m) => [String(m), openSlots(meta, booked, m)]));
+  const uploads = await toUploadCards(await listUploads({ educatorId: tutor.userId }));
   const tzLabel = meta.timezone.replace(/_/g, " ");
 
   return (
@@ -89,6 +92,29 @@ export default async function TutorPage({ params, searchParams }: PageProps<"/tu
               <h2 className="mt-8 text-lg font-bold text-ink">Credentials</h2>
               <p className="mt-2 text-[15px] leading-relaxed text-ink-2">{tutor.credentials}</p>
             </>
+          ) : null}
+          {uploads.length || own ? (
+            <section className="mt-10">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-bold text-ink">
+                  Videos <span className="font-normal text-muted">({uploads.length})</span>
+                </h2>
+                {own ? (
+                  <Link href="/studio/upload" className="text-sm font-medium text-accent hover:underline">
+                    Upload a video
+                  </Link>
+                ) : null}
+              </div>
+              {uploads.length ? (
+                <div className="mt-4 grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                  {uploads.map((u) => (
+                    <UploadCard key={u.id} u={u} hideBy />
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-muted">Students who watch your videos are more likely to book. Upload a short lesson to show how you teach.</p>
+              )}
+            </section>
           ) : null}
           <h2 className="mt-10 text-lg font-bold text-ink">
             Reviews <span className="font-normal text-muted">({reviews.length})</span>

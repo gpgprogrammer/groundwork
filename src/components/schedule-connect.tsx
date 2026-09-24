@@ -1,11 +1,26 @@
 "use client";
 
-import { Check, ClipboardPaste, FileText, Link2, Loader2, Upload } from "lucide-react";
+import {
+  Check,
+  ClipboardPaste,
+  FileText,
+  Link2,
+  Loader2,
+  Upload,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { connectCalendarUrl, importIcsFile, previewImport, saveImport, type PreviewResult, type ScheduleResult } from "@/app/actions/schedule";
+import {
+  connectCalendarUrl,
+  importIcsFile,
+  previewImport,
+  saveImport,
+  type PreviewResult,
+  type ScheduleResult,
+} from "@/app/actions/schedule";
 import type { Candidate } from "@/lib/extract-events";
 import { inputClass } from "./form";
+import { isSchoolLms, QuickConnect } from "./quick-connect";
 import { Button, cn } from "./ui";
 
 /** Where to find the subscribe link in each system schools use. */
@@ -19,9 +34,30 @@ const PROVIDERS: { name: string; steps: string[] }[] = [
       "Copy the iCal / webcal link and paste it here.",
     ],
   },
-  { name: "Canvas", steps: ["Open Calendar in Canvas.", "Click “Calendar Feed” at the bottom right.", "Copy the link it shows."] },
-  { name: "Schoology", steps: ["Open your Schoology Calendar.", "Click the iCal / Export icon above the calendar.", "Copy the feed URL."] },
-  { name: "Veracross", steps: ["Open your student or parent portal and go to Calendar.", "Choose “Subscribe” (or the calendar feed icon).", "Copy the iCal link."] },
+  {
+    name: "Canvas",
+    steps: [
+      "Open Calendar in Canvas.",
+      "Click “Calendar Feed” at the bottom right.",
+      "Copy the link it shows.",
+    ],
+  },
+  {
+    name: "Schoology",
+    steps: [
+      "Open your Schoology Calendar.",
+      "Click the iCal / Export icon above the calendar.",
+      "Copy the feed URL.",
+    ],
+  },
+  {
+    name: "Veracross",
+    steps: [
+      "Open your student or parent portal and go to Calendar.",
+      "Choose “Subscribe” (or the calendar feed icon).",
+      "Copy the iCal link.",
+    ],
+  },
   {
     name: "Google Classroom",
     steps: [
@@ -32,27 +68,71 @@ const PROVIDERS: { name: string; steps: string[] }[] = [
   },
   {
     name: "Google Calendar",
-    steps: ["Open Google Calendar on a computer → gear icon → Settings.", "Under “Settings for my calendars,” choose the calendar.", "Copy the “Secret address in iCal format.”"],
+    steps: [
+      "Open Google Calendar on a computer → gear icon → Settings.",
+      "Under “Settings for my calendars,” choose the calendar.",
+      "Copy the “Secret address in iCal format.”",
+    ],
   },
-  { name: "Microsoft Outlook / Teams", steps: ["Open Outlook on the web → Settings → Calendar → Shared calendars.", "Under “Publish a calendar,” pick the calendar and “Can view all details.”", "Copy the ICS link."] },
-  { name: "Apple Calendar (iCloud)", steps: ["In Calendar, right-click the calendar and choose Share Calendar.", "Check “Public Calendar” and copy the webcal:// link."] },
-  { name: "PowerSchool", steps: ["Many PowerSchool schools use Schoology or Canvas for assignments; connect that instead.", "If your school's portal offers “Export” or “Subscribe” on its calendar, copy that link here, or save the calendar as a PDF and use Upload a PDF."] },
-  { name: "Brightspace (D2L)", steps: ["Open Calendar in Brightspace.", "Choose “Subscribe” and copy the calendar feed URL."] },
-  { name: "Moodle", steps: ["Open Calendar → “Export calendar”.", "Choose events and a time period, then “Get calendar URL” and copy it."] },
+  {
+    name: "Microsoft Outlook / Teams",
+    steps: [
+      "Open Outlook on the web → Settings → Calendar → Shared calendars.",
+      "Under “Publish a calendar,” pick the calendar and “Can view all details.”",
+      "Copy the ICS link.",
+    ],
+  },
+  {
+    name: "Apple Calendar (iCloud)",
+    steps: [
+      "In Calendar, right-click the calendar and choose Share Calendar.",
+      "Check “Public Calendar” and copy the webcal:// link.",
+    ],
+  },
+  {
+    name: "PowerSchool",
+    steps: [
+      "Many PowerSchool schools use Schoology or Canvas for assignments; connect that instead.",
+      "If your school's portal offers “Export” or “Subscribe” on its calendar, copy that link here, or save the calendar as a PDF and use Upload a PDF.",
+    ],
+  },
+  {
+    name: "Brightspace (D2L)",
+    steps: [
+      "Open Calendar in Brightspace.",
+      "Choose “Subscribe” and copy the calendar feed URL.",
+    ],
+  },
+  {
+    name: "Moodle",
+    steps: [
+      "Open Calendar → “Export calendar”.",
+      "Choose events and a time period, then “Get calendar URL” and copy it.",
+    ],
+  },
 ];
 
 type Mode = "link" | "ics" | "doc" | "paste";
 
-export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<ScheduleResult, { ok: true }>) => void; compact?: boolean }) {
+export function ScheduleConnect({
+  onDone,
+  compact,
+}: {
+  onDone?: (r: Extract<ScheduleResult, { ok: true }>) => void;
+  compact?: boolean;
+}) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("link");
   const [url, setUrl] = useState("");
   const [school, setSchool] = useState(false);
   const [result, setResult] = useState<ScheduleResult | null>(null);
-  const [preview, setPreview] = useState<Extract<PreviewResult, { ok: true }> | null>(null);
+  const [preview, setPreview] = useState<Extract<
+    PreviewResult,
+    { ok: true }
+  > | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [picked, setPicked] = useState<Set<number>>(new Set());
-  const [help, setHelp] = useState<string | null>("Blackbaud (myschoolapp)");
+  const [help, setHelp] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   const finish = (r: ScheduleResult) => {
@@ -76,7 +156,13 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
       }
       setError(null);
       setPreview(r);
-      setPicked(new Set(r.candidates.map((c, i) => (c.suggested ? i : -1)).filter((i) => i >= 0)));
+      setPicked(
+        new Set(
+          r.candidates
+            .map((c, i) => (c.suggested ? i : -1))
+            .filter((i) => i >= 0),
+        ),
+      );
     });
 
   const tabs: [Mode, string, typeof Link2][] = [
@@ -93,8 +179,18 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
           <button
             key={k}
             type="button"
-            onClick={() => (setMode(k), setResult(null), setError(null), setPreview(null))}
-            className={cn("flex h-8 items-center gap-1.5 rounded-xl px-3 transition-colors", mode === k ? "bg-bg text-ink shadow-soft" : "text-muted hover:text-ink")}
+            onClick={() => (
+              setMode(k),
+              setResult(null),
+              setError(null),
+              setPreview(null)
+            )}
+            className={cn(
+              "flex h-8 items-center gap-1.5 rounded-xl px-3 transition-colors",
+              mode === k
+                ? "bg-bg text-ink shadow-soft"
+                : "text-muted hover:text-ink",
+            )}
           >
             <Icon className="size-4" />
             {label}
@@ -103,19 +199,50 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
       </div>
 
       {mode === "link" ? (
-        <form
-          className="mt-4 flex flex-col flex-wrap gap-2 sm:flex-row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            start(async () => finish(await connectCalendarUrl(url, school)));
-          }}
-        >
-          <input value={url} onChange={(e) => setUrl(e.target.value)} required inputMode="url" placeholder="webcal://yourschool.myschoolapp.com/… or https://…ics" className={cn(inputClass, "h-11 rounded-full px-4")} aria-label="Calendar link" />
-          <Button type="submit" size="lg" disabled={pending || !url.trim()} className="shrink-0">
-            {pending ? "Connecting…" : "Connect"}
-          </Button>
-          <SchoolToggle checked={school} onChange={setSchool} />
-        </form>
+        <>
+          <QuickConnect
+            pending={pending}
+            onLink={(link, isSchool) => {
+              setUrl(link);
+              start(async () =>
+                finish(await connectCalendarUrl(link, school || isSchool)),
+              );
+            }}
+          />
+          <p className="mt-4 text-[13px] font-medium text-ink-2">
+            Or paste the link yourself
+          </p>
+          <form
+            className="mt-2 flex flex-col flex-wrap gap-2 sm:flex-row"
+            onSubmit={(e) => {
+              e.preventDefault();
+              start(async () =>
+                finish(
+                  await connectCalendarUrl(url, school || isSchoolLms(url)),
+                ),
+              );
+            }}
+          >
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              required
+              inputMode="url"
+              placeholder="webcal://yourschool.myschoolapp.com/… or https://…ics"
+              className={cn(inputClass, "h-11 rounded-full px-4")}
+              aria-label="Calendar link"
+            />
+            <Button
+              type="submit"
+              size="lg"
+              disabled={pending || !url.trim()}
+              className="shrink-0"
+            >
+              {pending ? "Connecting…" : "Connect"}
+            </Button>
+            <SchoolToggle checked={school} onChange={setSchool} />
+          </form>
+        </>
       ) : mode === "ics" ? (
         <form
           className="mt-4 flex flex-col flex-wrap gap-2 sm:flex-row sm:items-center"
@@ -125,8 +252,17 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
             start(async () => finish(await importIcsFile(fd)));
           }}
         >
-          <FilePick name="file" accept=".ics,text/calendar" label="Choose a .ics file exported from any calendar" />
-          <Button type="submit" size="lg" disabled={pending} className="shrink-0">
+          <FilePick
+            name="file"
+            accept=".ics,text/calendar"
+            label="Choose a .ics file exported from any calendar"
+          />
+          <Button
+            type="submit"
+            size="lg"
+            disabled={pending}
+            className="shrink-0"
+          >
             {pending ? "Importing…" : "Import"}
           </Button>
           <input type="hidden" name="school" value={school ? "on" : ""} />
@@ -141,12 +277,24 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
           }}
         >
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <FilePick name="file" multiple accept=".pdf,.csv,.txt,application/pdf,text/csv,text/plain,image/*" label="Choose a PDF, CSV, or screenshots of your calendar" />
-            <Button type="submit" size="lg" disabled={pending} className="shrink-0">
+            <FilePick
+              name="file"
+              multiple
+              accept=".pdf,.csv,.txt,application/pdf,text/csv,text/plain,image/*"
+              label="Choose a PDF, CSV, or screenshots of your calendar"
+            />
+            <Button
+              type="submit"
+              size="lg"
+              disabled={pending}
+              className="shrink-0"
+            >
               {pending ? "Reading…" : "Read it"}
             </Button>
           </div>
-          <p className="text-xs text-muted">You&apos;ll review every item before anything is added.</p>
+          <p className="text-xs text-muted">
+            You&apos;ll review every item before anything is added.
+          </p>
         </form>
       ) : (
         <form
@@ -160,8 +308,13 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
             name="text"
             required
             rows={7}
-            className={cn(inputClass, "h-auto py-3 text-[13.5px] leading-relaxed")}
-            placeholder={"Copy your assignments or calendar list from your school portal and paste it here, e.g.\n\nThu, Sep 24   AP Bio: Unit 3 Test\n9/26   Calc BC Problem Set 4 due"}
+            className={cn(
+              inputClass,
+              "h-auto py-3 text-[13.5px] leading-relaxed",
+            )}
+            placeholder={
+              "Copy your assignments or calendar list from your school portal and paste it here, e.g.\n\nThu, Sep 24   AP Bio: Unit 3 Test\n9/26   Calc BC Problem Set 4 due"
+            }
           />
           <Button type="submit" size="lg" disabled={pending}>
             {pending ? "Reading…" : "Find the dates"}
@@ -179,13 +332,25 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
         <div className="mt-5 rounded-2xl ring-1 ring-line">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
             <p className="text-sm font-semibold text-ink">
-              We found {preview.candidates.length} dated {preview.candidates.length === 1 ? "item" : "items"}. Check the ones to add.
+              We found {preview.candidates.length} dated{" "}
+              {preview.candidates.length === 1 ? "item" : "items"}. Check the
+              ones to add.
             </p>
             <div className="flex gap-2 text-[12.5px]">
-              <button type="button" className="font-medium text-accent" onClick={() => setPicked(new Set(preview.candidates.map((_, i) => i)))}>
+              <button
+                type="button"
+                className="font-medium text-accent"
+                onClick={() =>
+                  setPicked(new Set(preview.candidates.map((_, i) => i)))
+                }
+              >
                 All
               </button>
-              <button type="button" className="font-medium text-muted" onClick={() => setPicked(new Set())}>
+              <button
+                type="button"
+                className="font-medium text-muted"
+                onClick={() => setPicked(new Set())}
+              >
                 None
               </button>
             </div>
@@ -208,19 +373,37 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
                     className="size-4 accent-[var(--accent)]"
                   />
                   <span className="tabular w-24 shrink-0 text-[12.5px] text-muted">
-                    {new Date(`${c.date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                    {new Date(`${c.date}T12:00:00`).toLocaleDateString(
+                      "en-US",
+                      { weekday: "short", month: "short", day: "numeric" },
+                    )}
                     {c.time ? ` ${c.time}` : ""}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-ink">{c.title}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink">
+                    {c.title}
+                  </span>
                   {c.kind === "test" || c.kind === "assignment" ? (
-                    <span className={cn("shrink-0 rounded px-1.5 py-0.5 text-[10.5px] font-bold uppercase", c.kind === "test" ? "bg-[#fde8e8] text-[#b42318]" : "bg-bg-subtle text-ink-2")}>{c.kind === "test" ? "Test" : "Due"}</span>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded px-1.5 py-0.5 text-[10.5px] font-bold uppercase",
+                        c.kind === "test"
+                          ? "bg-[#fde8e8] text-[#b42318]"
+                          : "bg-bg-subtle text-ink-2",
+                      )}
+                    >
+                      {c.kind === "test" ? "Test" : "Due"}
+                    </span>
                   ) : null}
                 </label>
               </li>
             ))}
           </ul>
           <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3">
-            <p className="text-[12px] text-muted">{preview.usedAi ? "Read with Merit AI." : "Tests and assignments are pre-checked."}</p>
+            <p className="text-[12px] text-muted">
+              {preview.usedAi
+                ? "Read with Merit AI."
+                : "Tests and assignments are pre-checked."}
+            </p>
             <Button
               disabled={pending || !picked.size}
               onClick={() =>
@@ -229,7 +412,14 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
                   try {
                     tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
                   } catch {}
-                  finish(await saveImport({ label: preview.label, kind: preview.kind, timezone: tz, items: preview.candidates.filter((_, i) => picked.has(i)) }));
+                  finish(
+                    await saveImport({
+                      label: preview.label,
+                      kind: preview.kind,
+                      timezone: tz,
+                      items: preview.candidates.filter((_, i) => picked.has(i)),
+                    }),
+                  );
                 })
               }
             >
@@ -240,9 +430,13 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
       ) : null}
 
       {result?.ok ? (
-        <p className="mt-3 flex items-start gap-2 text-sm text-positive" role="status">
+        <p
+          className="mt-3 flex items-start gap-2 text-sm text-positive"
+          role="status"
+        >
           <Check className="mt-0.5 size-4 shrink-0" />
-          Connected {result.label}. Added {result.added} {result.added === 1 ? "test or assignment" : "tests and assignments"}
+          Connected {result.label}. Added {result.added}{" "}
+          {result.added === 1 ? "test or assignment" : "tests and assignments"}
           {result.tests ? ` (${result.tests} tests)` : ""}
           {result.read ? `, from ${result.read} calendar items` : ""}.
         </p>
@@ -255,7 +449,9 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
 
       {mode === "link" ? (
         <div className={cn("mt-5", compact && "mt-4")}>
-          <p className="text-[13px] font-medium text-ink-2">Where to find your calendar link</p>
+          <p className="text-[13px] font-medium text-ink-2">
+            Where to find your calendar link
+          </p>
           <div className="mt-2 divide-y divide-line overflow-hidden rounded-xl ring-1 ring-line">
             {PROVIDERS.map((p) => (
               <div key={p.name}>
@@ -266,7 +462,9 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
                   aria-expanded={help === p.name}
                 >
                   {p.name}
-                  <span className="text-muted">{help === p.name ? "−" : "+"}</span>
+                  <span className="text-muted">
+                    {help === p.name ? "−" : "+"}
+                  </span>
                 </button>
                 {help === p.name ? (
                   <ol className="list-decimal space-y-1 bg-bg-subtle/50 px-4 py-3 pl-9 text-[13px] leading-relaxed text-ink-2">
@@ -279,7 +477,9 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
             ))}
           </div>
           <p className="mt-2 text-xs leading-relaxed text-muted">
-            You can connect several calendars (for example Blackbaud for assignments and Google for your schedule). Links stay private to your account. Merit only keeps tests, quizzes, and assignments.
+            You can connect several calendars (for example Blackbaud for
+            assignments and Google for your schedule). Links stay private to
+            your account. Merit only keeps tests, quizzes, and assignments.
           </p>
         </div>
       ) : null}
@@ -287,16 +487,38 @@ export function ScheduleConnect({ onDone, compact }: { onDone?: (r: Extract<Sche
   );
 }
 
-function SchoolToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function SchoolToggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <label className="flex w-full items-center gap-2 text-[12.5px] text-ink-2">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="size-4 accent-[var(--accent)]" />
-      Everything on this calendar is schoolwork (from a school portal like Blackbaud)
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="size-4 accent-[var(--accent)]"
+      />
+      Everything on this calendar is schoolwork (from a school portal like
+      Blackbaud)
     </label>
   );
 }
 
-function FilePick({ name, accept, label, multiple }: { name: string; accept: string; label: string; multiple?: boolean }) {
+function FilePick({
+  name,
+  accept,
+  label,
+  multiple,
+}: {
+  name: string;
+  accept: string;
+  label: string;
+  multiple?: boolean;
+}) {
   const [file, setFile] = useState<string | null>(null);
   return (
     <label className="flex h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-full border border-dashed border-line-strong px-4 text-sm text-muted hover:border-ink">
@@ -311,7 +533,9 @@ function FilePick({ name, accept, label, multiple }: { name: string; accept: str
         className="sr-only"
         onChange={(e) => {
           const f = e.target.files;
-          setFile(!f?.length ? null : f.length > 1 ? `${f.length} files` : f[0].name);
+          setFile(
+            !f?.length ? null : f.length > 1 ? `${f.length} files` : f[0].name,
+          );
         }}
       />
     </label>

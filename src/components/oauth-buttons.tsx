@@ -1,12 +1,29 @@
 import { signInWithProvider } from "@/app/actions/auth";
-import { oauthProviders } from "@/lib/env";
+import { env, oauthProviders } from "@/lib/env";
+
+let cached: { at: number; enabled: string[] } | null = null;
+
+/** Providers actually switched on in Supabase Auth (so a button never leads to "provider is not enabled"). */
+async function enabledProviders(): Promise<string[]> {
+  if (!oauthProviders.length) return [];
+  if (cached && Date.now() - cached.at < 5 * 60000) return cached.enabled;
+  try {
+    const res = await fetch(`${env.supabaseUrl}/auth/v1/settings`, { headers: { apikey: env.supabaseAnonKey }, signal: AbortSignal.timeout(4000) });
+    const j = (await res.json()) as { external?: Record<string, boolean> };
+    cached = { at: Date.now(), enabled: oauthProviders.filter((p) => j.external?.[p]) };
+  } catch {
+    cached = { at: Date.now(), enabled: [] };
+  }
+  return cached.enabled;
+}
 
 /** Google and Apple sign-in (shown when Supabase Auth has the providers switched on). */
-export function OAuthButtons({ next }: { next?: string }) {
-  if (!oauthProviders.length) return null;
+export async function OAuthButtons({ next }: { next?: string }) {
+  const providers = await enabledProviders();
+  if (!providers.length) return null;
   return (
     <div className="space-y-2">
-      {oauthProviders.map((p) => (
+      {providers.map((p) => (
         <form key={p} action={signInWithProvider}>
           <input type="hidden" name="provider" value={p} />
           <input type="hidden" name="next" value={next ?? ""} />

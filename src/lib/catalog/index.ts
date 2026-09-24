@@ -6,6 +6,7 @@ import { getStore } from "@/lib/data/store";
 import { EMPTY_SITE_STATS, rankVideo, type RankBreakdown } from "@/lib/ranking";
 import type { Channel, Concept, Contribution, Course, Curriculum, Educator, Library, SiteStats, Topic, Unit, YtVideo } from "@/lib/types";
 import { buildCurriculum } from "./build";
+import { withRefreshed } from "@/lib/youtube-refresh";
 
 export type RankedVideo = YtVideo & { rank: RankBreakdown; site: SiteStats };
 
@@ -35,7 +36,7 @@ export type IndexedCatalog = Curriculum & {
 const curriculum = buildCurriculum();
 
 let library: Library | null = null;
-function loadLibrary(): Library {
+export function loadLibrary(): Library {
   if (library && process.env.NODE_ENV === "production") return library;
   try {
     library = JSON.parse(readFileSync(path.join(process.cwd(), "src", "data", "youtube.json"), "utf8")) as Library;
@@ -154,7 +155,8 @@ export const getCatalog = cache(async () => {
   } catch (err) {
     console.error("[catalog] live data unavailable", err);
   }
-  return indexCatalog(contributions.length ? withContributions(loadLibrary(), contributions, educators) : loadLibrary(), stats);
+  const lib = await withRefreshed(loadLibrary());
+  return indexCatalog(contributions.length ? withContributions(lib, contributions, educators) : lib, stats);
 });
 
 export { curriculum };

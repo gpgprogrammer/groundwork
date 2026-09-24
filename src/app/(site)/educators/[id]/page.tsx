@@ -8,6 +8,8 @@ import { VideoCard } from "@/components/video-card";
 import { getCatalog } from "@/lib/catalog";
 import { contributionsBy, getEducator } from "@/lib/educators";
 import { toFeedVideo } from "@/lib/feed";
+import { UploadGrid } from "@/components/upload-card";
+import { toUploadCards } from "@/lib/uploads";
 
 export async function generateMetadata({ params }: PageProps<"/educators/[id]">): Promise<Metadata> {
   const e = await getEducator((await params).id);
@@ -21,6 +23,7 @@ export default async function EducatorPage({ params }: PageProps<"/educators/[id
   const items = await contributionsBy(educator.id);
   const videos = items.flatMap((c) => (c.kind === "video" && catalog.video(c.video!.id) ? [catalog.video(c.video!.id)!] : []));
   const guides = items.filter((c) => c.kind === "guide");
+  const uploads = await toUploadCards(items.filter((c) => c.kind === "upload" && c.media));
   return (
     <div className="mx-auto max-w-[1200px] px-4 pb-20 pt-8 sm:px-6">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -46,6 +49,15 @@ export default async function EducatorPage({ params }: PageProps<"/educators/[id
         </div>
       </div>
       {educator.bio ? <p className="mt-6 max-w-3xl whitespace-pre-wrap text-[15px] leading-relaxed text-ink-2">{educator.bio}</p> : null}
+
+      {uploads.length ? (
+        <section className="mt-10">
+          <h2 className="text-xl font-bold tracking-tight text-ink">Videos by {educator.name.split(" ")[0]}</h2>
+          <div className="mt-4">
+            <UploadGrid items={uploads} hideBy />
+          </div>
+        </section>
+      ) : null}
 
       {guides.length ? (
         <section className="mt-10">

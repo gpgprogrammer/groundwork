@@ -285,6 +285,7 @@ test("a student books a tutor's open hour; the tutor confirms and Merit's 10% fe
   await tutor.getByRole("button", { name: "Confirm" }).click();
   await expect(tutor.getByText("Confirmed")).toBeVisible();
   await tutor.getByRole("button", { name: "Mark completed" }).click();
+  await expect(tutor.getByRole("button", { name: "Mark completed" })).toHaveCount(0);
   await tutor.goto("/tutor/payouts");
   await expect(tutor.getByRole("button", { name: "Pay $6" })).toBeVisible();
   await tutor.close();
@@ -333,4 +334,67 @@ test("calendar parsing drops canceled and removed occurrences and keeps only sch
   await expect(page.getByText("AP Bio Vocab Quiz")).toHaveCount(2);
   await expect(page.getByText("AP Chem Test")).toHaveCount(0);
   await expect(page.getByText("Period 3 English")).toHaveCount(0);
+});
+
+test("a tutor uploads a video; it plays on Merit and shows on their profile", async ({ page }) => {
+  test.setTimeout(120_000);
+  await signUpAndOnboard(page);
+  await page.goto("/tutors/join");
+  await page.getByRole("textbox", { name: "Name", exact: true }).fill("Dana Okafor");
+  await page.getByLabel(/Headline/).fill("AP Chemistry tutor");
+  await page.getByLabel("About you").fill("I teach chemistry with worked examples and short practice sets for every unit.");
+  await page.locator('label:has(input[value="ap-chemistry"])').click();
+  await page.getByLabel(/Rate/).fill("50");
+  await page.getByLabel("I agree to the Merit Partner Terms.").check();
+  await page.getByRole("button", { name: "Publish my listing" }).click();
+  await page.waitForURL(/\/tutors\/[^/]+\?saved=1/);
+  const profile = new URL(page.url()).pathname;
+
+  await page.goto("/studio/upload");
+  // Record a short real video in the browser.
+  const b64 = await page.evaluate(async () => {
+    const c = document.createElement("canvas");
+    c.width = 320;
+    c.height = 180;
+    const ctx = c.getContext("2d")!;
+    const rec = new MediaRecorder(c.captureStream(15), { mimeType: "video/webm" });
+    const chunks: Blob[] = [];
+    rec.ondataavailable = (e) => chunks.push(e.data);
+    rec.start();
+    for (let i = 0; i < 20; i++) {
+      ctx.fillStyle = `hsl(${i * 18} 70% 50%)`;
+      ctx.fillRect(0, 0, 320, 180);
+      await new Promise((r) => setTimeout(r, 60));
+    }
+    rec.stop();
+    await new Promise((r) => (rec.onstop = r));
+    const buf = new Uint8Array(await new Blob(chunks).arrayBuffer());
+    let s = "";
+    for (const x of buf) s += String.fromCharCode(x);
+    return btoa(s);
+  });
+  await page.locator('input[type="file"]').setInputFiles({ name: "stoichiometry.webm", mimeType: "video/webm", buffer: Buffer.from(b64, "base64") });
+  await page.getByRole("textbox", { name: "Title" }).fill("Stoichiometry in five steps");
+  await page.getByRole("combobox", { name: "Course" }).selectOption("ap-chemistry");
+  const topic = page.getByRole("combobox", { name: "Topic" });
+  await topic.selectOption({ index: 1 });
+  await page.locator("#rights").check();
+  await page.getByRole("button", { name: "Publish video" }).click();
+  await page.waitForURL(/\/videos\/up_[\w-]+\?published=1/, { timeout: 60_000 });
+  await expect(page.getByRole("heading", { name: "Stoichiometry in five steps" })).toBeVisible();
+  await expect(page.locator("video")).toHaveAttribute("src", /merit-videos/);
+
+  await page.goto(profile);
+  await expect(page.getByRole("heading", { name: /Videos/ })).toBeVisible();
+  await expect(page.getByText("Stoichiometry in five steps")).toBeVisible();
+  await page.goto("/videos");
+  await expect(page.getByText("Stoichiometry in five steps").first()).toBeVisible();
+  await page.goto("/search?q=stoichiometry&course=ap-chemistry&type=merit");
+  await expect(page.getByText("Stoichiometry in five steps").first()).toBeVisible();
+
+  // Clean up the stored file.
+  await page.goto(page.url().replace(/\/search.*/, "/videos"));
+  await page.getByText("Stoichiometry in five steps").first().click();
+  await page.getByRole("button", { name: "Delete video" }).click();
+  await page.waitForURL(/\/studio\/upload/);
 });

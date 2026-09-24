@@ -28,3 +28,7 @@ export function courseTopics(catalog: IndexedCatalog, first: string[] = []): Cou
     topics: catalog.topicsForCourse(c.id).map((t) => ({ id: t.id, title: t.title, unit: `Unit ${catalog.unit(t.unitId)!.order}: ${catalog.unit(t.unitId)!.title}` })),
   }));
 }
+
+export async function guidesForCourse(courseId?: string) {
+  return (await (await getStore()).listDocs<Contribution>("contributions")).filter((c) => c.kind === "guide" && c.status === "published" && (!courseId || c.courseId === courseId));
+}

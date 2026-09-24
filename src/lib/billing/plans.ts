@@ -19,6 +19,7 @@ export const SPRINT = {
   price: 14.99,
   days: 30,
   features: [
+    { title: "7 days free", body: "Take the diagnostic and use every Sprint feature free for a week. No card needed." },
     { title: "Free diagnostic", body: "A quick exam-style check across every unit. See your readiness before you pay a cent." },
     { title: "Every test, not just May", body: "Start a Sprint for any quiz or test on your calendar, or the AP or SAT exam. One purchase covers every class, forever." },
     { title: "A day-by-day plan to test day", body: "Exactly what to watch and practice each day, sized to the time you have." },

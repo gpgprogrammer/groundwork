@@ -3,6 +3,7 @@
 import {
   CalendarDays,
   Clapperboard,
+  MonitorPlay,
   GraduationCap,
   History,
   House,
@@ -439,6 +440,7 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
         <NavRow href="/courses" icon={<GraduationCap className="size-5" />} label="Courses" pathname={pathname} />
         <NavRow href="/ask" icon={<Sparkles className="size-5" />} label="Ask Merit AI" pathname={pathname} />
         <NavRow href="/tutors" icon={<Users className="size-5" />} label="Tutors" pathname={pathname} />
+        <NavRow href="/videos" icon={<MonitorPlay className="size-5" />} label="Merit Tutors' Videos" pathname={pathname} />
       </Section>
       <Section title="Study tools">
         <NavRow href="/plan" icon={<CalendarCheck className="size-5" />} label="Tonight's plan" pathname={pathname} trailing={<PlusTag />} />

@@ -2,6 +2,7 @@ import { CalendarDays, EyeOff, Link2, Lock, Target, Trash2, Unlink } from "lucid
 import type { Metadata } from "next";
 import Link from "next/link";
 import { clearMatch, hideEvent, removeSource } from "@/app/actions/schedule";
+import { beginSprintTrial } from "@/app/actions/sprint";
 import { FocusPicker } from "@/components/focus-picker";
 import { ResyncButton } from "@/components/resync-button";
 import { ScheduleConnect } from "@/components/schedule-connect";
@@ -253,9 +254,13 @@ function SchedulePreview({ catalog, viewer }: { catalog: IndexedCatalog; viewer:
           </div>
           <div className="rounded-2xl bg-white/10 p-5">
             <p className="font-semibold">Exam Sprint</p>
-            <p className="mt-1 text-sm text-white/75">Calendar sync plus a Sprint for every test, forever. {usd(SPRINT.price)} once.</p>
+            <p className="mt-1 text-sm text-white/75">Calendar sync plus a Sprint for every test, forever. Free for 7 days, then {usd(SPRINT.price)} once.</p>
             <div className="mt-4">
-              {viewer ? (
+              {viewer && !viewer.billing.sprintTrialEndsAt ? (
+                <form action={beginSprintTrial.bind(null, "/schedule")}>
+                  <button className="inline-flex h-11 items-center rounded-full bg-gradient-to-r from-[#ff8a3d] to-[#e0531c] px-5 text-sm font-semibold text-white">Try it free for 7 days</button>
+                </form>
+              ) : viewer ? (
                 <BuyButton product="sprint" returnTo="/schedule" variant="sprint">
                   Unlock for {usd(SPRINT.price)}
                 </BuyButton>

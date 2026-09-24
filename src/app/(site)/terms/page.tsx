@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Terms of Service", description: "Ter
 
 export default function TermsPage() {
   return (
-    <LegalPage title="Terms of Service" updated="September 23, 2026">
+    <LegalPage title="Terms of Service" updated="September 24, 2026">
       <Clause title="Agreement">
         <p>By creating an account or using Merit Learning (&quot;Merit&quot;), you agree to these Terms. If you do not agree, do not use the service. We may update these Terms and will post the revised date above.</p>
       </Clause>
@@ -37,11 +37,14 @@ export default function TermsPage() {
         </p>
         <p>When you pay a tutor through Merit, the payment is processed by Stripe and paid out to the tutor after Merit&apos;s fee. Links to outside services take you to sites whose own terms apply.</p>
       </Clause>
-      <Clause title="Teacher content">
-        <p>Teachers who add lessons or write guides confirm they have the right to share them and that they are accurate and school-appropriate. They grant Merit permission to display that content to students. We may remove content that breaks these rules.</p>
+      <Clause title="Teacher and tutor content">
+        <p>Teachers and tutors who add lessons, write guides, or upload videos confirm they own the content or have permission to publish it, and that it is accurate and school-appropriate. Uploaded videos must not include other people&apos;s videos, TV, music, or textbook material you don&apos;t have rights to, or students&apos; faces or names without consent. You keep ownership of what you upload and grant Merit a non-exclusive, worldwide, royalty-free license to host, stream, and display it to Merit users and to show it in previews, until you delete it. We may remove content that breaks these rules.</p>
       </Clause>
-      <Clause title="Lessons from other creators">
-        <p>Many lessons are made by independent teachers and channels and play on YouTube. They belong to their creators; YouTube&apos;s Terms of Service apply when you watch them there.</p>
+      <Clause title="Copyright complaints">
+        <p>If you believe something on Merit infringes your copyright, <Contact /> with the page link, a description of your work, and your contact details. We remove infringing material promptly and close accounts of repeat infringers.</p>
+      </Clause>
+      <Clause title="YouTube lessons">
+        <p>Many lessons on Merit are YouTube videos, found and shown using YouTube API Services. They belong to their creators and play on YouTube. By using Merit you agree to be bound by the <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" className="text-accent underline">YouTube Terms of Service</a>. Merit is not affiliated with or endorsed by YouTube or Google.</p>
       </Clause>
       <Clause title="Conduct">
         <p>Don&apos;t misuse Merit: no scraping, attacks, harassment, spam, cheating on graded work, or fake reviews.</p>

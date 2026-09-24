@@ -9,8 +9,7 @@
     "lint": "eslint",
     "test": "playwright test",
     "typecheck": "next typegen && tsc --noEmit",
-    "ingest": "tsx scripts/ingest-youtube.ts",
-    "ingest:keyless": "tsx scripts/ingest-keyless.ts"
+    "ingest": "tsx scripts/ingest-youtube.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.62",

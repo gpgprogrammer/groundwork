@@ -40,9 +40,15 @@ test.describe("ranking", () => {
     expect(panned.score).toBeLessThan(base.score);
   });
 
-  test("tiny videos are smoothed toward the prior", () => {
-    const lucky = rankVideo(video({ views: 30, likes: 30 }));
-    expect(lucky.likeRate).toBeLessThan(0.8);
+  test("YouTube numbers never change the score", () => {
+    const a = rankVideo(video({ views: 30, likes: 30, comments: 0 }));
+    const b = rankVideo(video({ views: 5e7, likes: 2e6, comments: 9e4 }));
+    expect(a.score).toBe(b.score);
+  });
+
+  test("% helpful is hidden until enough Merit students vote", () => {
+    expect(rankVideo(video({})).helpfulPct).toBeNull();
+    expect(rankVideo(video({}), { opens: 10, saves: 0, helpful: 4, notHelpful: 1 }).helpfulPct).toBe(80);
   });
 
   test("scores stay within 0–100", () => {
@@ -233,5 +239,34 @@ test.describe("school portal calendars (Blackbaud)", () => {
     expect(byTitle["BC quiz 2.1-2.6"]).toMatchObject({ date: "2026-09-04", kind: "test" });
     expect(c.find((x) => /pts\.|Graded|SUN|Chemistry H - 1/.test(x.title))).toBeUndefined();
     expect(c).toHaveLength(5);
+  });
+});
+
+test.describe("analytics", () => {
+  test("counts visitors, sessions, bounces, and live viewers", async () => {
+    const { trafficReport } = await import("../src/lib/analytics-report");
+    const now = Date.parse("2026-09-24T12:00:00Z");
+    const at = (minAgo: number) => new Date(now - minAgo * 60_000).toISOString();
+    const r = trafficReport(
+      [
+        { t: "view", at: at(300), v: "a", u: null, path: "/" },
+        { t: "view", at: at(298), v: "a", u: null, path: "/courses/ap-calculus-bc" },
+        { t: "view", at: at(2), v: "a", u: "user-1234567890", path: "/tutors/t_1" },
+        { t: "view", at: at(60), v: "b", u: null, path: "/", ref: "google.com" },
+        { t: "video_open", at: at(59), v: "b", u: null, x: "vid" },
+        { t: "view", at: at(60 * 24 * 9), v: "old", u: null, path: "/" },
+      ],
+      7,
+      now,
+    );
+    expect(r.visitors).toBe(2);
+    expect(r.views).toBe(4);
+    expect(r.sessions).toBe(3);
+    expect(r.bounceRate).toBeCloseTo(2 / 3);
+    expect(r.live).toBe(1);
+    expect(r.videoOpens).toBe(1);
+    expect(r.referrers[0]).toEqual({ key: "google.com", n: 1 });
+    expect(r.courses[0].key).toBe("ap-calculus-bc");
+    expect(r.tutorViews[0].key).toBe("t_1");
   });
 });

@@ -46,7 +46,7 @@ export const formatPlace = (t: Pick<Tutor, "city" | "region" | "country">) => [t
 
 // ── Top creators (from real video data) ──────────────────────────────────────
 
-export type CreatorStat = { channel: Channel; lessons: number; views: number; score: number; topVideoId: string | null };
+export type CreatorStat = { channel: Channel; lessons: number; topics: number; score: number; topVideoId: string | null };
 
 /**
  * A channel's standing in a course or topic: the quality of its best lessons,
@@ -64,7 +64,7 @@ export function topCreators(catalog: IndexedCatalog, scope: { courseId?: string;
     const best = [...vids].sort((a, b) => b.rank.score - a.rank.score).slice(0, 5);
     const quality = best.reduce((n, v) => n + v.rank.score, 0) / best.length;
     const breadth = Math.log10(vids.length + 1) * 6;
-    out.push({ channel, lessons: vids.length, views: vids.reduce((n, v) => n + v.views, 0), score: quality + breadth, topVideoId: best[0]?.id ?? null });
+    out.push({ channel, lessons: vids.length, topics: new Set(vids.map((v) => v.topicId).filter(Boolean)).size, score: quality + breadth, topVideoId: best[0]?.id ?? null });
   }
   return out.sort((a, b) => b.score - a.score).slice(0, limit);
 }

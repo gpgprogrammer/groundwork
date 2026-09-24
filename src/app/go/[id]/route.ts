@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { getViewer } from "@/lib/viewer";
+import { trackServer } from "@/lib/analytics";
 
 /** Records that a student opened a lesson, then sends them to YouTube. */
 export async function GET(_req: NextRequest, ctx: RouteContext<"/go/[id]">) {
@@ -16,6 +17,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/go/[id]">) {
       console.error("[go] failed to record open", err);
     }
   }
+  if (video) await trackServer("video_open", { u: viewer?.user.id ?? null, x: id });
   const target = video?.isShort ? `https://www.youtube.com/shorts/${id}` : `https://www.youtube.com/watch?v=${id}`;
   return NextResponse.redirect(target, { status: 302, headers: { "Cache-Control": "no-store" } });
 }

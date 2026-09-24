@@ -9,7 +9,7 @@ import { cn, formatDuration, formatViews } from "./ui";
 
 export type CourseTopics = { id: string; title: string; category: string; topics: { id: string; title: string; unit: string }[] };
 
-function TopicPicker({ courses, courseId, setCourseId, topicId, setTopicId }: { courses: CourseTopics[]; courseId: string; setCourseId: (v: string) => void; topicId: string; setTopicId: (v: string) => void }) {
+export function TopicPicker({ courses, courseId, setCourseId, topicId, setTopicId }: { courses: CourseTopics[]; courseId: string; setCourseId: (v: string) => void; topicId: string; setTopicId: (v: string) => void }) {
   const course = courses.find((c) => c.id === courseId);
   const units = useMemo(() => [...new Set(course?.topics.map((t) => t.unit) ?? [])], [course]);
   return (

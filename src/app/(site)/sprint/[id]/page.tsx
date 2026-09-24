@@ -2,7 +2,8 @@ import { ArrowRight, BookOpen, CalendarDays, ClipboardCheck, Coffee, Lock, Noteb
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { deleteSprint, updateSprintSettings } from "@/app/actions/sprint";
+import { beginSprintTrial, deleteSprint, updateSprintSettings } from "@/app/actions/sprint";
+import { sprintTrialDaysLeft } from "@/lib/billing/access";
 import { CheckoutNotice } from "@/components/checkout-notice";
 import { CourseIcon } from "@/components/course-icon";
 import { Gauge, ReadinessBars } from "@/components/sprint/readiness";
@@ -28,7 +29,7 @@ export default async function SprintDashboard({ params, searchParams }: PageProp
   const viewer = await requireViewer(`/sprint/${id}`);
   let sprint = await getSprint(id);
   if (!sprint || sprint.userId !== viewer.user.id) notFound();
-  if (!sprint.unlocked && viewer.billing.sprintPass) sprint = await consumeCredit(sprint);
+  if (!sprint.unlocked) sprint = await consumeCredit(sprint);
 
   const catalog = await getCatalog();
   const course = catalog.course(sprint.courseId);
@@ -42,6 +43,7 @@ export default async function SprintDashboard({ params, searchParams }: PageProp
   const visibleDays = sprint.unlocked ? plan.slice(1, 8) : plan.slice(1, 3);
   const weakest = [...r].sort((a, b) => a.score - b.score).slice(0, 3);
   const correct = sprint.answers.filter((a) => a.correct).length;
+  const trialLeft = sprintTrialDaysLeft(viewer.billing);
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 pb-20 pt-6 sm:px-6">
@@ -93,6 +95,16 @@ export default async function SprintDashboard({ params, searchParams }: PageProp
         </div>
       </header>
 
+      {trialLeft !== null ? (
+        <section className="mt-6 flex flex-col gap-3 rounded-2xl bg-[#fff1e8] p-4 text-ink sm:flex-row sm:items-center sm:justify-between dark:bg-[#3a1d0c]">
+          <p className="text-[14px]">
+            <span className="font-semibold">Free week of Exam Sprint:</span> {trialLeft} {trialLeft === 1 ? "day" : "days"} left. Unlock it for good to keep every class&apos;s Sprint.
+          </p>
+          <BuyButton product="sprint" returnTo={`/sprint/${sprint.id}`} variant="sprint" className="h-10 shrink-0">
+            Unlock forever · {usd(SPRINT.price)}
+          </BuyButton>
+        </section>
+      ) : null}
       {!sprint.unlocked ? (
         <section className="mt-6 flex flex-col gap-4 rounded-3xl bg-[#0b1530] p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div>
@@ -103,6 +115,11 @@ export default async function SprintDashboard({ params, searchParams }: PageProp
             <p className="mt-1 max-w-xl text-[14px] text-white/75">One payment unlocks Sprints for every test and AP exam you&apos;ll ever have on Merit: daily lessons and practice, checkpoints, cram sheets, and the free-response coach. Calendar sync is included.</p>
           </div>
           <div className="flex shrink-0 flex-col items-center gap-2">
+            {!viewer.billing.sprintTrialEndsAt ? (
+              <form action={beginSprintTrial.bind(null, `/sprint/${sprint.id}`)}>
+                <button className="h-12 rounded-full bg-white px-7 text-[15px] font-semibold text-[#0b1530] hover:bg-white/90">Start 7-day free trial</button>
+              </form>
+            ) : null}
             <BuyButton product="sprint" returnTo={`/sprint/${sprint.id}`} variant="sprint" className="h-12 px-7 text-[15px]">
               Unlock for {usd(SPRINT.price)}
             </BuyButton>

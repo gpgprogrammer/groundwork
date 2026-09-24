@@ -2,6 +2,8 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { trackServer } from "@/lib/analytics";
+import { blackbaudExists, detectSchoolPortal, portalFor, rememberSchoolPortal, type SchoolPortal } from "@/lib/school-detect";
 import { calendarAccess } from "@/lib/billing/access";
 import { getStore } from "@/lib/data/store";
 import { candidatesFromCsv, candidatesFromImages, candidatesFromPdf, candidatesFromText, candidatesWithAi, type Candidate } from "@/lib/extract-events";
@@ -41,6 +43,7 @@ async function saveSource(viewer: Viewer, source: ScheduleSource, events: Schedu
   const store = await getStore();
   const current = normalizeSchedule((await store.getUserState(viewer.user.id))?.schedule ?? null) ?? empty();
   const others = current.events.filter((e) => e.sourceId !== source.id);
+  if (!current.sources.some((s) => s.id === source.id)) await trackServer("calendar_connect", { u: viewer.user.id, x: source.kind === "ics-url" && source.url ? `link:${new URL(source.url).hostname}` : source.kind });
   const keys = new Set(others.map((e) => `${e.title.toLowerCase()}|${e.start.slice(0, 10)}`));
   const fresh = events.map((e) => ({ ...e, sourceId: source.id })).filter((e) => !keys.has(`${e.title.toLowerCase()}|${e.start.slice(0, 10)}`));
   const next: Schedule = {
@@ -87,6 +90,7 @@ export async function connectCalendarUrl(rawUrl: string, school = false): Promis
     console.info("[schedule] link", { host: url.hostname, bytes: ics.length, school, ...stats, prodid: ics.match(/PRODID:([^\r\n]{0,80})/)?.[1] ?? null });
     if (!events.length) return emptyResult(source.label, stats);
     const added = await saveSource(a.viewer, source, events);
+    await rememberSchoolPortal(a.viewer.user.email, url.toString());
     return { ok: true, added: added.length, tests: added.filter((e) => e.kind === "test").length, label: source.label, read: stats.read, upcoming: stats.upcoming };
   } catch (e) {
     console.warn("[schedule] link failed", e instanceof Error ? e.message : e);
@@ -241,4 +245,19 @@ export async function clearMatch(uid: string) {
   if (!s) return;
   await (await getStore()).setSchedule(viewer.user.id, { ...s, events: s.events.map((e) => (e.uid === uid ? { ...e, courseId: null, topicIds: [] } : e)) });
   revalidatePath("/", "layout");
+}
+
+/** The student's school portal, found from their email domain, if we can. */
+export async function findMySchool(): Promise<SchoolPortal | null> {
+  const viewer = await getViewer();
+  if (!viewer) return null;
+  const linked = normalizeSchedule(viewer.state.schedule)?.sources.find((s) => s.kind === "ics-url" && s.url && portalFor(new URL(s.url).hostname));
+  if (linked?.url) return portalFor(new URL(linked.url).hostname);
+  return detectSchoolPortal(viewer.user.email);
+}
+
+/** Finds a Blackbaud site from just the first part of its address ("weberschool"). */
+export async function findBlackbaud(prefix: string): Promise<SchoolPortal | null> {
+  const p = prefix.trim().toLowerCase().replace(/^https?:\/\//, "").split(".")[0];
+  return p ? blackbaudExists(p) : null;
 }

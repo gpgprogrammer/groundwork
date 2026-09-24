@@ -31,7 +31,6 @@ export default async function ChannelPage({ params, searchParams }: PageProps<"/
     sort: result.sort,
     ...(result.length !== "any" ? { length: result.length } : {}),
   }).toString();
-  const totalViews = all.reduce((n, v) => n + v.views, 0);
   const topicCount = new Set(all.map((v) => v.topicId).filter(Boolean)).size;
 
   return (
@@ -45,7 +44,6 @@ export default async function ChannelPage({ params, searchParams }: PageProps<"/
             {channel.subscribers ? <span>· {formatViews(channel.subscribers)} subscribers</span> : null}
             <span>· {all.length} lessons on Merit</span>
             <span>· {topicCount} topics</span>
-            <span>· {formatViews(totalViews)} views</span>
           </p>
           <p className="mt-2 text-sm text-muted">
             {courseIds.map((cid) => catalog.course(cid)?.title).filter(Boolean).join(" · ")}

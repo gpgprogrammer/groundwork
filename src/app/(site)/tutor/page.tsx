@@ -55,6 +55,9 @@ export default async function TutorDashboard() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Link href="/studio/upload" className="flex h-9 items-center rounded-full bg-accent px-4 text-sm font-medium text-white">
+            Upload a video
+          </Link>
           <Link href={`/tutors/${t.id}`} className="flex h-9 items-center rounded-full bg-bg-subtle px-4 text-sm font-medium text-ink hover:bg-line">
             Public profile
           </Link>

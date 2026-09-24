@@ -42,8 +42,23 @@ export function plusAccess(profile: Profile | null, billing: Billing | null, now
 
 export const hasPlus = (a: PlusAccess) => a.kind === "trial" || a.kind === "active";
 
-/** Calendar sync comes with Plus or with the Exam Sprint pass. */
-export const calendarAccess = (v: { plus: PlusAccess; billing: Billing }) => hasPlus(v.plus) || v.billing.sprintPass;
+export const SPRINT_TRIAL_DAYS = 7;
+
+export const sprintTrialActive = (b: Billing, now = Date.now()) => Boolean(b.sprintTrialEndsAt && new Date(b.sprintTrialEndsAt).getTime() > now);
+
+/** Exam Sprint features: bought once, or during the free week. */
+export const sprintAccess = (b: Billing) => b.sprintPass || sprintTrialActive(b);
+
+/** Calendar sync comes with Plus or with Exam Sprint (including its free week). */
+export const calendarAccess = (v: { plus: PlusAccess; billing: Billing }) => hasPlus(v.plus) || sprintAccess(v.billing);
+
+export async function startSprintTrial(userId: string) {
+  const b = await getBilling(userId);
+  if (b.sprintPass || b.sprintTrialEndsAt) return b;
+  const next = { ...b, sprintTrialEndsAt: new Date(Date.now() + SPRINT_TRIAL_DAYS * 86400000).toISOString() };
+  await saveBilling(next);
+  return next;
+}
 
 /** Grants a product to a user (after Stripe confirms payment, in test mode, or from a gift). */
 export async function grant(userId: string, product: "plus-month" | "plus-year" | "sprint", source: PaymentSource, amount: number, note?: string) {
@@ -77,4 +92,10 @@ export async function claimGifts(userId: string, email: string) {
     await grant(userId, g.product, "gift", 0, `Gift from ${g.buyerName}`);
   }
   return gifts;
+}
+
+/** Whole days left in the free week of Exam Sprint, or null when it isn't running. */
+export function sprintTrialDaysLeft(b: Billing, now = Date.now()) {
+  if (b.sprintPass || !sprintTrialActive(b, now)) return null;
+  return Math.ceil((new Date(b.sprintTrialEndsAt!).getTime() - now) / 86400000);
 }

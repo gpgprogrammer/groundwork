@@ -1,4 +1,4 @@
-import { CalendarDays, Clapperboard } from "lucide-react";
+import { CalendarDays, Clapperboard, MonitorPlay } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Chips, FeedGrid, Shelf, SortControls } from "@/components/feed";
@@ -14,6 +14,8 @@ import { hasPlus } from "@/lib/billing/access";
 import { buildPlan } from "@/lib/plan";
 import { getPlanPrefs } from "@/lib/plan-store";
 import { dueForCheckIn, listLeads } from "@/lib/leads";
+import { UploadCard } from "@/components/upload-card";
+import { listUploads, toUploadCards } from "@/lib/uploads";
 
 const FIRST_ROWS = 12;
 
@@ -48,6 +50,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const head = page.items.slice(0, FIRST_ROWS);
   const rest = page.items.slice(FIRST_ROWS);
   const query = new URLSearchParams({ chip, ...(str(sp.sort) ? { sort: str(sp.sort)! } : {}), ...(str(sp.length) ? { length: str(sp.length)! } : {}) }).toString();
+  const uploads = showShelves ? await toUploadCards((await listUploads()).slice(0, 4)) : [];
   const shorts = showShelves ? catalog.videos.filter((v) => v.isShort).slice(0, 12).map((v) => toFeedVideo(catalog, v)) : [];
 
   if (!catalog.videos.length) {
@@ -118,6 +121,26 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           ))}
         </div>
       </div>
+
+      {uploads.length ? (
+        <div className="mt-10 border-t border-line pt-6">
+          <Shelf
+            icon={<MonitorPlay className="size-5 text-accent" />}
+            title="Merit Tutors' Videos"
+            action={
+              <Link href="/videos" className="rounded-full px-3 py-1.5 text-sm font-medium text-ink hover:bg-bg-subtle">
+                See all
+              </Link>
+            }
+          >
+            <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+              {uploads.map((u) => (
+                <UploadCard key={u.id} u={u} />
+              ))}
+            </div>
+          </Shelf>
+        </div>
+      ) : null}
 
       {shorts.length >= 6 ? (
         <div className="mt-10 border-t border-line pt-6">
