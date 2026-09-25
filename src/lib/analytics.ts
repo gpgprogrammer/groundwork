@@ -10,7 +10,7 @@ import { createAdminClient } from "@/lib/supabase/server";
  * third party) with a random visitor id; no IP addresses are kept.
  */
 
-export type EventType = "view" | "video_open" | "upload_play" | "calendar_connect" | "ai_question" | "checkout";
+export type EventType = "view" | "video_open" | "upload_play" | "calendar_connect" | "ai_question" | "checkout" | "cta";
 
 export type AnalyticsEvent = {
   t: EventType;

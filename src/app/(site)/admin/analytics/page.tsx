@@ -17,6 +17,18 @@ const RANGES = [
   { d: 90, label: "90 days" },
 ];
 
+/** Names for the landing page's buttons. */
+const FUNNELS: Record<string, string> = {
+  "nav-signup": "Top bar: Get started",
+  "hero-student": "Hero: Start free as a student",
+  "hero-explore": "Hero: Explore lessons",
+  "path-student": "Students card",
+  "path-teacher": "Teachers & tutors card",
+  "path-parent": "Parents card",
+  "footer-student": "Bottom: Start free",
+  "footer-teacher": "Bottom: I'm a teacher or tutor",
+};
+
 const pct = (n: number) => `${Math.round(n * 100)}%`;
 const num = (n: number) => n.toLocaleString("en-US");
 
@@ -79,6 +91,13 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
         </p>
       </Card>
 
+      <Group title="Landing page funnel">
+        <Stat label="Landing page visitors" value={num(t.landingVisitors)} />
+        <Stat label="Clicked a button" value={num(t.landingClickers)} hint={t.landingVisitors ? `${pct(t.landingClickers / t.landingVisitors)} of landing visitors` : undefined} />
+        <Stat label="New accounts" value={num(a.signups.count)} hint={t.landingVisitors ? `${pct(a.signups.count / t.landingVisitors)} of landing visitors` : undefined} />
+        <Stat label="Top path" value={t.ctaClicks[0] ? FUNNELS[t.ctaClicks[0].key] ?? t.ctaClicks[0].key : "–"} />
+      </Group>
+
       <Group title="Learning">
         <Stat label="YouTube lessons opened" value={num(t.videoOpens)} />
         <Stat label="Merit video plays" value={num(t.uploadPlays)} />
@@ -111,6 +130,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
       </Group>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        <Table title="Landing page buttons clicked" rows={t.ctaClicks.map((c) => [FUNNELS[c.key] ?? c.key, num(c.n)])} empty="No clicks yet." />
         <Table title="Top pages" rows={t.topPages.map((c) => [<Link key="l" href={c.key} className="hover:underline">{c.key}</Link>, num(c.n)])} />
         <Table title="Where visitors come from" rows={t.referrers.map((c) => [c.key, num(c.n)])} empty="No outside referrers yet (direct visits don't count here)." />
         <Table title="Top courses" rows={a.content.topCourses.map((c) => [c.label, num(c.n)])} />

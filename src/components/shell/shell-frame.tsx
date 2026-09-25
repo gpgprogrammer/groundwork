@@ -112,7 +112,7 @@ export function ShellFrame({ data, children }: { data: ShellData; children: Reac
                 <button onClick={() => setDrawer(false)} className="flex size-10 items-center justify-center rounded-full hover:bg-bg-subtle" aria-label="Close menu">
                   <X className="size-5" />
                 </button>
-                <Logo />
+                <Logo href="/home" />
               </div>
               <FullNav data={data} pathname={pathname} />
             </div>
@@ -142,7 +142,7 @@ function TopBar({ data, onMenu }: { data: ShellData; onMenu: () => void }) {
             <button onClick={onMenu} className="flex size-10 items-center justify-center rounded-full hover:bg-bg-subtle" aria-label="Menu">
               <Menu className="size-5" />
             </button>
-            <Logo />
+            <Logo href="/home" />
           </div>
           <div className="hidden max-w-[640px] flex-1 sm:flex">
             <SearchBox />
@@ -435,7 +435,7 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
   return (
     <nav aria-label="Main">
       <Section>
-        <NavRow href="/" icon={<House className="size-5" />} label="Home" pathname={pathname} />
+        <NavRow href="/home" icon={<House className="size-5" />} label="Home" pathname={pathname} />
         <NavRow href="/shorts" icon={<Clapperboard className="size-5" />} label="Quick lessons" pathname={pathname} />
         <NavRow href="/courses" icon={<GraduationCap className="size-5" />} label="Courses" pathname={pathname} />
         <NavRow href="/ask" icon={<Sparkles className="size-5" />} label="Ask Merit AI" pathname={pathname} />
@@ -505,7 +505,7 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
 
 function MiniNav({ pathname }: { pathname: string }) {
   const items = [
-    { href: "/", label: "Home", icon: <House className="size-5" /> },
+    { href: "/home", label: "Home", icon: <House className="size-5" /> },
     { href: "/courses", label: "Courses", icon: <GraduationCap className="size-5" /> },
     { href: "/ask", label: "Ask AI", icon: <Sparkles className="size-5" /> },
     { href: "/tutors", label: "Tutors", icon: <Users className="size-5" /> },

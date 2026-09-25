@@ -19,7 +19,7 @@ import { listUploads, toUploadCards } from "@/lib/uploads";
 
 const FIRST_ROWS = 12;
 
-export default async function Home({ searchParams }: PageProps<"/">) {
+export default async function Home({ searchParams }: PageProps<"/home">) {
   const [catalog, viewer, sp] = await Promise.all([getCatalog(), getViewer(), searchParams]);
   if (viewer && !viewer.state.profile.onboarded && viewer.user.accountType !== "teacher") redirect("/onboarding");
 

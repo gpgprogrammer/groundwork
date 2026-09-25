@@ -40,19 +40,19 @@ async function signUpAndOnboard(page: Page, opts: { calendar?: boolean } = {}) {
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: /AP exams/ }).click();
   await page.getByRole("button", { name: "Start learning" }).click();
-  await page.waitForURL((u) => u.pathname === "/");
+  await page.waitForURL((u) => u.pathname === "/home");
   if (opts.calendar) {
     await page.goto("/schedule");
     await page.getByRole("button", { name: "Upload .ics" }).click();
     await page.locator('input[type=file]').setInputFiles({ name: "school.ics", mimeType: "text/calendar", buffer: Buffer.from(ICS) });
     await page.getByRole("button", { name: "Import" }).click();
     await expect(page.getByText(/Added 1 test or assignment/)).toBeVisible();
-    await page.goto("/");
+    await page.goto("/home");
   }
 }
 
 test("anonymous home: chips, sorting, and real YouTube thumbnails", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/home");
   await expect(page.getByRole("link", { name: "Merit Learning home" }).first()).toBeVisible();
   await expect(page.getByText("The best AP and SAT lessons on YouTube")).toHaveCount(0);
   const firstThumb = page.locator('main img[src*="ytimg.com"]').first();
@@ -119,7 +119,7 @@ test("topic mastery updates course progress", async ({ page }) => {
 });
 
 test("search suggestions tolerate typos", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/home");
   await page.getByRole("combobox", { name: "Search" }).fill("chian rule");
   await expect(page.getByRole("option").filter({ hasText: "Chain Rule" }).first()).toBeVisible();
   await page.keyboard.press("Enter");
@@ -480,8 +480,8 @@ test("a teacher account skips student setup and lands in the teacher studio", as
   await expect(page.getByText("Your teacher account is ready")).toBeVisible();
   await expect(page.getByRole("link", { name: "Create a tutor listing" })).toBeVisible();
   // The home page doesn't send teachers to student onboarding.
-  await page.goto("/");
-  expect(new URL(page.url()).pathname).toBe("/");
+  await page.goto("/home");
+  expect(new URL(page.url()).pathname).toBe("/home");
 });
 
 test("sign-up requires choosing student or teacher", async ({ page }) => {
@@ -512,4 +512,29 @@ test("the link preview image renders", async ({ request }) => {
   const res = await request.get("/opengraph-image");
   expect(res.status()).toBe(200);
   expect(res.headers()["content-type"]).toContain("image/png");
+});
+
+test.describe("landing page", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+  test("signed-out visitors land on the landing page; its paths lead to sign-up and lessons", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Know what to study");
+    // No welcome popup here: the landing page is the invitation.
+    await page.waitForTimeout(1200);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.getByText("Tonight's plan · example")).toBeVisible();
+    await expect(page.locator('img[src*="ytimg.com"]').first()).toBeVisible();
+    await page.getByRole("link", { name: /Create a teacher account/ }).click();
+    await page.waitForURL(/\/signup\?as=teacher/);
+    await expect(page.getByRole("radio", { name: /teacher or tutor/ })).toBeChecked();
+    await page.goto("/");
+    await page.getByRole("link", { name: "Explore lessons" }).click();
+    await page.waitForURL("**/home");
+  });
+});
+
+test("signed-in visitors skip the landing page", async ({ page }) => {
+  await signUpAndOnboard(page);
+  await page.goto("/");
+  await page.waitForURL("**/home");
 });

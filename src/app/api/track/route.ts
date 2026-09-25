@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     await logError({ source: "browser", message: String(body.message ?? "Unknown error"), digest: body.digest ? String(body.digest) : undefined, path: typeof body.path === "string" ? body.path : undefined, stack: body.stack ? String(body.stack) : undefined });
     return res;
   }
-  const type = body.type === "upload_play" ? "upload_play" : body.type === "view" ? "view" : null;
+  const type = body.type === "upload_play" ? "upload_play" : body.type === "cta" ? "cta" : body.type === "view" ? "view" : null;
   if (!type) return res;
   let v = req.cookies.get(VISITOR_COOKIE)?.value;
   if (!v || !/^[\w-]{8,40}$/.test(v)) {
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     ...(req.headers.get("x-vercel-ip-country") ? { c: req.headers.get("x-vercel-ip-country")! } : {}),
     ...(ref ? { ref } : {}),
     ...(typeof body.path === "string" ? { path: body.path.slice(0, 300).split("?")[0] } : {}),
-    ...(type === "upload_play" && typeof body.ref_id === "string" ? { x: body.ref_id.slice(0, 40) } : {}),
+    ...((type === "upload_play" || type === "cta") && typeof body.ref_id === "string" ? { x: body.ref_id.slice(0, 40) } : {}),
   };
   try {
     await saveEvent(e);

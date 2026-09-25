@@ -82,6 +82,10 @@ export function trafficReport(events: AnalyticsEvent[], days: number, now = Date
     calendarConnects: of("calendar_connect").length,
     calendarMethods: top(of("calendar_connect").map((e) => (e.x?.startsWith("link:") ? `Link · ${e.x.slice(5)}` : e.x)), 10),
     checkouts: top(of("checkout").map((e) => e.x), 5),
+    // Landing page funnel: who saw it, and which button they chose.
+    landingVisitors: new Set(views.filter((e) => e.path === "/").map((e) => e.v)).size,
+    landingClickers: new Set(of("cta").map((e) => e.v)).size,
+    ctaClicks: top(of("cta").map((e) => e.x), 12),
   };
 }
 

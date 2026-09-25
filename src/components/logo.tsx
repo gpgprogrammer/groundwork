@@ -21,10 +21,10 @@ export function LogoMark({ className }: { className?: string }) {
 }
 
 /** "merit" wordmark: rounded lowercase with a blue dot over the i. */
-export function Wordmark({ className, tagline = false }: { className?: string; tagline?: boolean }) {
+export function Wordmark({ className, tagline = false, onDark = false }: { className?: string; tagline?: boolean; onDark?: boolean }) {
   return (
     <span className={cn("inline-flex flex-col leading-none", className)}>
-      <span className="font-brand text-[1.45em] font-extrabold tracking-[-0.02em] text-brand-ink">
+      <span className={cn("font-brand text-[1.45em] font-extrabold tracking-[-0.02em]", onDark ? "text-white" : "text-brand-ink")}>
         mer
         <span className="relative inline-block">
           ı
