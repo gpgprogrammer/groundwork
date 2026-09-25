@@ -4,6 +4,7 @@ import { Check, Copy } from "lucide-react";
 import { useActionState, useOptimistic, useState, useTransition } from "react";
 import { toggleTask, updatePlanPrefs, type PrefsState } from "@/app/actions/plan";
 import { cn } from "./ui";
+import { StudyTimeInput } from "./study-time-input";
 
 export function TaskCheck({ id, done }: { id: string; done: boolean }) {
   const [optimistic, setOptimistic] = useOptimistic(done);
@@ -35,16 +36,7 @@ export function PlanSettings({ minutesPerDay, reminderHour, studyDays }: { minut
   const [state, action, pending] = useActionState<PrefsState, FormData>(updatePlanPrefs, {});
   return (
     <form action={action} className="space-y-5">
-      <label className="block">
-        <span className="text-[13px] font-medium text-ink-2">Time per day</span>
-        <select name="minutesPerDay" defaultValue={minutesPerDay} className="mt-1.5 h-10 w-full rounded-lg bg-bg px-3 text-sm ring-1 ring-line-strong">
-          {[20, 30, 45, 60, 90, 120].map((m) => (
-            <option key={m} value={m}>
-              {m < 60 ? `${m} minutes` : `${m / 60} hour${m > 60 ? "s" : ""}`}
-            </option>
-          ))}
-        </select>
-      </label>
+      <StudyTimeInput defaultMinutes={minutesPerDay} label="How much time do you have each day?" />
       <label className="block">
         <span className="text-[13px] font-medium text-ink-2">Reminder time</span>
         <select name="reminderHour" defaultValue={reminderHour} className="mt-1.5 h-10 w-full rounded-lg bg-bg px-3 text-sm ring-1 ring-line-strong">

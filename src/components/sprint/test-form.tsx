@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { useActionState, useState } from "react";
 import { createTestSprint, type CreateState } from "@/app/actions/sprint";
 import { inputClass } from "../form";
+import { StudyTimeInput } from "../study-time-input";
 
 type CourseUnits = { id: string; title: string; units: { id: string; label: string }[] };
 
@@ -54,16 +55,7 @@ export function TestSprintForm({
           </div>
         </fieldset>
       ) : null}
-      <label className="block max-w-48">
-        <span className="mb-1.5 block text-[13px] font-medium text-ink-2">Time per day</span>
-        <select name="minutesPerDay" defaultValue="30" className={inputClass}>
-          {[15, 20, 30, 45, 60, 90].map((m) => (
-            <option key={m} value={m}>
-              {m} min
-            </option>
-          ))}
-        </select>
-      </label>
+      <StudyTimeInput defaultMinutes={30} label="How much time do you have each day?" />
       {state.error ? <p className="text-sm text-[#c2410c]">{state.error}</p> : null}
       <button disabled={pending} className="inline-flex h-12 items-center gap-2 rounded-full bg-gradient-to-r from-[#ff8a3d] to-[#e0531c] px-6 text-[15px] font-semibold text-white disabled:opacity-60">
         {pending ? "Setting up…" : "Start the free diagnostic"} <ArrowRight className="size-4" />

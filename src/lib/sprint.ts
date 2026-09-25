@@ -156,7 +156,8 @@ export function sprintPlan(catalog: IndexedCatalog, sprint: Sprint, now = Date.n
       // Build phase: learn one or two topics, then practice them plus a missed one.
       let budget = Math.round(minutes * 0.6);
       const today: string[] = [];
-      while (qi < queue.length && budget >= 8 && today.length < 2) {
+      // About one new topic per 45 minutes of study, and never fewer than two.
+      while (qi < queue.length && budget >= 8 && today.length < Math.max(2, Math.floor(minutes / 45))) {
         const { topic, unit } = queue[qi++];
         const videos = bestLessons(catalog, topic.id, budget);
         const m = Math.max(8, Math.ceil(videos.reduce((s, v) => s + v.durationSec, 0) / 60) + 3);

@@ -14,7 +14,7 @@ async function plusViewer() {
 }
 
 const prefsSchema = z.object({
-  minutesPerDay: z.coerce.number().int().min(10).max(240),
+  minutesPerDay: z.coerce.number({ message: "Enter how much time you have: 10 minutes to 8 hours." }).int().min(10, "At least 10 minutes a day.").max(480, "Up to 8 hours a day."),
   reminderHour: z.coerce.number().int().min(5).max(23),
   studyDays: z.array(z.coerce.number().int().min(0).max(6)).min(1, "Pick at least one day."),
 });

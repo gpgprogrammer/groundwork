@@ -31,7 +31,7 @@ const tryUnlock = consumeCredit;
 const createSchema = z.object({
   courseId: z.string().min(1),
   examDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick your exam date."),
-  minutesPerDay: z.coerce.number().int().min(15).max(240),
+  minutesPerDay: z.coerce.number({ message: "Enter how much time you have: 10 minutes to 8 hours." }).int().min(10, "At least 10 minutes a day.").max(480, "Up to 8 hours a day."),
 });
 
 export type CreateState = { error?: string };
@@ -166,7 +166,7 @@ export async function updateSprintSettings(id: string, form: FormData) {
   await save({
     ...sprint,
     examDate: /^\d{4}-\d{2}-\d{2}$/.test(examDate) ? examDate : sprint.examDate,
-    minutesPerDay: minutes >= 15 && minutes <= 240 ? Math.round(minutes) : sprint.minutesPerDay,
+    minutesPerDay: minutes >= 10 && minutes <= 480 ? Math.round(minutes) : sprint.minutesPerDay,
   });
   revalidatePath(`/sprint/${id}`);
 }
@@ -200,7 +200,7 @@ const testSchema = z.object({
   courseId: z.string().min(1, "Pick the class this test is for."),
   title: z.string().trim().min(2, "Name the test.").max(120),
   examDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick the test date."),
-  minutesPerDay: z.coerce.number().int().min(15).max(240),
+  minutesPerDay: z.coerce.number({ message: "Enter how much time you have: 10 minutes to 8 hours." }).int().min(10, "At least 10 minutes a day.").max(480, "Up to 8 hours a day."),
   eventUid: z.string().max(300).optional(),
   unitIds: z.array(z.string()).min(1, "Pick at least one unit the test covers."),
 });

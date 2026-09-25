@@ -130,6 +130,25 @@ export function buildPlan(catalog: IndexedCatalog, state: UserState, prefs: Pick
         nextPointer.set(c.topic.courseId, list[list.findIndex((t) => t.id === c.topic.id) + 1]);
       }
     }
+    // Lots of time left? Keep moving through each course until it's used.
+    for (let round = 0; round < 8 && budget >= 8; round++) {
+      let added = false;
+      for (const courseId of courseIds) {
+        if (budget < 8) break;
+        const t = nextPointer.get(courseId);
+        if (!t || tasks.some((x) => x.topic.id === t.id)) continue;
+        const course = catalog.course(courseId)!;
+        const { videos, minutes } = lessonsFor(catalog, state, t.id, budget, false);
+        const list = catalog.topicsForCourse(courseId).filter((x) => catalog.videosForTopic(x.id).length && !state.mastered[x.id]);
+        nextPointer.set(courseId, list[list.findIndex((x) => x.id === t.id) + 1]);
+        if (!videos.length) continue;
+        tasks.push({ id: `${date}:${t.id}`, kind: "next", topic: t, course, reason: `Next in ${course.shortTitle}`, videos, minutes });
+        budget -= minutes;
+        lastPlanned.set(t.id, i);
+        added = true;
+      }
+      if (!added) break;
+    }
     out.push({ date, tasks, minutes: tasks.reduce((s, t) => s + t.minutes, 0), events: dayEvents, rest });
   }
   return out;

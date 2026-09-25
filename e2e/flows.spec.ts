@@ -575,3 +575,27 @@ test("connecting a schedule: copy the school calendar page and paste it anywhere
   await expect(page.getByText(/Added \d+ tests? (and|or) assignments?/)).toBeVisible();
   await expect(page.getByText(/Pasted · \d+ items?/)).toBeVisible();
 });
+
+test("students type exactly how much time they have, and tonight's plan fills it", async ({ page }) => {
+  await signUpAndOnboard(page);
+  await page.goto("/plan");
+  const summary = page.getByText(/things?, about/).first();
+  await expect(summary).toBeVisible();
+  const before = await summary.innerText();
+  // Type 2 hours 15 minutes.
+  await page.getByLabel("Hours").fill("2");
+  await page.getByLabel("Minutes").fill("15");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Saved. Your plan is updated.")).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Hours")).toHaveValue("2");
+  await expect(page.getByLabel("Minutes")).toHaveValue("15");
+  const after = await page.getByText(/things?, about/).first().innerText();
+  expect(after).toMatch(/about \d+ hr/);
+  expect(after).not.toBe(before);
+  // Quick picks fill the boxes; out-of-range amounts are flagged.
+  await page.getByRole("button", { name: "3 hr", exact: true }).click();
+  await expect(page.getByLabel("Hours")).toHaveValue("3");
+  await page.getByLabel("Hours").fill("9");
+  await expect(page.getByText("Up to 8 hours a day")).toBeVisible();
+});

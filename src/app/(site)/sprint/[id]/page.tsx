@@ -15,6 +15,7 @@ import { getCatalog } from "@/lib/catalog";
 import { daysLeft, estimatedScore, overall, readiness, sprintPlan, type SprintDay, type SprintTask } from "@/lib/sprint";
 import { consumeCredit, getSprint } from "@/lib/sprint-store";
 import { requireViewer } from "@/lib/viewer";
+import { StudyTimeInput } from "@/components/study-time-input";
 
 export const metadata: Metadata = { title: "Exam Sprint" };
 
@@ -242,10 +243,7 @@ export default async function SprintDashboard({ params, searchParams }: PageProp
                 Exam date
                 <input type="date" name="examDate" defaultValue={sprint.examDate} className="mt-1 h-10 w-full rounded-lg bg-bg px-3 text-sm ring-1 ring-line-strong" />
               </label>
-              <label className="block text-[13px] font-medium text-ink-2">
-                Minutes per day
-                <input type="number" name="minutesPerDay" min={15} max={240} step={5} defaultValue={sprint.minutesPerDay} className="mt-1 h-10 w-full rounded-lg bg-bg px-3 text-sm ring-1 ring-line-strong" />
-              </label>
+              <StudyTimeInput defaultMinutes={sprint.minutesPerDay} />
               <button className="h-10 w-full rounded-full bg-ink text-sm font-semibold text-bg">Save</button>
             </form>
             {!sprint.unlocked ? (

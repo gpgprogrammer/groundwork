@@ -55,7 +55,7 @@ export default async function PlanPage() {
         <h1 className="mt-3 text-[34px] font-bold tracking-tight text-ink">Tonight</h1>
         <p className="mt-1 text-[15px] text-muted">
           {tonight.tasks.length
-            ? `${tonight.tasks.length} ${tonight.tasks.length === 1 ? "thing" : "things"}, about ${tonight.minutes} minutes. ${doneTonight ? `${doneTonight} done.` : ""}`
+            ? `${tonight.tasks.length} ${tonight.tasks.length === 1 ? "thing" : "things"}, about ${tonight.minutes < 60 ? `${tonight.minutes} minutes` : `${Math.floor(tonight.minutes / 60)} hr${tonight.minutes % 60 ? ` ${tonight.minutes % 60} min` : ""}`}. ${doneTonight ? `${doneTonight} done.` : ""}`
             : tonight.rest
               ? "Rest day. You earned it."
               : "Nothing planned tonight."}
