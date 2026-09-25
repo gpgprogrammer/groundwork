@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/watch/:id", destination: "/go/:id", permanent: false },
+      // The video catalog used to live at /home; Home is now the front page.
+      { source: "/home", destination: "/lessons", permanent: false },
     ];
   },
   async headers() {

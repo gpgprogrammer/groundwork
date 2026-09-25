@@ -123,7 +123,7 @@ export type ScheduleEvent = {
 
 export type ScheduleSource = {
   id: string;
-  kind: "ics-url" | "ics-file" | "document" | "text";
+  kind: "ics-url" | "ics-file" | "document" | "text" | "google";
   /** Calendar feed URL (kept private to the owner). Null for uploads. */
   url: string | null;
   label: string;

@@ -9,7 +9,7 @@ const nunito = Nunito({ variable: "--font-nunito", subsets: ["latin", "latin-ext
 const newsreader = Newsreader({ variable: "--font-newsreader", subsets: ["latin"], style: ["normal", "italic"], display: "swap" });
 const mono = JetBrains_Mono({ variable: "--font-jetbrains", subsets: ["latin"], display: "swap" });
 
-const description = "Know what to study tonight. Every AP course and the SAT: the best lessons for every topic, an AI study partner, exam sprints, and top tutors.";
+const description = "Understand what you're studying tonight. The best videos and tutors in the world for every AP course and the SAT, plus Merit AI and a plan for every test.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.appUrl),

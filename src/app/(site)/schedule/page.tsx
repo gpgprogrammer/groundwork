@@ -5,7 +5,8 @@ import { clearMatch, hideEvent, removeSource } from "@/app/actions/schedule";
 import { beginSprintTrial } from "@/app/actions/sprint";
 import { FocusPicker } from "@/components/focus-picker";
 import { ResyncButton } from "@/components/resync-button";
-import { ScheduleConnect } from "@/components/schedule-connect";
+import { ScheduleSetup } from "@/components/schedule-setup";
+import { googleCalendarEnabled } from "@/lib/google-calendar";
 import { ago, cn } from "@/components/ui";
 import { BuyButton } from "@/components/upgrade";
 import { VideoCard } from "@/components/video-card";
@@ -24,10 +25,24 @@ import { getViewer, type Viewer } from "@/lib/viewer";
 export const metadata: Metadata = { title: "My schedule" };
 
 const KIND: Record<ScheduleEvent["kind"], string> = { test: "Test", assignment: "Due", class: "Class", other: "Event" };
-const SOURCE_KIND = { "ics-url": "Linked calendar", "ics-file": "Uploaded .ics", document: "Imported file", text: "Pasted list" } as const;
+const SOURCE_KIND = { "ics-url": "Syncs on its own", "ics-file": "Uploaded .ics", document: "Imported file", text: "Pasted", google: "Syncs on its own" } as const;
+const GOOGLE_NOTE: Record<string, string> = {
+  connected: "Google Calendar is connected.",
+  canceled: "Google Calendar wasn't connected. You can try again anytime.",
+  error: "We couldn't connect Google Calendar. Please try again.",
+};
 
-export default async function SchedulePage() {
-  const [viewer, catalog] = await Promise.all([getViewer(), getCatalog()]);
+export default async function SchedulePage({ searchParams }: PageProps<"/schedule">) {
+  const [viewer, catalog, sp] = await Promise.all([getViewer(), getCatalog(), searchParams]);
+  const added = typeof sp.added === "string" ? Number(sp.added) : null;
+  const googleNote =
+    typeof sp.google === "string"
+      ? sp.google === "connected" && typeof sp.added === "string"
+        ? `Google Calendar is connected. Added ${sp.added} ${sp.added === "1" ? "test or assignment" : "tests and assignments"}.`
+        : GOOGLE_NOTE[sp.google]
+      : added !== null && typeof sp.from === "string"
+        ? `Added ${added} ${added === 1 ? "test or assignment" : "tests and assignments"} from ${sp.from.slice(0, 60)}.`
+        : undefined;
   if (!viewer || !calendarAccess(viewer)) return <SchedulePreview catalog={catalog} viewer={viewer} />;
   const schedule = (await refreshStaleSources(viewer)) ?? viewer.state.schedule;
   const upcoming = futureEvents(visibleEvents(schedule)).slice(0, 60);
@@ -39,8 +54,30 @@ export default async function SchedulePage() {
     days.set(key, [...(days.get(key) ?? []), e]);
   }
 
+  if (!schedule?.sources.length) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 pb-16 pt-8 sm:px-6">
+        {googleNote ? <p className="mb-5 rounded-xl bg-bg-subtle px-4 py-3 text-sm text-ink">{googleNote}</p> : null}
+        <h1 className="flex items-center gap-3 text-[28px] font-bold tracking-tight text-ink">
+          <CalendarDays className="size-7 text-accent" /> Connect your schedule
+        </h1>
+        <p className="mt-1 text-[15px] text-muted">Merit lines up the right lessons for every quiz and test on it, and your feed follows what you&apos;re learning in class.</p>
+        <div className="mt-7">
+          <ScheduleSetup googleEnabled={googleCalendarEnabled} />
+        </div>
+        <details className="mt-10 rounded-2xl ring-1 ring-line">
+          <summary className="cursor-pointer px-5 py-4 text-sm font-medium text-ink">No calendar? Just pick the topics you&apos;re covering in class</summary>
+          <div className="px-5 pb-5">
+            <FocusPicker courses={focusCourses(catalog, viewer.state.profile.courseIds)} initial={viewer.state.profile.focusTopicIds} />
+          </div>
+        </details>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-[1200px] px-4 pb-16 pt-6 sm:px-6">
+      {googleNote ? <p className="mb-5 rounded-xl bg-bg-subtle px-4 py-3 text-sm text-ink">{googleNote}</p> : null}
       <h1 className="flex items-center gap-3 text-[28px] font-bold tracking-tight text-ink">
         <CalendarDays className="size-7 text-accent" /> My schedule
       </h1>
@@ -48,8 +85,6 @@ export default async function SchedulePage() {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_420px]">
         <section className="min-w-0">
-          {schedule?.sources.length ? (
-            <>
               <h2 className="text-xl font-bold tracking-tight text-ink">Coming up</h2>
               {days.size ? (
                 <div className="mt-4 space-y-8">
@@ -69,30 +104,18 @@ export default async function SchedulePage() {
                 </div>
               ) : (
                 <p className="mt-4 rounded-xl bg-bg-subtle px-5 py-6 text-sm text-muted">
-                  No upcoming tests or assignments on your calendars. If your assignments live somewhere else (like Blackbaud or Canvas), connect that calendar too.
+                  No upcoming tests or assignments yet. If your assignments live somewhere else (like Blackbaud or Canvas), add that calendar too.
                 </p>
               )}
               {hiddenCount ? <p className="mt-6 text-[12.5px] text-muted">{hiddenCount} hidden {hiddenCount === 1 ? "event" : "events"}.</p> : null}
-            </>
-          ) : (
-            <div className="rounded-xl ring-1 ring-line">
-              <div className="border-b border-line px-5 py-4">
-                <h2 className="text-lg font-bold tracking-tight text-ink">Connect your calendars</h2>
-                <p className="mt-0.5 text-sm text-muted">Blackbaud, Canvas, Schoology, Veracross, Google, Outlook, Apple, or a PDF or pasted list.</p>
-              </div>
-              <div className="p-5">
-                <ScheduleConnect />
-              </div>
-            </div>
-          )}
-        </section>
+                    </section>
 
         <aside className="space-y-6">
           {schedule?.sources.length ? (
             <div className="rounded-xl ring-1 ring-line">
               <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
                 <p className="text-[15px] font-bold text-ink">Your calendars</p>
-                {schedule.sources.some((s) => s.kind === "ics-url") ? <ResyncButton /> : null}
+                {schedule.sources.some((s) => s.kind === "ics-url" || s.kind === "google") ? <ResyncButton /> : null}
               </div>
               <ul className="divide-y divide-line">
                 {schedule.sources.map((s) => (
@@ -101,7 +124,7 @@ export default async function SchedulePage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-ink">{s.label}</p>
                       <p className="text-xs text-muted">
-                        {SOURCE_KIND[s.kind]} · {s.count} {s.count === 1 ? "item" : "items"} · {s.kind === "ics-url" ? `synced ${ago(s.syncedAt)}` : `added ${ago(s.syncedAt)}`}
+                        {SOURCE_KIND[s.kind]} · {s.count} {s.count === 1 ? "item" : "items"} · {s.kind === "ics-url" || s.kind === "google" ? `synced ${ago(s.syncedAt)}` : `added ${ago(s.syncedAt)}`}
                       </p>
                     </div>
                     <form action={removeSource.bind(null, s.id)}>
@@ -113,9 +136,9 @@ export default async function SchedulePage() {
                 ))}
               </ul>
               <details className="border-t border-line px-5 py-3">
-                <summary className="cursor-pointer text-sm font-medium text-accent">+ Add another calendar</summary>
+                <summary className="cursor-pointer text-sm font-medium text-accent">+ Add or update a calendar</summary>
                 <div className="pt-4">
-                  <ScheduleConnect compact />
+                  <ScheduleSetup googleEnabled={googleCalendarEnabled} />
                 </div>
               </details>
             </div>

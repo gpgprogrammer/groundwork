@@ -13,9 +13,10 @@ export { candidatesFromCsv, candidatesFromText, type Candidate } from "@/lib/ext
  * student reviews the list, so a misread line never lands on their schedule.
  */
 
-type Item = { str: string; x: number; y: number; width?: number };
+type Item = { str: string; x: number; y: number; width?: number; height?: number };
 
 const WEEKDAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+const WEEKDAY_NAME = /^(sun(day)?|mon(day)?|tue(s|sday)?|wed(nesday)?|thu(r|rs|rsday)?|fri(day)?|sat(urday)?)\.?$/i;
 const DAY = 86400000;
 /** Timed entries in a portal's month view are class periods, clubs, and games, not coursework. */
 const TIMED = /^\d{1,2}(:\d{2})?\s*(a|p|am|pm)\b/i;
@@ -27,12 +28,37 @@ const CHROME = /^\d{1,2}\/\d{1,2}\/\d{2,4},|^https?:\/\/|^\d+\/\d+$|current view
  * headers mark the columns; the grid starts on the Sunday before the 1st, so any
  * day number tells us which week a row is. Works across pages.
  */
-function monthGrid(pages: Item[][], courseHints: string[], now: Date): Candidate[] | null {
-  const all = pages.flat();
-  const head = all.map((i) => i.str.trim().match(new RegExp(`^(${MONTHS.join("|")})\\s+(20\\d{2})$`, "i"))).find(Boolean);
+type GridOptions = {
+  /** Use this month instead of reading it from a title (a screenshot may hide the title). */
+  month?: { year: number; month: number };
+  /** Screenshots may lose some weekday headers: fall back to seven equal columns. */
+  equalColumns?: boolean;
+  /** How far apart (in the page's units) words can be vertically and still be one line. */
+  lineTolerance?: number;
+};
+
+/** "September 2026", whether it's one text item or several words on a line. */
+function findMonthTitle(pages: Item[][]) {
+  const re = new RegExp(`(${MONTHS.join("|")})\\s+(20\\d{2})`, "i");
+  for (const items of pages) {
+    const lines = new Map<number, Item[]>();
+    for (const i of items) {
+      const k = [...lines.keys()].find((y) => Math.abs(y - i.y) < 8) ?? i.y;
+      lines.set(k, [...(lines.get(k) ?? []), i]);
+    }
+    for (const row of lines.values()) {
+      const m = row.sort((a, b) => a.x - b.x).map((i) => i.str.trim()).join(" ").match(re);
+      if (m) return { year: +m[2], month: monthIndex(m[1]) };
+    }
+  }
+  return null;
+}
+
+function monthGrid(pages: Item[][], courseHints: string[], now: Date, opts: GridOptions = {}): Candidate[] | null {
+  const head = opts.month ?? findMonthTitle(pages);
   if (!head) return null;
-  const month = monthIndex(head[1]);
-  const year = +head[2];
+  const month = head.month;
+  const year = head.year;
   const first = Date.UTC(year, month, 1);
   const gridStart = first - new Date(first).getUTCDay() * DAY;
   const found: { day: number; title: string }[] = [];
@@ -40,13 +66,28 @@ function monthGrid(pages: Item[][], courseHints: string[], now: Date): Candidate
   let carryRow: number | null = null;
   for (const page of pages) {
     const items = page.filter((i) => i.str.trim());
-    const heads = items.filter((i) => WEEKDAYS.includes(i.str.trim().toLowerCase().slice(0, 3)) && i.str.trim().length <= 9);
-    if (heads.length >= 5) {
-      const centers = heads.map((h) => h.x + (h.width ?? 0) / 2).sort((x, y) => x - y);
+    // Only exact weekday names count (a misread "Monopoly" must not become a Monday header).
+    const heads = items.filter((i) => WEEKDAY_NAME.test(i.str.trim()));
+    // Each weekday header pins its column; fit all seven from the ones found (screenshots can miss a few).
+    const named = heads
+      .map((h) => ({ idx: WEEKDAYS.indexOf(h.str.trim().toLowerCase().slice(0, 3)), c: h.x + (h.width ?? 0) / 2 }))
+      .filter((h, k, arr) => h.idx >= 0 && arr.findIndex((o) => o.idx === h.idx) === k);
+    if (named.length >= (opts.equalColumns ? 3 : 5)) {
+      const n = named.length;
+      const mi = named.reduce((t, h) => t + h.idx, 0) / n;
+      const mc = named.reduce((t, h) => t + h.c, 0) / n;
+      const slope = named.reduce((t, h) => t + (h.idx - mi) * (h.c - mc), 0) / named.reduce((t, h) => t + (h.idx - mi) ** 2, 0);
+      const centers = [0, 1, 2, 3, 4, 5, 6].map((k) => mc + slope * (k - mi));
       bounds = centers.slice(1).map((c, k) => (c + centers[k]) / 2);
+    } else if (!bounds && opts.equalColumns && items.length) {
+      const left = Math.min(...items.map((i) => i.x));
+      const right = Math.max(...items.map((i) => i.x + (i.width ?? 0)));
+      const w = (right - left) / 7;
+      bounds = [1, 2, 3, 4, 5, 6].map((k) => left + k * w);
     }
     if (!bounds) continue;
-    const headerY = heads.length ? Math.min(...heads.map((h) => h.y)) : Infinity;
+    // The header row is where most weekday names sit.
+    const headerY = heads.length ? [...heads.map((h) => h.y)].sort((a, b) => a - b)[Math.floor(heads.length / 2)] - 4 : Infinity;
     const col = (x: number) => {
       const k = bounds!.findIndex((b) => x < b);
       return k < 0 ? bounds!.length : k;
@@ -80,12 +121,13 @@ function monthGrid(pages: Item[][], courseHints: string[], now: Date): Candidate
       const [r, c] = key.split(":").map(Number);
       const lines = new Map<number, Item[]>();
       for (const it of parts) {
-        const k = [...lines.keys()].find((y) => Math.abs(y - it.y) < 3) ?? it.y;
+        const k = [...lines.keys()].find((y) => Math.abs(y - it.y) < (opts.lineTolerance ?? 3)) ?? it.y;
         lines.set(k, [...(lines.get(k) ?? []), it]);
       }
       for (const [, row] of [...lines.entries()].sort((x, y) => y[0] - x[0])) {
         const title = row.sort((x, y) => x.x - y.x).map((it) => it.str.trim()).join(" ").replace(/\s+/g, " ");
-        if (title.length < 3 || TIMED.test(title) || NOT_WORK.test(title)) continue;
+        // Needs real words (screenshots can turn box borders into dashes).
+        if (title.length < 3 || !/[a-z]{2}/i.test(title) || TIMED.test(title) || NOT_WORK.test(title)) continue;
         found.push({ day: 7 * r + c, title });
       }
     }

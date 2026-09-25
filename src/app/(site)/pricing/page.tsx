@@ -56,7 +56,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
     <div className="mx-auto max-w-[1200px] px-4 pb-20 pt-10 sm:px-6">
       <CheckoutNotice sp={sp} />
       <div className="mx-auto max-w-2xl text-center">
-        <h1 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">Know what to study tonight.</h1>
+        <h1 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">Understand what you&apos;re studying tonight.</h1>
         <p className="mt-4 text-[17px] leading-relaxed text-ink-2">
           Every course and lesson is free, forever. Plus plans your nights around your real schedule. Exam Sprint gets you ready for one big exam.
         </p>

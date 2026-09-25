@@ -1,6 +1,16 @@
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 
+/** Simulates pressing ⌘V on the page with this text on the clipboard. */
+async function pasteInto(page: Page, text: string) {
+  await page.waitForLoadState("networkidle");
+  await page.evaluate((t) => {
+    const dt = new DataTransfer();
+    dt.setData("text/plain", t);
+    document.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  }, text);
+}
+
 /** Stands in for an admin pressing Approve (the test account isn't an admin). */
 async function approveAsAdmin(id: string) {
   const env = Object.fromEntries(
@@ -40,19 +50,18 @@ async function signUpAndOnboard(page: Page, opts: { calendar?: boolean } = {}) {
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: /AP exams/ }).click();
   await page.getByRole("button", { name: "Start learning" }).click();
-  await page.waitForURL((u) => u.pathname === "/home");
+  await page.waitForURL((u) => u.pathname === "/");
   if (opts.calendar) {
     await page.goto("/schedule");
-    await page.getByRole("button", { name: "Upload .ics" }).click();
-    await page.locator('input[type=file]').setInputFiles({ name: "school.ics", mimeType: "text/calendar", buffer: Buffer.from(ICS) });
-    await page.getByRole("button", { name: "Import" }).click();
+    await page.waitForLoadState("networkidle");
+    await page.getByLabel("Choose a calendar file").setInputFiles({ name: "school.ics", mimeType: "text/calendar", buffer: Buffer.from(ICS) });
     await expect(page.getByText(/Added 1 test or assignment/)).toBeVisible();
-    await page.goto("/home");
+    await page.goto("/lessons");
   }
 }
 
 test("anonymous home: chips, sorting, and real YouTube thumbnails", async ({ page }) => {
-  await page.goto("/home");
+  await page.goto("/lessons");
   await expect(page.getByRole("link", { name: "Merit Learning home" }).first()).toBeVisible();
   await expect(page.getByText("The best AP and SAT lessons on YouTube")).toHaveCount(0);
   const firstThumb = page.locator('main img[src*="ytimg.com"]').first();
@@ -119,7 +128,7 @@ test("topic mastery updates course progress", async ({ page }) => {
 });
 
 test("search suggestions tolerate typos", async ({ page }) => {
-  await page.goto("/home");
+  await page.goto("/lessons");
   await page.getByRole("combobox", { name: "Search" }).fill("chian rule");
   await expect(page.getByRole("option").filter({ hasText: "Chain Rule" }).first()).toBeVisible();
   await page.keyboard.press("Enter");
@@ -201,7 +210,7 @@ test("courses page lists every AP course, grouped and searchable", async ({ page
 
 test("pricing shows the three offers and a test-mode Sprint purchase unlocks the Sprint", async ({ page }) => {
   await page.goto("/pricing");
-  await expect(page.getByRole("heading", { name: "Know what to study tonight." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Understand what you're studying tonight." })).toBeVisible();
   await expect(page.getByText("$4.99").first()).toBeAttached();
   await expect(page.getByText("$14.99").first()).toBeVisible();
   await signUpAndOnboard(page);
@@ -309,11 +318,10 @@ test("a student books a tutor's open hour; the tutor confirms and Merit's 10% fe
 test("pasted assignments are reviewed before they're added, and a calendar test gets its own Sprint", async ({ page }) => {
   await signUpAndOnboard(page);
   await page.goto("/schedule");
-  await page.getByRole("button", { name: "Paste text" }).click();
   const soon = new Date(Date.now() + 5 * 86400000);
   const md = `${soon.getMonth() + 1}/${soon.getDate()}`;
-  await page.locator('textarea[name="text"]').fill(`${md}  AP Calc BC Unit 2 Test\n${md}  Soccer practice`);
-  await page.getByRole("button", { name: "Find the dates" }).click();
+  await expect(page.getByRole("button", { name: "Paste my calendar" })).toBeVisible();
+  await pasteInto(page, `${md}  AP Calc BC Unit 2 Test\n${md}  Soccer practice`);
   await expect(page.getByText("We found 2 dated items")).toBeVisible({ timeout: 15_000 });
   // Only the test is pre-checked.
   await expect(page.getByRole("button", { name: "Add 1 to my schedule" })).toBeVisible();
@@ -340,9 +348,8 @@ test("calendar parsing drops canceled and removed occurrences and keeps only sch
     "END:VCALENDAR",
   ].join("\r\n");
   await page.goto("/schedule");
-  await page.getByRole("button", { name: "Upload .ics" }).click();
-  await page.locator('input[type=file]').setInputFiles({ name: "school.ics", mimeType: "text/calendar", buffer: Buffer.from(ics) });
-  await page.getByRole("button", { name: "Import" }).click();
+  await page.waitForLoadState("networkidle");
+  await page.getByLabel("Choose a calendar file").setInputFiles({ name: "school.ics", mimeType: "text/calendar", buffer: Buffer.from(ics) });
   await expect(page.getByText(/Added 2 tests and assignments/)).toBeVisible();
   await page.reload();
   await expect(page.getByText("AP Bio Vocab Quiz")).toHaveCount(2);
@@ -479,9 +486,11 @@ test("a teacher account skips student setup and lands in the teacher studio", as
   await page.waitForURL(/\/studio\?welcome=teacher/);
   await expect(page.getByText("Your teacher account is ready")).toBeVisible();
   await expect(page.getByRole("link", { name: "Create a tutor listing" })).toBeVisible();
-  // The home page doesn't send teachers to student onboarding.
-  await page.goto("/home");
-  expect(new URL(page.url()).pathname).toBe("/home");
+  // Home and Lessons don't send teachers to student onboarding.
+  await page.goto("/");
+  expect(new URL(page.url()).pathname).toBe("/");
+  await page.goto("/lessons");
+  expect(new URL(page.url()).pathname).toBe("/lessons");
 });
 
 test("sign-up requires choosing student or teacher", async ({ page }) => {
@@ -518,11 +527,11 @@ test.describe("landing page", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
   test("signed-out visitors land on the landing page; its paths lead to sign-up and lessons", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Know what to study");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Understand what you're studying tonight");
     // No welcome popup here: the landing page is the invitation.
     await page.waitForTimeout(1200);
     await expect(page.getByRole("dialog")).toHaveCount(0);
-    await expect(page.getByRole("main").getByText("Tonight's plan")).toBeVisible();
+    await expect(page.getByText("The top lessons, ranked by how well they teach")).toBeVisible();
     await expect(page.getByRole("link", { name: /AP Business with Personal Finance|AP Calculus BC/ }).first()).toBeVisible();
     await expect(page.locator('img[src*="ytimg.com"]').first()).toBeVisible();
     await page.getByRole("link", { name: /Create a teacher account/ }).click();
@@ -530,12 +539,39 @@ test.describe("landing page", () => {
     await expect(page.getByRole("radio", { name: /teacher or tutor/ })).toBeChecked();
     await page.goto("/");
     await page.getByRole("link", { name: "Browse lessons" }).click();
-    await page.waitForURL("**/home");
+    await page.waitForURL("**/lessons");
   });
 });
 
-test("signed-in visitors skip the landing page", async ({ page }) => {
+test("Home greets signed-in students and links to their lessons; old /home links still work", async ({ page }) => {
   await signUpAndOnboard(page);
   await page.goto("/");
-  await page.waitForURL("**/home");
+  await expect(page.getByText(/Welcome back, Test/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your courses" })).toBeVisible();
+  await page.getByRole("link", { name: /Go to my lessons/ }).click();
+  await page.waitForURL("**/lessons");
+  await page.goto("/home");
+  await page.waitForURL("**/lessons");
+});
+
+test("connecting a schedule: copy the school calendar page and paste it anywhere", async ({ page }) => {
+  await signUpAndOnboard(page);
+  await page.goto("/schedule");
+  await expect(page.getByRole("heading", { name: "Connect your schedule" })).toBeVisible();
+  // Google's one-click button only appears once Google is set up.
+  await expect(page.getByText("Connect Google Calendar")).toHaveCount(0);
+  await expect(page.getByText("Select all and copy")).toBeVisible();
+  // What ⌘A ⌘C copies from a Blackbaud month view (the real format, from a student's calendar).
+  const copied = [
+    "Today", "September 2026", "Month", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT",
+    "30", "31", "8:30 AM", "H Chem Skill Check 4", "Chemistry H - 1", "6 pts. | Lab/Quiz |", "Assignment", "Graded",
+    "Sep 1", "9:40 AM", "AP World - 1.1-1.2 Summative Test", "AP World", "25 pts. |", "Summative |", "Assignment", "Graded",
+    "2", "1:35 PM", "BC 2.4 wkst", "AP Calculus BC - 4", "10 pts. | Online submission | Homework |", "Graded",
+    "4", "12:50 PM", "BC quiz 2.1-2.6", "AP Calculus BC - 4", "Graded",
+  ].join("\n");
+  await pasteInto(page, copied);
+  await expect(page.getByText(/We found 4 dated items/)).toBeVisible({ timeout: 15_000 });
+  await page.getByRole("button", { name: /Add \d+ to my schedule/ }).click();
+  await expect(page.getByText(/Added \d+ tests? (and|or) assignments?/)).toBeVisible();
+  await expect(page.getByText(/Pasted · \d+ items?/)).toBeVisible();
 });

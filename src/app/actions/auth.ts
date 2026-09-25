@@ -127,5 +127,5 @@ export async function updatePassword(_: AuthState, form: FormData): Promise<Auth
   const supabase = await createSessionClient();
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { error: /session|auth/i.test(error.message) ? "That reset link has expired. Request a new one." : error.message };
-  redirect("/home?password=updated");
+  redirect("/lessons?password=updated");
 }

@@ -2,7 +2,8 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { trackServer } from "@/lib/analytics";
+import { saveSource } from "@/lib/schedule-save";
+import { forgetGoogle, GOOGLE_SOURCE_ID, syncGoogle } from "@/lib/google-calendar";
 import { blackbaudExists, detectSchoolPortal, portalFor, rememberSchoolPortal, type SchoolPortal } from "@/lib/school-detect";
 import { calendarAccess } from "@/lib/billing/access";
 import { getStore } from "@/lib/data/store";
@@ -31,30 +32,6 @@ async function access(): Promise<{ viewer: Viewer } | { error: string }> {
   if (!viewer) return { error: "Sign in to connect a calendar." };
   if (!calendarAccess(viewer)) return { error: LOCKED };
   return { viewer };
-}
-
-function empty(): Schedule {
-  return { sources: [], events: [], hidden: [], syncedAt: new Date().toISOString() };
-}
-
-/** Replaces one source's events, keeping every other calendar's. */
-async function saveSource(viewer: Viewer, source: ScheduleSource, events: ScheduleEvent[]) {
-  // Read fresh: several sources can be saved in one request.
-  const store = await getStore();
-  const current = normalizeSchedule((await store.getUserState(viewer.user.id))?.schedule ?? null) ?? empty();
-  const others = current.events.filter((e) => e.sourceId !== source.id);
-  if (!current.sources.some((s) => s.id === source.id)) await trackServer("calendar_connect", { u: viewer.user.id, x: source.kind === "ics-url" && source.url ? `link:${new URL(source.url).hostname}` : source.kind });
-  const keys = new Set(others.map((e) => `${e.title.toLowerCase()}|${e.start.slice(0, 10)}`));
-  const fresh = events.map((e) => ({ ...e, sourceId: source.id })).filter((e) => !keys.has(`${e.title.toLowerCase()}|${e.start.slice(0, 10)}`));
-  const next: Schedule = {
-    sources: [...current.sources.filter((s) => s.id !== source.id), { ...source, count: fresh.length }],
-    events: [...others, ...fresh].sort((a, b) => a.start.localeCompare(b.start)).slice(0, 1500),
-    hidden: current.hidden,
-    syncedAt: new Date().toISOString(),
-  };
-  await store.setSchedule(viewer.user.id, next);
-  revalidatePath("/", "layout");
-  return fresh;
 }
 
 const labelFor = (url: URL) =>
@@ -202,6 +179,7 @@ export async function removeSource(id: string) {
   if (!viewer) return;
   const s = normalizeSchedule(viewer.state.schedule);
   if (!s) return;
+  if (id === GOOGLE_SOURCE_ID) await forgetGoogle(viewer.user.id);
   const next: Schedule = { ...s, sources: s.sources.filter((x) => x.id !== id), events: s.events.filter((e) => e.sourceId !== id) };
   await (await getStore()).setSchedule(viewer.user.id, next.sources.length ? next : null);
   revalidatePath("/", "layout");
@@ -213,8 +191,17 @@ export async function resyncCalendars(): Promise<ScheduleResult> {
   if ("error" in a) return { ok: false, error: a.error };
   const s = normalizeSchedule(a.viewer.state.schedule);
   const links = s?.sources.filter((x) => x.kind === "ics-url" && x.url) ?? [];
-  if (!links.length) return { ok: false, error: "Uploaded calendars can't refresh by themselves. Upload the newer file." };
+  const google = s?.sources.find((x) => x.kind === "google");
+  if (!links.length && !google) return { ok: false, error: "Pasted and uploaded calendars can't refresh by themselves. Paste your calendar again to update it." };
   let added = 0;
+  if (google) {
+    try {
+      const { events } = await syncGoogle(a.viewer.user.id, a.viewer.state.profile.courseIds);
+      added += (await saveSource(a.viewer, { ...google, syncedAt: new Date().toISOString() }, events)).length;
+    } catch (err) {
+      console.warn("[schedule] google resync failed", err);
+    }
+  }
   for (const src of links) {
     try {
       const ics = await fetchCalendar(src.url!);

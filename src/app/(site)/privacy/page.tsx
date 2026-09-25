@@ -19,6 +19,15 @@ export default function PrivacyPage() {
       <Clause title="How we use it">
         <p>To run Merit: build your plan, rank lessons, personalize practice, answer your questions, process purchases and bookings, prevent abuse, and improve the service. Aggregated, anonymous engagement helps rank lessons for everyone.</p>
       </Clause>
+      <Clause title="Google Calendar">
+        <p>
+          If you choose &quot;Connect Google Calendar,&quot; Merit gets read-only access to your Google calendars. Merit reads event titles, dates, and descriptions to find your tests, quizzes, and assignments and match them to lessons, and keeps only those items. Merit never changes your calendars, never shares this data, and never uses it for ads. Merit&apos;s use of information received from Google APIs adheres to the{" "}
+          <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" className="text-accent underline">
+            Google API Services User Data Policy
+          </a>
+          , including the Limited Use requirements. You can disconnect at any time from My schedule, which deletes Merit&apos;s access, or from your Google account settings.
+        </p>
+      </Clause>
       <Clause title="Cookies and analytics">
         <p>Merit uses its own cookies to keep you signed in and to count visits (a random visitor ID). Our analytics are first-party: they&apos;re stored in Merit&apos;s own database, not sent to advertising or analytics companies. We don&apos;t store IP addresses for analytics.</p>
       </Clause>
