@@ -549,7 +549,7 @@ function SidebarPromo({ plus }: { plus: ShellData["plus"] }) {
       {plus === "anonymous" || plus === "expired" ? (
         <Link href={plus === "anonymous" ? "/signup?next=/plan" : "/pricing"} className="mt-2 block rounded-xl bg-accent-soft p-3 text-[13px] text-ink hover:opacity-90">
         <span className="font-semibold text-accent">Know what to study tonight.</span>{" "}
-        {plus === "anonymous" ? "Merit Plus is free for your first month." : "Get your plan back with Plus."}
+        {plus === "anonymous" ? "Merit Plus suggests videos for what you're learning in class. Free for your first month." : "Get your plan and class-based suggestions back with Plus."}
         </Link>
       ) : null}
     </div>

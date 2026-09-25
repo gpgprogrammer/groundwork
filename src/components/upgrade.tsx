@@ -73,7 +73,7 @@ export function PlusLocked({ access, feature, returnTo }: { access: PlusAccess; 
         </span>
         <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">Know exactly what to study tonight.</h2>
         <p className="mt-2 text-[15px] leading-relaxed text-white/75">
-          Plus turns your class calendar and exam date into a plan: tonight&apos;s lessons, reminders before every test, and progress you can see.
+          Plus learns what you&apos;re studying in school and suggests the right videos for it, then turns your calendar and exam date into a plan: tonight&apos;s lessons, reminders before every test, and progress you can see.
         </p>
         <ul className="mt-5 grid gap-2 text-sm sm:grid-cols-2">
           {PLUS.features.map((f) => (
@@ -142,7 +142,7 @@ export function PlusFeedCard() {
         <PlusBadge onDark className="relative w-fit" />
         <div className="relative">
           <p className="text-[22px] font-extrabold leading-tight tracking-tight">Know what to study tonight.</p>
-          <p className="mt-1 text-[13px] text-white/85">Your calendar + exam date → a plan, every day</p>
+          <p className="mt-1 text-[13px] text-white/85">A feed that follows your classes, and a plan every day</p>
         </div>
       </div>
       <div className="mt-3 flex gap-3">
@@ -150,7 +150,7 @@ export function PlusFeedCard() {
           <CalendarCheck className="size-4.5" />
         </span>
         <div className="min-w-0">
-          <p className="text-[15px] font-semibold leading-snug text-ink group-hover:underline">Build your study plan with Merit Plus</p>
+          <p className="text-[15px] font-semibold leading-snug text-ink group-hover:underline">Merit Plus suggests videos for what you&apos;re learning in class</p>
           <p className="mt-1 text-sm text-muted">Merit · first month free</p>
         </div>
       </div>

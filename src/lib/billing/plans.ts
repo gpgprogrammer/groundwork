@@ -7,6 +7,7 @@ export const PLUS = {
   /** Every new account gets Plus free for this long, no card required. */
   trialDays: Number(process.env.NEXT_PUBLIC_PLUS_TRIAL_DAYS || 30),
   features: [
+    { key: "feed", title: "A feed that learns your classes", body: "Merit reads what you're learning in school from your calendar and suggests the videos for it, so For you keeps pace with class." },
     { key: "plan", title: "Adaptive study plan", body: "Tonight's lessons, picked from your calendar, exam date, and what you haven't mastered yet." },
     { key: "calendar", title: "Calendar sync", body: "Blackbaud, Canvas, Schoology, Google, Outlook, or a PDF. Quizzes and tests line up the right lessons days ahead." },
     { key: "reminders", title: "Study reminders", body: "Reminders land in the calendar app you already check, timed before each test." },
