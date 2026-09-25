@@ -9,7 +9,8 @@ import { LogoMark } from "./logo";
 const KEY = "merit:welcome-dismissed";
 /** After closing it, a visitor sees it again only after this long. */
 const QUIET_DAYS = 3;
-const HIDDEN_ON = /^\/(signup|login|auth|terms|privacy|onboarding)/;
+// Not on the landing page itself: it already is the invitation.
+const HIDDEN_ON = /^\/($|signup|login|auth|terms|privacy|onboarding|forgot-password|reset-password)/;
 
 function recentlyDismissed() {
   try {

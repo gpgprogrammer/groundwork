@@ -19,14 +19,12 @@ const RANGES = [
 
 /** Names for the landing page's buttons. */
 const FUNNELS: Record<string, string> = {
-  "nav-signup": "Top bar: Get started",
-  "hero-student": "Hero: Start free as a student",
-  "hero-explore": "Hero: Explore lessons",
+  "hero-student": "Top: Create a free account",
+  "hero-explore": "Top: Browse lessons",
   "path-student": "Students card",
-  "path-teacher": "Teachers & tutors card",
+  "path-teacher": "Teachers and tutors card",
   "path-parent": "Parents card",
-  "footer-student": "Bottom: Start free",
-  "footer-teacher": "Bottom: I'm a teacher or tutor",
+  "footer-student": "Bottom: Create a free account",
 };
 
 const pct = (n: number) => `${Math.round(n * 100)}%`;

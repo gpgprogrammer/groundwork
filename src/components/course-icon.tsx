@@ -1,4 +1,6 @@
 import {
+  BriefcaseBusiness,
+  ShieldCheck,
   Box,
   Brain,
   BookOpen,
@@ -49,6 +51,8 @@ const MARKS: Record<string, Mark> = {
   "ap-statistics": { icon: ChartColumn, from: "#16b3c7", to: "#0a7f9e" },
   "ap-computer-science-a": { icon: Braces, from: "#ff8a3d", to: "#e0531c" },
   "ap-computer-science-principles": { icon: Network, from: "#8b5cf6", to: "#5b30d6" },
+  "ap-business-personal-finance": { icon: BriefcaseBusiness, from: "#22c55e", to: "#15803d" },
+  "ap-cybersecurity": { icon: ShieldCheck, from: "#06b6d4", to: "#0e6f8f" },
   "ap-biology": { icon: Dna, from: "#2fcf7a", to: "#129656" },
   "ap-chemistry": { icon: FlaskConical, from: "#18c1b0", to: "#0a8a86" },
   "ap-environmental-science": { icon: Leaf, from: "#7cc93a", to: "#3f8f1c" },

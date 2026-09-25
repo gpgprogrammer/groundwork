@@ -314,7 +314,7 @@ test("pasted assignments are reviewed before they're added, and a calendar test 
   const md = `${soon.getMonth() + 1}/${soon.getDate()}`;
   await page.locator('textarea[name="text"]').fill(`${md}  AP Calc BC Unit 2 Test\n${md}  Soccer practice`);
   await page.getByRole("button", { name: "Find the dates" }).click();
-  await expect(page.getByText("We found 2 dated items")).toBeVisible();
+  await expect(page.getByText("We found 2 dated items")).toBeVisible({ timeout: 15_000 });
   // Only the test is pre-checked.
   await expect(page.getByRole("button", { name: "Add 1 to my schedule" })).toBeVisible();
   await page.getByRole("button", { name: "Add 1 to my schedule" }).click();
@@ -522,13 +522,14 @@ test.describe("landing page", () => {
     // No welcome popup here: the landing page is the invitation.
     await page.waitForTimeout(1200);
     await expect(page.getByRole("dialog")).toHaveCount(0);
-    await expect(page.getByText("Tonight's plan · example")).toBeVisible();
+    await expect(page.getByRole("main").getByText("Tonight's plan")).toBeVisible();
+    await expect(page.getByRole("link", { name: /AP Business with Personal Finance|AP Calculus BC/ }).first()).toBeVisible();
     await expect(page.locator('img[src*="ytimg.com"]').first()).toBeVisible();
     await page.getByRole("link", { name: /Create a teacher account/ }).click();
     await page.waitForURL(/\/signup\?as=teacher/);
     await expect(page.getByRole("radio", { name: /teacher or tutor/ })).toBeChecked();
     await page.goto("/");
-    await page.getByRole("link", { name: "Explore lessons" }).click();
+    await page.getByRole("link", { name: "Browse lessons" }).click();
     await page.waitForURL("**/home");
   });
 });

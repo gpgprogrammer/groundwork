@@ -18,9 +18,10 @@ let status: { ok: boolean; at: number; reason?: string } | null = null;
 export async function aiAvailable() {
   if (!isAiConfigured) return false;
   const now = Date.now();
-  if (status && now - status.at < (status.ok ? 30 : 3) * 60000) return status.ok;
+  // A failed check is remembered for 10 minutes, so features that can work without AI don't keep waiting on it.
+  if (status && now - status.at < (status.ok ? 30 : 10) * 60000) return status.ok;
   try {
-    await generateText({ model: probeModel(), prompt: "Reply with OK.", maxOutputTokens: 5 });
+    await generateText({ model: probeModel(), prompt: "Reply with OK.", maxOutputTokens: 5, abortSignal: AbortSignal.timeout(4000) });
     status = { ok: true, at: now };
   } catch (err) {
     status = { ok: false, at: now, reason: err instanceof Error ? err.message.slice(0, 200) : String(err) };

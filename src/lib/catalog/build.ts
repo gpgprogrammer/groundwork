@@ -1,4 +1,5 @@
 import type { Concept, Course, Curriculum, Topic, Unit } from "@/lib/types";
+import { business, cybersecurity } from "./content/ap-career";
 import { csa, csp, precalc, stats } from "./content/ap-math-cs";
 import { afam, apush, compGov, euro, gov, humanGeo, macro, micro, psych, worldExtraUnits } from "./content/ap-history";
 import { art2d, art3d, artHistory, chinese, drawing, french, german, italian, japanese, lang, latin, lit, musicTheory, research, seminar, spanish, spanishLit } from "./content/ap-humanities";
@@ -66,6 +67,8 @@ export const courseSpecs: (CourseSpec & { sameAsCourse?: string })[] = [
   artHistory, musicTheory, art2d, art3d, drawing,
   // AP Capstone
   seminar, research,
+  // AP Career Kickstart
+  business, cybersecurity,
   // SAT
   satMath, satRW,
 ];

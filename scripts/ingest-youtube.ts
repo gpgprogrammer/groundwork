@@ -4,6 +4,8 @@
  *   npm run ingest                 # search every topic, then crawl top channels
  *   npm run ingest -- --refresh    # only refresh views/likes/comments (cheap)
  *   npm run ingest -- --budget 4000
+ *   npm run ingest -- --courses ap-cybersecurity,ap-business-personal-finance
+ *                                  # add lessons for new courses only; the rest of the library is kept as is
  *
  * Needs YOUTUBE_API_KEY (in .env.local or the environment). Every API response
  * is cached in .cache/youtube, so reruns and resumed runs don't spend quota
@@ -128,6 +130,8 @@ const COURSE_BROAD_QUERIES: Record<string, string[]> = {
   "ap-biology": ["AP Biology review", "AP Biology FRQ"],
   "ap-chemistry": ["AP Chemistry review", "AP Chemistry FRQ"],
   "sat-reading-writing": ["digital SAT reading and writing", "SAT grammar rules"],
+  "ap-business-personal-finance": ["AP Business with Personal Finance", "personal finance for teens", "intro to business course"],
+  "ap-cybersecurity": ["AP Cybersecurity", "cybersecurity for beginners", "intro to cybersecurity course"],
 };
 
 // ── pipeline ──────────────────────────────────────────────────────────────────
@@ -143,16 +147,20 @@ async function main() {
   for (const v of existing.videos) found.set(v.id, { topicId: v.topicId ?? undefined, courseId: v.courseId, source: "search" });
 
   const refreshOnly = flag("refresh");
+  const ci = args.indexOf("--courses");
+  const onlyCourses = ci >= 0 ? args[ci + 1].split(",") : null;
+  // Adding courses keeps every existing video exactly as it is (like a refresh).
+  const keepExisting = refreshOnly || Boolean(onlyCourses);
   const prevById = new Map(existing.videos.map((v) => [v.id, v]));
   let stoppedEarly = "";
 
   try {
     if (!refreshOnly) {
       // 1. Every topic: "<topic> <course>".
-      for (const topic of curriculum.topics) {
+      for (const topic of curriculum.topics.filter((t) => !onlyCourses || onlyCourses.includes(t.courseId))) {
         let pageToken = "";
         for (let page = 0; page < PAGES_PER_TOPIC; page++) {
-          const q = `${topic.title} ${COURSE_QUERY[topic.courseId]}`;
+          const q = `${topic.title} ${COURSE_QUERY[topic.courseId] ?? curriculum.courses.find((c) => c.id === topic.courseId)!.query}`;
           const res = await yt<{ items: SearchItem[]; nextPageToken?: string }>("search", {
             part: "snippet",
             type: "video",
@@ -173,7 +181,7 @@ async function main() {
       console.log();
 
       // 2. Broad course queries (reviews, FRQs).
-      for (const [courseId, queries] of Object.entries(COURSE_BROAD_QUERIES)) {
+      for (const [courseId, queries] of Object.entries(COURSE_BROAD_QUERIES).filter(([id]) => !onlyCourses || onlyCourses.includes(id))) {
         for (const q of queries) {
           const res = await yt<{ items: SearchItem[] }>("search", {
             part: "snippet", type: "video", q, maxResults: 50, relevanceLanguage: "en", safeSearch: "strict",
@@ -234,7 +242,7 @@ async function main() {
       for (const c of res.items) channelInfo.set(c.id, c);
     }
 
-    if (!refreshOnly) {
+    if (!refreshOnly && !onlyCourses) {
       const crawled: string[] = [];
       for (const ch of topChannels) {
         const info = channelInfo.get(ch.id);
@@ -292,7 +300,7 @@ async function main() {
     if (!durationSec || durationSec > 4 * 3600) continue;
     const th0 = d.snippet.thumbnails;
     // A refresh updates what YouTube reports and keeps the video's place in the curriculum.
-    const prevVideo = refreshOnly ? prevById.get(id) : undefined;
+    const prevVideo = keepExisting ? prevById.get(id) : undefined;
     if (prevVideo) {
       videos.push({
         ...prevVideo,
@@ -399,6 +407,8 @@ const COURSE_WORDS: Record<string, RegExp> = {
   "ap-biology": /\b(ap bio|biology)\b/i,
   "ap-chemistry": /\b(ap chem|chemistry)\b/i,
   "sat-reading-writing": /\bsat\b.*\b(reading|writing|grammar|english|verbal)\b/i,
+  "ap-business-personal-finance": /\b(business|personal finance|entrepreneur\w*|marketing|accounting|budget\w*|credit|invest\w*)\b/i,
+  "ap-cybersecurity": /\b(cyber ?security|hack(ing|er)s?|encryption|malware|phishing|firewall|infosec)\b/i,
 };
 function mentionsCourse(title: string, description: string, courseId: string | null) {
   if (!courseId) return false;

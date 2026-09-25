@@ -8,6 +8,7 @@ export const CATEGORIES = [
   "World Languages & Cultures",
   "Arts",
   "AP Capstone",
+  "AP Career Kickstart",
   "SAT",
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
