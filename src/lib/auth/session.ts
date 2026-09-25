@@ -4,7 +4,8 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 import { env, isSupabaseEnabled } from "@/lib/env";
 
-export type SessionUser = { id: string; email: string; name: string };
+export type AccountType = "student" | "teacher";
+export type SessionUser = { id: string; email: string; name: string; accountType: AccountType };
 
 export const DEMO_COOKIE = "gw_session";
 const MAX_AGE = 60 * 60 * 24 * 30;
@@ -56,11 +57,12 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
       id: u.id,
       email: u.email ?? "",
       name: (u.user_metadata?.name as string | undefined) ?? u.email?.split("@")[0] ?? "Student",
+      accountType: u.user_metadata?.account_type === "teacher" ? "teacher" : "student",
     };
   }
   const userId = decodeDemoSession((await cookies()).get(DEMO_COOKIE)?.value);
   if (!userId) return null;
   const { localGetUser } = await import("@/lib/data/demo-store");
   const u = await localGetUser(userId);
-  return u ? { id: u.id, email: u.email, name: u.name } : null;
+  return u ? { id: u.id, email: u.email, name: u.name, accountType: "student" } : null;
 });

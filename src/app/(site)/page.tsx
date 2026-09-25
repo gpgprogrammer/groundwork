@@ -21,7 +21,7 @@ const FIRST_ROWS = 12;
 
 export default async function Home({ searchParams }: PageProps<"/">) {
   const [catalog, viewer, sp] = await Promise.all([getCatalog(), getViewer(), searchParams]);
-  if (viewer && !viewer.state.profile.onboarded) redirect("/onboarding");
+  if (viewer && !viewer.state.profile.onboarded && viewer.user.accountType !== "teacher") redirect("/onboarding");
 
   const str = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
   const chip = str(sp.chip) ?? (viewer ? "foryou" : "all");

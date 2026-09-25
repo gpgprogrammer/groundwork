@@ -13,6 +13,7 @@ export default async function SignUpPage({ searchParams }: PageProps<"/signup">)
   const sp = await searchParams;
   const next = typeof sp.next === "string" && sp.next.startsWith("/") && !sp.next.startsWith("//") ? sp.next : undefined;
   if (await getViewer()) redirect(next ?? "/");
+  const initialType = sp.as === "teacher" || sp.as === "student" ? sp.as : undefined;
   return (
     <div className="flex flex-1 items-start justify-center px-4 pb-16 pt-[5vh]">
       <div className="rise grid w-full max-w-4xl overflow-hidden rounded-3xl bg-bg shadow-soft md:grid-cols-2">
@@ -22,7 +23,7 @@ export default async function SignUpPage({ searchParams }: PageProps<"/signup">)
           <p className="mt-1 text-[15px] text-muted">Free account. Merit Plus free for your first month. No card.</p>
           <div className="mt-8">
             <OAuthButtons next={next} />
-            <SignUpForm next={next} />
+            <SignUpForm next={next} initialType={initialType} />
           </div>
           <p className="mt-6 text-xs leading-relaxed text-faint">
             By continuing you agree to the <Link href="/terms" className="underline">Terms</Link> and <Link href="/privacy" className="underline">Privacy Policy</Link>. Students under 13 need a parent to create the account.

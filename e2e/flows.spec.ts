@@ -15,10 +15,11 @@ const ICS = [
 
 async function signUpAndOnboard(page: Page, opts: { calendar?: boolean } = {}) {
   await page.goto("/signup");
+  await page.getByText("I'm a student").click();
   await page.getByLabel("Your name").fill("Test Student");
   await page.getByLabel("Email").fill(unique());
   await page.getByLabel("Password").fill("correct-horse-battery");
-  await page.getByRole("button", { name: "Create account" }).click();
+  await page.getByRole("button", { name: "Create student account" }).click();
   await page.waitForURL("**/onboarding");
   await page.getByRole("button", { name: /AP Calculus BC/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();
@@ -418,4 +419,41 @@ test("signup skips calendar setup; the sync popup appears 5 minutes later, can b
   await page.clock.fastForward("01:00");
   await expect(page.getByRole("heading", { name: /./ }).first()).toBeAttached();
   await expect(popup).toHaveCount(0);
+});
+
+test.describe("first visit", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+  test("signed-out visitors are invited to create an account; the X closes it", async ({ page }) => {
+    await page.goto("/courses");
+    const welcome = page.getByRole("dialog", { name: "Welcome to Merit" });
+    await expect(welcome).toBeVisible();
+    await expect(welcome.getByRole("link", { name: /I'm a student/ })).toHaveAttribute("href", /\/signup\?as=student&next=%2Fcourses/);
+    await welcome.getByRole("button", { name: "Close" }).click();
+    await expect(welcome).toHaveCount(0);
+    await page.reload();
+    await page.waitForTimeout(1500);
+    await expect(welcome).toHaveCount(0);
+  });
+});
+
+test("a teacher account skips student setup and lands in the teacher studio", async ({ page }) => {
+  await page.goto("/signup?as=teacher");
+  await expect(page.getByRole("radio", { name: /teacher or tutor/ })).toBeChecked();
+  await page.getByLabel("Your name").fill("Test Teacher");
+  await page.getByLabel("Email").fill(unique());
+  await page.getByLabel("Password").fill("correct-horse-battery");
+  await page.getByRole("button", { name: "Create teacher account" }).click();
+  await page.waitForURL(/\/studio\?welcome=teacher/);
+  await expect(page.getByText("Your teacher account is ready")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Create a tutor listing" })).toBeVisible();
+  // The home page doesn't send teachers to student onboarding.
+  await page.goto("/");
+  expect(new URL(page.url()).pathname).toBe("/");
+});
+
+test("sign-up requires choosing student or teacher", async ({ page }) => {
+  await page.goto("/signup");
+  await expect(page.getByRole("button", { name: "Choose an account type" })).toBeDisabled();
+  await page.getByText("I'm a student").click();
+  await expect(page.getByRole("button", { name: "Create student account" })).toBeEnabled();
 });

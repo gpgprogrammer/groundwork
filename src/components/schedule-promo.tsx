@@ -9,6 +9,8 @@ import { dismissSchedulePromo } from "@/app/actions/prompts";
 /** Seconds before the popup can be closed, so it gets read first. */
 const LOCK_SECONDS = 5;
 
+const DISMISSED_KEY = "merit:schedule-promo-dismissed";
+
 const HIDDEN_ON = /^\/(schedule|onboarding|login|signup|pricing|settings\/billing|admin)/;
 
 /**
@@ -23,6 +25,10 @@ export function SchedulePromo({ showAt, trialDaysLeft }: { showAt: string; trial
   const cta = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
+    // Closed on this device already (the server copy covers other devices).
+    try {
+      if (localStorage.getItem(DISMISSED_KEY)) return;
+    } catch {}
     const wait = Math.max(1500, new Date(showAt).getTime() - Date.now());
     const t = setTimeout(() => setOpen(true), wait);
     return () => clearTimeout(t);
@@ -48,6 +54,9 @@ export function SchedulePromo({ showAt, trialDaysLeft }: { showAt: string; trial
 
   function dismiss() {
     setClosed(true);
+    try {
+      localStorage.setItem(DISMISSED_KEY, new Date().toISOString());
+    } catch {}
     void dismissSchedulePromo();
   }
 

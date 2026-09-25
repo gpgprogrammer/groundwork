@@ -7,7 +7,7 @@ const DELAY_MS = 5 * 60_000;
 
 /** When to show the "Sync your schedule" popup, or null if it shouldn't show. */
 export async function schedulePromoFor(viewer: Viewer | null) {
-  if (!viewer || !viewer.state.profile.onboarded) return null;
+  if (!viewer || viewer.user.accountType === "teacher" || !viewer.state.profile.onboarded) return null;
   if (normalizeSchedule(viewer.state.schedule)?.sources.length) return null;
   const seen = await (await getStore()).getDoc<{ scheduleDismissedAt?: string }>("prompts", viewer.user.id);
   if (seen?.scheduleDismissedAt) return null;

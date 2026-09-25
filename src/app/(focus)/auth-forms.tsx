@@ -1,10 +1,18 @@
 "use client";
 
+import { GraduationCap, Presentation } from "lucide-react";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { signIn, signUp, type AuthState } from "@/app/actions/auth";
 import { Field, FormMessage, inputClass } from "@/components/form";
-import { Button } from "@/components/ui";
+import { Button, cn } from "@/components/ui";
+
+export type AccountType = "student" | "teacher";
+
+const TYPES: { key: AccountType; title: string; note: string; Icon: typeof GraduationCap }[] = [
+  { key: "student", title: "I'm a student", note: "Study for AP and SAT exams", Icon: GraduationCap },
+  { key: "teacher", title: "I'm a teacher or tutor", note: "Share lessons, videos, and tutoring", Icon: Presentation },
+];
 
 export function SignInForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState<AuthState, FormData>(signIn, {});
@@ -25,8 +33,9 @@ export function SignInForm({ next }: { next?: string }) {
   );
 }
 
-export function SignUpForm({ next }: { next?: string }) {
+export function SignUpForm({ next, initialType }: { next?: string; initialType?: AccountType }) {
   const [state, action, pending] = useActionState<AuthState, FormData>(signUp, {});
+  const [type, setType] = useState<AccountType | null>(initialType ?? null);
   if (state.message) {
     return (
       <div className="rounded-xl border border-line bg-surface p-5 text-sm leading-relaxed text-ink-2">
@@ -42,6 +51,19 @@ export function SignUpForm({ next }: { next?: string }) {
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="next" value={next ?? ""} />
+      <fieldset>
+        <legend className="mb-2 text-[13px] font-medium text-ink-2">What kind of account are you making?</legend>
+        <div className="grid grid-cols-2 gap-2">
+          {TYPES.map(({ key, title, note, Icon }) => (
+            <label key={key} className={cn("cursor-pointer rounded-xl p-3.5 transition-all", type === key ? "bg-accent-soft ring-2 ring-accent" : "bg-bg-subtle ring-1 ring-line hover:bg-line")}>
+              <input type="radio" name="accountType" value={key} checked={type === key} onChange={() => setType(key)} required className="sr-only" />
+              <Icon className={cn("size-5", type === key ? "text-accent" : "text-ink")} />
+              <span className="mt-2 block text-[14px] font-semibold text-ink">{title}</span>
+              <span className="block text-[12px] leading-snug text-muted">{note}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <Field label="Your name">
         <input name="name" required autoComplete="name" autoFocus defaultValue={state.fields?.name} className={inputClass} placeholder="Maya Alvarez" />
       </Field>
@@ -52,8 +74,8 @@ export function SignUpForm({ next }: { next?: string }) {
         <input name="password" type="password" required minLength={8} autoComplete="new-password" className={inputClass} />
       </Field>
       <FormMessage error={state.error} />
-      <Button type="submit" size="lg" className="w-full" disabled={pending}>
-        {pending ? "Creating account…" : "Create account"}
+      <Button type="submit" size="lg" className="w-full" disabled={pending || !type}>
+        {pending ? "Creating account…" : type === "teacher" ? "Create teacher account" : type === "student" ? "Create student account" : "Choose an account type"}
       </Button>
     </form>
   );

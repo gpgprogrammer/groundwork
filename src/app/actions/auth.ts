@@ -18,6 +18,7 @@ const signUpSchema = z.object({
   name: z.string().trim().min(1, "Tell us your name.").max(80),
   email: z.string().trim().toLowerCase().email("That email doesn't look right."),
   password: z.string().min(8, "Use at least 8 characters."),
+  accountType: z.enum(["student", "teacher"], { message: "Choose whether this is a student or a teacher account." }),
 });
 
 async function origin() {
@@ -31,7 +32,10 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
   const parsed = signUpSchema.safeParse(Object.fromEntries(form));
   const fields = { name: String(form.get("name") ?? ""), email: String(form.get("email") ?? "") };
   if (!parsed.success) return { error: parsed.error.issues[0].message, fields };
-  const { name, email, password } = parsed.data;
+  const { name, email, password, accountType } = parsed.data;
+  const teacher = accountType === "teacher";
+  // Teachers set up their studio profile; students pick their courses.
+  const firstStop = teacher ? "/studio?welcome=teacher" : "/onboarding";
 
   if (isSupabaseEnabled) {
     const { createSessionClient } = await import("@/lib/supabase/server");
@@ -39,7 +43,7 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name }, emailRedirectTo: `${await origin()}/auth/callback?next=/onboarding` },
+      options: { data: { name, account_type: accountType }, emailRedirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(firstStop)}` },
     });
     if (error) return { error: error.message, fields };
     if (!data.session) return { message: `Check ${email} for a confirmation link to finish creating your account.` };
@@ -51,6 +55,7 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
     await setDemoSession(user.id);
   }
   const next = safeNext(form.get("next"), "");
+  if (teacher) redirect(firstStop);
   redirect(next ? `/onboarding?next=${encodeURIComponent(next)}` : "/onboarding");
 }
 

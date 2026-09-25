@@ -4,6 +4,7 @@ import { getViewer } from "@/lib/viewer";
 import { getStore } from "@/lib/data/store";
 import { SchedulePromo } from "../schedule-promo";
 import { Tracker } from "../tracker";
+import { WelcomePrompt } from "../welcome-prompt";
 import { schedulePromoFor } from "@/lib/schedule-promo";
 import { ViewerMarksProvider } from "../viewer-marks";
 import { ShellFrame, type ShellData } from "./shell-frame";
@@ -39,6 +40,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
     >
       <ShellFrame data={data}>{children}</ShellFrame>
       <Tracker uid={viewer?.user.id ?? null} />
+      {!viewer ? <WelcomePrompt /> : null}
       {promo ? <SchedulePromo showAt={promo.showAt} trialDaysLeft={promo.trialDaysLeft} /> : null}
     </ViewerMarksProvider>
   );

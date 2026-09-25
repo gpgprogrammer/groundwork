@@ -5,7 +5,8 @@ export default defineConfig({
   timeout: 60_000,
   fullyParallel: false,
   workers: 1,
-  use: { baseURL: process.env.BASE_URL ?? "http://127.0.0.1:3000", trace: "retain-on-failure" },
+  // Test browsers start with the first-visit welcome popup already dismissed (one test checks the popup itself).
+  use: { baseURL: process.env.BASE_URL ?? "http://127.0.0.1:3000", trace: "retain-on-failure", storageState: "e2e/storage.json" },
   webServer: process.env.PW_USE_DEV
     ? {
         command: "npm run dev -- --port 3000",

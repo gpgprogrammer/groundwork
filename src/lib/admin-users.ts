@@ -27,7 +27,7 @@ export type AdminUser = {
 export async function listAdminUsers(adminEmails: string[]): Promise<AdminUser[]> {
   if (!isSupabaseEnabled) return [];
   const db = createAdminClient();
-  const authUsers: { id: string; email?: string; created_at: string; last_sign_in_at?: string | null; email_confirmed_at?: string | null; app_metadata?: { provider?: string; providers?: string[] }; user_metadata?: { name?: string; full_name?: string } }[] = [];
+  const authUsers: { id: string; email?: string; created_at: string; last_sign_in_at?: string | null; email_confirmed_at?: string | null; app_metadata?: { provider?: string; providers?: string[] }; user_metadata?: { name?: string; full_name?: string; account_type?: string } }[] = [];
   for (let page = 1; page < 100; page++) {
     const { data, error } = await db.auth.admin.listUsers({ page, perPage: 1000 });
     if (error) throw new Error(error.message);
@@ -58,7 +58,7 @@ export async function listAdminUsers(adminEmails: string[]): Promise<AdminUser[]
       const email = (u.email ?? "").toLowerCase();
       const roles: AdminUser["roles"] = [];
       if (tutorIds.has(u.id) || p?.role === "tutor") roles.push("tutor");
-      if (teachers.has(u.id)) roles.push("teacher");
+      if (teachers.has(u.id) || u.user_metadata?.account_type === "teacher") roles.push("teacher");
       if (!roles.length) roles.push("student");
       if (adminEmails.includes(email)) roles.push("admin");
       const trialLive = Boolean(b?.sprintTrialEndsAt && new Date(b.sprintTrialEndsAt).getTime() > now);

@@ -56,6 +56,18 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
   if (!educator || sp.edit === "1") {
     return (
       <div className="mx-auto max-w-3xl px-4 pb-20 pt-10 sm:px-6">
+        {!educator ? (
+          <div className="mb-6 rounded-2xl bg-accent-soft p-4 text-[14px] text-ink">
+            <p className="font-semibold">{sp.welcome === "teacher" ? "Welcome to Merit! Your teacher account is ready." : "Teachers and tutors start here."}</p>
+            <p className="mt-1 text-ink-2">
+              Set up your profile to add lessons, write study guides, and upload your own videos. Tutoring students privately?{" "}
+              <Link href="/tutors/join" className="font-medium text-accent underline">
+                Create a tutor listing
+              </Link>{" "}
+              so students can book you.
+            </p>
+          </div>
+        ) : null}
         <h1 className="text-3xl font-extrabold tracking-tight text-ink">{educator ? "Edit your teacher profile" : "Set up your teacher profile"}</h1>
         <p className="mt-2 text-[15px] text-muted">This is what students see next to the lessons and guides you add.</p>
         <div className="mt-8">
