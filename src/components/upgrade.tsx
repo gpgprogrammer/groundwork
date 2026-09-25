@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { PLUS, SPRINT, usd, type Product } from "@/lib/billing/plans";
 import type { PlusAccess } from "@/lib/types";
+import { paymentsPaused } from "@/lib/env";
 import { cn } from "./ui";
 
 export function PlusBadge({ className, onDark }: { className?: string; onDark?: boolean }) {
@@ -35,6 +36,17 @@ export function BuyButton({
   className?: string;
   variant?: "primary" | "sprint" | "light" | "outline" | "glass";
 }) {
+  if (paymentsPaused) {
+    return (
+      <span
+        title="Purchases open soon"
+        className={cn("inline-flex h-11 cursor-not-allowed flex-col items-center justify-center rounded-full bg-bg-subtle px-5 text-sm font-semibold leading-tight text-muted ring-1 ring-line", className)}
+      >
+        {children}
+        <span className="text-[10.5px] font-medium">Opening soon</span>
+      </span>
+    );
+  }
   return (
     <form action="/api/billing/checkout" method="post" className="contents">
       <input type="hidden" name="product" value={product} />

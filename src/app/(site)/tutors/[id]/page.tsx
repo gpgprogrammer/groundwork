@@ -12,6 +12,7 @@ import { getViewer } from "@/lib/viewer";
 import { BookingForm } from "@/components/booking-client";
 import { getTutorMeta, listBookings, openSlots } from "@/lib/bookings";
 import { BadgeCheck } from "lucide-react";
+import { ReportButton } from "@/components/report-button";
 import { UploadCard } from "@/components/upload-card";
 import { listUploads, toUploadCards } from "@/lib/uploads";
 
@@ -85,6 +86,11 @@ export default async function TutorPage({ params, searchParams }: PageProps<"/tu
               </Link>
             ))}
           </div>
+          {!own ? (
+            <div className="mt-3">
+              <ReportButton kind="tutor" targetId={tutor.id} />
+            </div>
+          ) : null}
           <h2 className="mt-10 text-lg font-bold text-ink">About</h2>
           <p className="mt-2 whitespace-pre-line text-[15px] leading-relaxed text-ink-2">{tutor.bio}</p>
           {tutor.credentials ? (

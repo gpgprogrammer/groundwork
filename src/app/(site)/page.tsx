@@ -101,6 +101,12 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         </Link>
       ) : null}
 
+      {sp.password === "updated" ? (
+        <p role="status" className="mt-3 rounded-xl bg-positive-soft px-4 py-3 text-sm font-medium text-positive">
+          Your password is updated.
+        </p>
+      ) : null}
+
       {checkIn ? (
         <Link href="/bookings" className="mt-3 flex items-center gap-4 rounded-xl bg-accent-soft px-4 py-3.5 text-sm text-ink hover:opacity-90">
           <span className="min-w-0 flex-1">

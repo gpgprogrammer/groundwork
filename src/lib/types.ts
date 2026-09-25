@@ -320,7 +320,8 @@ export type Contribution = {
   kind: "video" | "guide" | "upload";
   courseId: string;
   topicId: string;
-  status: "published" | "removed";
+  /** Uploaded videos wait as "pending" until an admin approves them. */
+  status: "published" | "pending" | "removed";
   createdAt: string;
   /** For videos: why it's worth watching, what to look for, timestamps. */
   note: string;
@@ -384,4 +385,21 @@ export type Lead = {
   /** open: contacted. reported: the student says they had a session. logged: the tutor logged it. dismissed: no session. */
   status: "open" | "reported" | "logged" | "dismissed";
   reportedAt: string | null;
+};
+
+export type ReportKind = "upload" | "tutor" | "educator" | "guide";
+export type Report = {
+  id: string;
+  kind: ReportKind;
+  targetId: string;
+  /** Where the admin can see the reported thing. */
+  href: string;
+  title: string;
+  reason: string;
+  details: string;
+  reporterId: string | null;
+  reporterEmail: string | null;
+  createdAt: string;
+  status: "open" | "resolved" | "dismissed";
+  resolvedAt?: string;
 };

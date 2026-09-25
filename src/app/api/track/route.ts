@@ -1,16 +1,21 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { deviceOf, isBot, saveEvent, VISITOR_COOKIE, type AnalyticsEvent } from "@/lib/analytics";
+import { logError } from "@/lib/error-log";
 
 /** Page views and Merit video plays from the browser (sent with navigator.sendBeacon). */
 export async function POST(req: NextRequest) {
   const ua = req.headers.get("user-agent") ?? "";
   const res = new NextResponse(null, { status: 204 });
   if (isBot(ua)) return res;
-  let body: { type?: string; path?: string; ref?: string; ref_id?: string; w?: number; u?: string | null } = {};
+  let body: { type?: string; path?: string; ref?: string; ref_id?: string; w?: number; u?: string | null; message?: string; digest?: string; stack?: string } = {};
   try {
     body = JSON.parse((await req.text()).slice(0, 4000));
   } catch {
+    return res;
+  }
+  if (body.type === "error") {
+    await logError({ source: "browser", message: String(body.message ?? "Unknown error"), digest: body.digest ? String(body.digest) : undefined, path: typeof body.path === "string" ? body.path : undefined, stack: body.stack ? String(body.stack) : undefined });
     return res;
   }
   const type = body.type === "upload_play" ? "upload_play" : body.type === "view" ? "view" : null;

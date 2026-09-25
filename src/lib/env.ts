@@ -23,6 +23,13 @@ export const env = {
 
 export const isSupabaseEnabled = Boolean(env.supabaseUrl && env.supabaseAnonKey);
 export const isStripeEnabled = Boolean(env.stripeSecretKey);
+/**
+ * How purchases work. "live": Stripe is connected. "test": no Stripe, outside the live
+ * site, so purchases are granted free for testing. "paused": the live site without
+ * Stripe; nothing can be bought (free trials still work).
+ */
+export const paymentsMode: "live" | "test" | "paused" = isStripeEnabled ? "live" : process.env.VERCEL_ENV === "production" ? "paused" : "test";
+export const paymentsPaused = paymentsMode === "paused";
 /** On Vercel, the AI Gateway authenticates with the deployment's OIDC token. */
 export const isAiConfigured = Boolean(process.env.ANTHROPIC_API_KEY || process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL);
 /** Google and Apple sign-in run through Supabase Auth; enable the providers there too. */

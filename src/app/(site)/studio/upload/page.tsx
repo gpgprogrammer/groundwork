@@ -4,7 +4,7 @@ import { UploadForm } from "@/components/upload-form";
 import { getCatalog } from "@/lib/catalog";
 import { courseTopics, getEducator } from "@/lib/educators";
 import { getStore } from "@/lib/data/store";
-import { MAX_VIDEO_BYTES, uploaderIdentity, uploadsEnabled } from "@/lib/uploads";
+import { listPendingUploads, MAX_VIDEO_BYTES, uploaderIdentity, uploadsEnabled } from "@/lib/uploads";
 import { requireViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Upload a video" };
@@ -30,6 +30,7 @@ export default async function UploadPage() {
   }
   const [catalog, educator, tutor] = await Promise.all([getCatalog(), getEducator(viewer.user.id), (await getStore()).listTutors().then((ts) => ts.find((t) => t.id === who.tutorId))]);
   const mine = educator?.courseIds ?? tutor?.courseIds ?? viewer.state.profile.courseIds;
+  const waiting = await listPendingUploads(viewer.user.id);
   return (
     <div className="mx-auto max-w-3xl px-4 pb-20 pt-8 sm:px-6">
       <Link href={who.tutorId ? "/tutor" : "/studio"} className="text-sm text-muted hover:text-ink">
@@ -39,7 +40,22 @@ export default async function UploadPage() {
       <p className="mt-2 text-[15px] text-muted">
         Published on Merit as a Merit exclusive, under <span className="font-medium text-ink">{who.name}</span>. It shows on the topic page, in Merit Tutors&apos; Videos, and on your profile.
       </p>
-      <div className="mt-8">
+      {waiting.length ? (
+        <div className="mt-6 rounded-2xl bg-accent-soft p-4 text-sm text-ink">
+          <p className="font-semibold">Waiting for review ({waiting.length})</p>
+          <ul className="mt-1 list-disc pl-5 text-ink-2">
+            {waiting.map((w) => (
+              <li key={w.id}>
+                <Link href={`/videos/${w.id}`} className="hover:underline">
+                  {w.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <p className="mt-6 text-[13.5px] text-muted">Merit reviews every video before students see it, usually within a day.</p>
+      <div className="mt-6">
         {uploadsEnabled ? <UploadForm courses={courseTopics(catalog, mine)} maxMb={MAX_VIDEO_BYTES / 1024 / 1024} /> : <p className="rounded-2xl bg-bg-subtle p-5 text-sm text-ink-2">Uploads need the database connected.</p>}
       </div>
       <p className="mt-10 text-[12.5px] leading-relaxed text-muted">

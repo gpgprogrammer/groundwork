@@ -1,9 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isSupabaseEnabled } from "@/lib/env";
+import { originOf } from "@/lib/origin";
 
 /** Supabase email-confirmation and OAuth redirect target. */
 export async function GET(req: NextRequest) {
-  const { searchParams, origin } = req.nextUrl;
+  const { searchParams } = req.nextUrl;
+  const origin = originOf(req);
   const code = searchParams.get("code");
   const nextParam = searchParams.get("next") ?? "/";
   const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/";

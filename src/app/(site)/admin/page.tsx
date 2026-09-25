@@ -2,13 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { removeContribution } from "@/app/actions/educator";
+import { approveUpload, rejectUpload, resolveReport } from "@/app/actions/moderation";
+import { listPendingUploads, toUploadCards } from "@/lib/uploads";
+import { recentErrors } from "@/lib/error-log";
+import type { Report } from "@/lib/types";
 import { reviewPartner, setTutorVetted } from "@/app/actions/partners";
 import { money } from "@/components/booking-ui";
 import { aiAvailable, aiStatus } from "@/lib/ai/runtime";
 import { allTutorMeta, listBookings } from "@/lib/bookings";
 import { PLUS } from "@/lib/billing/plans";
 import { getStore } from "@/lib/data/store";
-import { isAiConfigured, isStripeEnabled, isSupabaseEnabled } from "@/lib/env";
+import { isAiConfigured, isSupabaseEnabled, paymentsMode } from "@/lib/env";
 import { allServices, listPartnerApps } from "@/lib/partners";
 import { listLeads } from "@/lib/leads";
 import type { Billing, Contribution, Gift, Sprint } from "@/lib/types";
@@ -32,7 +36,8 @@ export default async function AdminPage() {
     allServices(),
     aiAvailable(),
   ]);
-  const leads = await listLeads();
+  const [leads, pendingUploads, reports, errors] = await Promise.all([listLeads(), listPendingUploads().then(toUploadCards), store.listDocs<Report>("reports"), recentErrors(7)]);
+  const openReports = reports.filter((r) => r.status === "open").sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const followUps = leads.filter((l) => l.status === "reported");
   const referrals = await store.referralCounts([...services.map((s) => s.id), ...tutors.map((t) => t.id)]);
 
@@ -60,7 +65,7 @@ export default async function AdminPage() {
         </div>
       </div>
       <p className="mt-1 text-sm text-muted">
-        Payments: {isStripeEnabled ? "Stripe live" : "test mode"} · Database: {isSupabaseEnabled ? "Supabase" : "local file"} · AI: {aiOk ? "on" : isAiConfigured ? `unavailable${status?.reason ? ` (${status.reason.slice(0, 90)})` : ""}` : "not configured"}
+        Payments: {paymentsMode === "live" ? "Stripe live" : paymentsMode === "paused" ? "paused until Stripe is connected" : "test mode"} · Database: {isSupabaseEnabled ? "Supabase" : "local file"} · AI: {aiOk ? "on" : isAiConfigured ? `unavailable${status?.reason ? ` (${status.reason.slice(0, 90)})` : ""}` : "not configured"}
       </p>
 
       <div className="tabular mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -80,6 +85,91 @@ export default async function AdminPage() {
           </div>
         ))}
       </div>
+
+      <Section title={`Videos waiting for review (${pendingUploads.length})`}>
+        {pendingUploads.length ? (
+          <ul className="divide-y divide-line">
+            {pendingUploads.map((u) => (
+              <li key={u.id} className="flex flex-wrap items-center gap-4 py-3">
+                <Link href={`/videos/${u.id}`} className="relative block aspect-video w-36 shrink-0 overflow-hidden rounded-lg bg-bg-subtle">
+                  {u.posterUrl ? <img src={u.posterUrl} alt="" className="absolute inset-0 size-full object-cover" /> : null}
+                </Link>
+                <div className="min-w-0 flex-1 text-sm">
+                  <Link href={`/videos/${u.id}`} className="font-semibold text-ink hover:underline">
+                    {u.title}
+                  </Link>
+                  <p className="text-muted">
+                    {u.by.name} · {u.course?.title ?? ""}
+                    {u.topic ? ` · ${u.topic.title}` : ""}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <form action={approveUpload.bind(null, u.id)}>
+                    <button className="h-9 rounded-full bg-positive px-4 text-[13px] font-semibold text-white">Approve</button>
+                  </form>
+                  <form action={rejectUpload.bind(null, u.id)}>
+                    <button className="h-9 rounded-full px-4 text-[13px] text-muted ring-1 ring-line hover:text-ink">Reject and delete</button>
+                  </form>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted">Nothing waiting. Watch each video before approving: it becomes public right away.</p>
+        )}
+      </Section>
+
+      <Section title={`Reports (${openReports.length} open)`}>
+        {openReports.length ? (
+          <ul className="divide-y divide-line">
+            {openReports.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-start justify-between gap-3 py-3 text-sm">
+                <div className="min-w-0">
+                  <Link href={r.href} className="font-semibold text-ink hover:underline">
+                    {r.title}
+                  </Link>
+                  <p className="text-ink-2">
+                    <span className="font-medium">{r.reason}</span>
+                    {r.details ? `: ${r.details}` : ""}
+                  </p>
+                  <p className="text-[12px] text-muted">
+                    {r.reporterEmail ?? "Signed-out visitor"} · {new Date(r.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "America/New_York" })} ET
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <form action={resolveReport.bind(null, r.id, "remove")}>
+                    <button className="h-9 rounded-full bg-[#c2410c] px-4 text-[13px] font-semibold text-white">Take it down</button>
+                  </form>
+                  <form action={resolveReport.bind(null, r.id, "dismiss")}>
+                    <button className="h-9 rounded-full px-4 text-[13px] text-muted ring-1 ring-line hover:text-ink">Dismiss</button>
+                  </form>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted">No open reports.</p>
+        )}
+      </Section>
+
+      <Section title={`Site errors, last 7 days (${errors.total})`}>
+        {errors.groups.length ? (
+          <ul className="divide-y divide-line">
+            {errors.groups.map((g) => (
+              <li key={`${g.source}${g.message}`} className="py-2.5 text-sm">
+                <p className="font-mono text-[12.5px] text-ink">{g.message}</p>
+                <p className="mt-0.5 text-[12px] text-muted">
+                  {g.count}× · {g.source === "server" ? "server" : "in the browser"} · last {new Date(g.last.at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "America/New_York" })} ET
+                  {g.paths.size ? ` · ${[...g.paths].slice(0, 3).join(", ")}` : ""}
+                  {g.last.digest ? ` · ref ${g.last.digest}` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted">No errors. 🎉</p>
+        )}
+      </Section>
 
       <Section title={`Partner applications (${apps.filter((a) => a.status === "pending").length} pending)`}>
         {apps.length ? (

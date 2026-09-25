@@ -103,3 +103,29 @@ export async function signOut() {
   }
   redirect("/");
 }
+
+/** Emails a link to choose a new password. Always answers the same way, so it doesn't reveal who has an account. */
+export async function requestPasswordReset(_: AuthState, form: FormData): Promise<AuthState> {
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  if (!z.string().email().safeParse(email).success) return { error: "Enter the email you signed up with.", fields: { email } };
+  if (!isSupabaseEnabled) return { error: "Password reset needs the database connected." };
+  const { createSessionClient } = await import("@/lib/supabase/server");
+  const supabase = await createSessionClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${await origin()}/auth/callback?next=/reset-password` });
+  if (error && /rate|limit|seconds/i.test(error.message)) return { error: "Too many requests. Wait a minute and try again.", fields: { email } };
+  if (error) console.error("[auth] reset email failed", error.message);
+  return { message: `If there's a Merit account for ${email}, we've emailed it a link to choose a new password. Check your spam folder if it doesn't arrive in a few minutes.` };
+}
+
+/** Sets a new password for the signed-in user (after following the emailed link). */
+export async function updatePassword(_: AuthState, form: FormData): Promise<AuthState> {
+  const password = String(form.get("password") ?? "");
+  if (password.length < 8) return { error: "Use at least 8 characters." };
+  if (password !== String(form.get("confirm") ?? "")) return { error: "Those passwords don't match." };
+  if (!isSupabaseEnabled) return { error: "Password reset needs the database connected." };
+  const { createSessionClient } = await import("@/lib/supabase/server");
+  const supabase = await createSessionClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: /session|auth/i.test(error.message) ? "That reset link has expired. Request a new one." : error.message };
+  redirect("/?password=updated");
+}

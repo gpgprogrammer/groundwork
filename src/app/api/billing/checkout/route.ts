@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { grant } from "@/lib/billing/access";
 import { PRODUCTS, type Product } from "@/lib/billing/plans";
 import { createCheckoutUrl } from "@/lib/billing/stripe";
-import { isStripeEnabled } from "@/lib/env";
+import { isStripeEnabled, paymentsPaused } from "@/lib/env";
 import { getViewer } from "@/lib/viewer";
 import { trackServer } from "@/lib/analytics";
 
@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
   if (!viewer) return NextResponse.redirect(`${origin}/signup?next=${encodeURIComponent(`/pricing?buy=${product}`)}`, 303);
 
   const sep = returnTo.includes("?") ? "&" : "?";
+  if (paymentsPaused) return NextResponse.redirect(`${origin}${returnTo}${sep}checkout=paused`, 303);
   if (!isStripeEnabled) {
     // Test mode: no payment processor connected, so grant the product without charging.
     await grant(viewer.user.id, product, "test", 0, "Test mode: no charge");

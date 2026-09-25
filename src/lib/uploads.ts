@@ -51,6 +51,21 @@ export async function getUpload(id: string) {
   return c && c.kind === "upload" && c.status === "published" && c.media ? c : null;
 }
 
+/** A published upload, or a pending one for its uploader and admins. */
+export async function getUploadFor(id: string, viewer: { user: { id: string }; isAdmin: boolean } | null) {
+  const c = await (await getStore()).getDoc<Contribution>("contributions", id);
+  if (!c || c.kind !== "upload" || !c.media) return null;
+  if (c.status === "published") return c;
+  if (c.status === "pending" && viewer && (viewer.isAdmin || viewer.user.id === c.educatorId)) return c;
+  return null;
+}
+
+/** Uploads waiting for an admin, oldest first (optionally one uploader's). */
+export async function listPendingUploads(educatorId?: string) {
+  const all = await (await getStore()).listDocs<Contribution>("contributions", educatorId ? { owner: educatorId } : undefined);
+  return all.filter((c) => c.kind === "upload" && c.status === "pending" && c.media).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
 /** Display names for a set of uploaders. */
 export async function uploaderNames(ids: string[]) {
   const out = new Map<string, { name: string; tutorId: string | null }>();

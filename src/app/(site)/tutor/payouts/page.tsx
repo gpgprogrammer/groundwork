@@ -6,7 +6,7 @@ import { money } from "@/components/booking-ui";
 import { getTutorMeta, ledger, listBookings } from "@/lib/bookings";
 import { refreshConnectStatus } from "@/lib/billing/stripe";
 import { getStore } from "@/lib/data/store";
-import { isStripeEnabled } from "@/lib/env";
+import { isStripeEnabled, paymentsPaused } from "@/lib/env";
 import { requireViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Payouts and fees" };
@@ -27,6 +27,11 @@ export default async function PayoutsPage({ searchParams }: PageProps<"/tutor/pa
       </Link>
       <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-ink">Payouts and fees</h1>
       {sp.test ? <p className="mt-4 rounded-xl bg-warn-soft p-3 text-sm text-ink">Test mode: payments aren&apos;t connected yet, so no money moved.</p> : null}
+      {paymentsPaused ? (
+        <p className="mt-4 rounded-xl bg-accent-soft p-3 text-sm text-ink">
+          Card payments through Merit open soon. For now, students pay you directly, and Merit&apos;s 10% referral fee is tracked here for later.
+        </p>
+      ) : null}
 
       <section className="mt-6 rounded-2xl p-6 ring-1 ring-line">
         <h2 className="flex items-center gap-2 text-lg font-bold text-ink">

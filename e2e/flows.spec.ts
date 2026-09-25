@@ -1,4 +1,19 @@
+import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+
+/** Stands in for an admin pressing Approve (the test account isn't an admin). */
+async function approveAsAdmin(id: string) {
+  const env = Object.fromEntries(
+    readFileSync(".env.local", "utf8")
+      .split("\n")
+      .filter((l) => /^[A-Z_]+=/.test(l))
+      .map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1).replace(/^["']|["']$/g, "")]),
+  );
+  const h = { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "application/json" };
+  const url = `${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/docs?collection=eq.contributions&id=eq.${id}`;
+  const [row] = await (await fetch(`${url}&select=data`, { headers: h })).json();
+  await fetch(url, { method: "PATCH", headers: h, body: JSON.stringify({ data: { ...row.data, status: "published" } }) });
+}
 
 const unique = () => `e2e+${Date.now()}${Math.floor(Math.random() * 1000)}@example.com`;
 
@@ -379,9 +394,27 @@ test("a tutor uploads a video; it plays on Merit and shows on their profile", as
   await topic.selectOption({ index: 1 });
   await page.locator("#rights").check();
   await page.getByRole("button", { name: "Publish video" }).click();
-  await page.waitForURL(/\/videos\/up_[\w-]+\?published=1/, { timeout: 60_000 });
+  await page.waitForURL(/\/videos\/up_[\w-]+\?submitted=1/, { timeout: 60_000 });
+  const videoId = new URL(page.url()).pathname.split("/").pop()!;
   await expect(page.getByRole("heading", { name: "Stoichiometry in five steps" })).toBeVisible();
   await expect(page.locator("video")).toHaveAttribute("src", /merit-videos/);
+  await expect(page.getByText("Waiting for review.")).toBeVisible();
+
+  // Nobody else can see it until an admin approves it.
+  const visitor = await page.context().browser()!.newPage();
+  await visitor.goto(`/videos/${videoId}`);
+  await expect(visitor.getByText("couldn't find that page")).toBeVisible();
+  await visitor.goto("/videos");
+  await expect(visitor.getByText("Stoichiometry in five steps")).toHaveCount(0);
+  await approveAsAdmin(videoId);
+  await visitor.goto(`/videos/${videoId}`);
+  await expect(visitor.getByRole("heading", { name: "Stoichiometry in five steps" })).toBeVisible();
+  // Viewers can report a video.
+  await visitor.getByRole("button", { name: "Report" }).click();
+  await visitor.getByLabel("Wrong or misleading").check();
+  await visitor.getByRole("button", { name: "Send report" }).click();
+  await expect(visitor.getByText("Thanks for letting us know")).toBeVisible();
+  await visitor.close();
 
   await page.goto(profile);
   await expect(page.getByRole("heading", { name: /Videos/ })).toBeVisible();
@@ -456,4 +489,27 @@ test("sign-up requires choosing student or teacher", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Choose an account type" })).toBeDisabled();
   await page.getByText("I'm a student").click();
   await expect(page.getByRole("button", { name: "Create student account" })).toBeEnabled();
+});
+
+test("forgot password: request a link, then set a new password from the reset page", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByRole("link", { name: "Forgot password?" }).click();
+  await page.waitForURL("**/forgot-password");
+  await page.waitForLoadState("networkidle");
+  await page.getByLabel("Email").fill("nobody-here@example.com");
+  await page.getByRole("button", { name: "Email me a reset link" }).click();
+  await expect(page.getByText(/If there's a Merit account for nobody-here@example.com/)).toBeVisible();
+  // The emailed link signs you in and lands here; a signed-in user can set a new password.
+  await signUpAndOnboard(page);
+  await page.goto("/reset-password");
+  await page.getByLabel("New password").fill("a-brand-new-password");
+  await page.getByLabel("Type it again").fill("a-brand-new-password");
+  await page.getByRole("button", { name: "Save new password" }).click();
+  await expect(page.getByText("Your password is updated.")).toBeVisible();
+});
+
+test("the link preview image renders", async ({ request }) => {
+  const res = await request.get("/opengraph-image");
+  expect(res.status()).toBe(200);
+  expect(res.headers()["content-type"]).toContain("image/png");
 });

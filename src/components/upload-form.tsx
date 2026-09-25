@@ -102,7 +102,7 @@ export function UploadForm({ courses, maxMb }: { courses: CourseTopics[]; maxMb:
       setProgress(0.98);
       const r = await publishUpload({ path: t.video.path, posterPath, title, description, topicId, durationSec: Math.max(1, meta.duration) });
       if (!r.ok) throw new Error(r.error);
-      router.push(`/videos/${r.id}?published=1`);
+      router.push(`/videos/${r.id}?submitted=1`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed.");
       setProgress(null);

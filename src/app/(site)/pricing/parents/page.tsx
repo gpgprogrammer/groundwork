@@ -4,7 +4,7 @@ import Link from "next/link";
 import { inputClass } from "@/components/form";
 import { cn } from "@/components/ui";
 import { PLUS, SPRINT, usd } from "@/lib/billing/plans";
-import { isStripeEnabled } from "@/lib/env";
+import { isStripeEnabled, paymentsPaused } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "For parents",
@@ -99,10 +99,14 @@ export default async function ParentsPage({ searchParams }: PageProps<"/pricing/
                 <span className="mt-1 block text-[12px] text-muted">The email they use (or will use) to sign in to Merit.</span>
               </label>
               {error ? <p className="text-sm text-[#c2410c]">{error}</p> : null}
-              <button type="submit" className={cn("h-12 w-full rounded-full bg-gradient-to-r from-[#ff8a3d] to-[#e0531c] text-[15px] font-semibold text-white hover:brightness-110")}>
-                Continue to payment
+              <button type="submit" disabled={paymentsPaused} className={cn("h-12 w-full rounded-full bg-gradient-to-r from-[#ff8a3d] to-[#e0531c] text-[15px] font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50")}>
+                {paymentsPaused ? "Gift purchases open soon" : "Continue to payment"}
               </button>
-              {!isStripeEnabled ? <p className="text-center text-[12px] text-muted">Test mode: no card will be charged.</p> : null}
+              {paymentsPaused ? (
+                <p className="text-center text-[12px] text-muted">Your student can start now: Merit Plus is free for their first month.</p>
+              ) : !isStripeEnabled ? (
+                <p className="text-center text-[12px] text-muted">Test mode: no card will be charged.</p>
+              ) : null}
             </form>
           )}
         </div>

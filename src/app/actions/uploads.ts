@@ -57,7 +57,8 @@ export async function publishUpload(input: z.infer<typeof publishSchema>): Promi
     kind: "upload",
     courseId: topic.courseId,
     topicId: topic.id,
-    status: "published",
+    // Every upload is reviewed before students can see it (admins' own uploads go straight up).
+    status: viewer.isAdmin ? "published" : "pending",
     createdAt: new Date().toISOString(),
     note: "",
     title: d.title,

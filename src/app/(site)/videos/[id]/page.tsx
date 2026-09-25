@@ -10,7 +10,8 @@ import { ago, formatViews } from "@/components/ui";
 import { UploadCard } from "@/components/upload-card";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
-import { getUpload, listUploads, toUploadCards, uploaderIdentity } from "@/lib/uploads";
+import { ReportButton } from "@/components/report-button";
+import { getUpload, getUploadFor, listUploads, toUploadCards, uploaderIdentity } from "@/lib/uploads";
 import { getViewer } from "@/lib/viewer";
 
 export async function generateMetadata({ params }: PageProps<"/videos/[id]">): Promise<Metadata> {
@@ -20,8 +21,9 @@ export async function generateMetadata({ params }: PageProps<"/videos/[id]">): P
 
 export default async function WatchPage({ params, searchParams }: PageProps<"/videos/[id]">) {
   const [{ id }, sp, viewer, catalog] = await Promise.all([params, searchParams, getViewer(), getCatalog()]);
-  const c = await getUpload(id);
+  const c = await getUploadFor(id, viewer);
   if (!c) notFound();
+  const pending = c.status === "pending";
   const who = await uploaderIdentity(c.educatorId);
   const tutor = who?.tutorId ? (await (await getStore()).listTutors()).find((t) => t.id === who.tutorId) : undefined;
   const course = catalog.course(c.courseId);
@@ -34,8 +36,14 @@ export default async function WatchPage({ params, searchParams }: PageProps<"/vi
   return (
     <div className="mx-auto grid max-w-[1400px] gap-8 px-4 pb-20 pt-6 sm:px-6 lg:grid-cols-[1fr_380px]">
       <div className="min-w-0">
-        {sp.published ? <p className="mb-4 rounded-xl bg-positive-soft px-4 py-3 text-sm text-positive">Published. Students can watch it now.</p> : null}
-        <MeritPlayer id={c.id} src={c.media!.videoUrl} poster={c.media!.posterUrl} />
+        {pending ? (
+          <p className="mb-4 rounded-xl bg-accent-soft px-4 py-3 text-sm text-ink">
+            <span className="font-semibold">{sp.submitted ? "Submitted! " : ""}Waiting for review.</span> Merit checks every video before students can see it, usually within a day. Until then, only you can watch it here.
+          </p>
+        ) : sp.published ? (
+          <p className="mb-4 rounded-xl bg-positive-soft px-4 py-3 text-sm text-positive">Published. Students can watch it now.</p>
+        ) : null}
+        <MeritPlayer id={c.id} src={c.media!.videoUrl} poster={c.media!.posterUrl} count={!pending} />
         <h1 className="mt-4 text-xl font-bold leading-snug text-ink sm:text-2xl">{c.title}</h1>
         <p className="mt-1 text-sm text-muted">
           {formatViews(c.views ?? 0)} {(c.views ?? 0) === 1 ? "view" : "views"} · {ago(c.createdAt)} · <span className="font-medium text-accent">Merit exclusive</span>
@@ -62,6 +70,11 @@ export default async function WatchPage({ params, searchParams }: PageProps<"/vi
           </Link>
         ) : null}
         {c.body ? <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-ink-2">{c.body}</p> : null}
+        {!pending && viewer?.user.id !== c.educatorId ? (
+          <div className="mt-4">
+            <ReportButton kind="upload" targetId={c.id} signedIn={Boolean(viewer)} />
+          </div>
+        ) : null}
         {canDelete ? (
           <form action={deleteUpload.bind(null, c.id)} className="mt-6">
             <button className="inline-flex h-9 items-center gap-2 rounded-full px-4 text-[13px] text-muted ring-1 ring-line hover:text-ink">

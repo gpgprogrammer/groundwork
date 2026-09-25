@@ -8,6 +8,7 @@ import { VideoCard } from "@/components/video-card";
 import { getCatalog } from "@/lib/catalog";
 import { contributionsBy, getEducator } from "@/lib/educators";
 import { toFeedVideo } from "@/lib/feed";
+import { ReportButton } from "@/components/report-button";
 import { UploadGrid } from "@/components/upload-card";
 import { toUploadCards } from "@/lib/uploads";
 
@@ -49,6 +50,9 @@ export default async function EducatorPage({ params }: PageProps<"/educators/[id
         </div>
       </div>
       {educator.bio ? <p className="mt-6 max-w-3xl whitespace-pre-wrap text-[15px] leading-relaxed text-ink-2">{educator.bio}</p> : null}
+      <div className="mt-3">
+        <ReportButton kind="educator" targetId={educator.id} />
+      </div>
 
       {uploads.length ? (
         <section className="mt-10">

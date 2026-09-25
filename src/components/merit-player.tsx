@@ -5,7 +5,7 @@ import { recordUploadView } from "@/app/actions/uploads";
 import { trackPlay } from "./tracker";
 
 /** Merit's own player for tutor uploads. A view counts once per page load, on first play. */
-export function MeritPlayer({ id, src, poster }: { id: string; src: string; poster: string | null }) {
+export function MeritPlayer({ id, src, poster, count = true }: { id: string; src: string; poster: string | null; count?: boolean }) {
   const counted = useRef(false);
   return (
     <video
@@ -16,7 +16,7 @@ export function MeritPlayer({ id, src, poster }: { id: string; src: string; post
       preload="metadata"
       controlsList="nodownload"
       onPlay={() => {
-        if (counted.current) return;
+        if (counted.current || !count) return;
         counted.current = true;
         void recordUploadView(id);
         trackPlay(id);

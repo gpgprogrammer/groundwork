@@ -3,7 +3,7 @@
 import { GraduationCap, Presentation } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useState } from "react";
-import { signIn, signUp, type AuthState } from "@/app/actions/auth";
+import { requestPasswordReset, signIn, signUp, updatePassword, type AuthState } from "@/app/actions/auth";
 import { Field, FormMessage, inputClass } from "@/components/form";
 import { Button, cn } from "@/components/ui";
 
@@ -25,6 +25,11 @@ export function SignInForm({ next }: { next?: string }) {
       <Field label="Password">
         <input name="password" type="password" required autoComplete="current-password" className={inputClass} />
       </Field>
+      <p className="-mt-2 text-right text-[13px]">
+        <Link href="/forgot-password" className="text-accent hover:underline">
+          Forgot password?
+        </Link>
+      </p>
       <FormMessage error={state.error} />
       <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending ? "Signing in…" : "Sign in"}
@@ -76,6 +81,51 @@ export function SignUpForm({ next, initialType }: { next?: string; initialType?:
       <FormMessage error={state.error} />
       <Button type="submit" size="lg" className="w-full" disabled={pending || !type}>
         {pending ? "Creating account…" : type === "teacher" ? "Create teacher account" : type === "student" ? "Create student account" : "Choose an account type"}
+      </Button>
+    </form>
+  );
+}
+
+export function ForgotPasswordForm() {
+  const [state, action, pending] = useActionState<AuthState, FormData>(requestPasswordReset, {});
+  if (state.message) {
+    return (
+      <div role="status" className="rounded-xl border border-line bg-surface p-5 text-sm leading-relaxed text-ink-2">
+        {state.message}
+        <p className="mt-3">
+          <Link href="/login" className="font-medium text-ink underline underline-offset-4">
+            Back to sign in
+          </Link>
+        </p>
+      </div>
+    );
+  }
+  return (
+    <form action={action} className="space-y-4">
+      <Field label="Email">
+        <input name="email" type="email" required autoComplete="email" autoFocus defaultValue={state.fields?.email} className={inputClass} />
+      </Field>
+      <FormMessage error={state.error} />
+      <Button type="submit" size="lg" className="w-full" disabled={pending}>
+        {pending ? "Sending…" : "Email me a reset link"}
+      </Button>
+    </form>
+  );
+}
+
+export function ResetPasswordForm() {
+  const [state, action, pending] = useActionState<AuthState, FormData>(updatePassword, {});
+  return (
+    <form action={action} className="space-y-4">
+      <Field label="New password" hint="8+ characters">
+        <input name="password" type="password" required minLength={8} autoComplete="new-password" autoFocus className={inputClass} />
+      </Field>
+      <Field label="Type it again">
+        <input name="confirm" type="password" required minLength={8} autoComplete="new-password" className={inputClass} />
+      </Field>
+      <FormMessage error={state.error} />
+      <Button type="submit" size="lg" className="w-full" disabled={pending}>
+        {pending ? "Saving…" : "Save new password"}
       </Button>
     </form>
   );

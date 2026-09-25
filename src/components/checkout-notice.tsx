@@ -17,6 +17,14 @@ export function CheckoutNotice({ sp }: { sp: Record<string, string | string[] | 
       </div>
     );
   }
+  if (status === "paused") {
+    return (
+      <div role="status" className="mb-6 flex items-start gap-3 rounded-2xl bg-accent-soft p-4 text-sm text-ink">
+        <CircleAlert className="mt-0.5 size-5 shrink-0 text-accent" />
+        <p>Purchases open soon. Until then, Merit Plus is free for your first month and Exam Sprint has a free 7-day trial.</p>
+      </div>
+    );
+  }
   if (status === "canceled" || status === "error") {
     return (
       <div role="status" className="mb-6 flex items-start gap-3 rounded-2xl bg-warn-soft p-4 text-sm text-ink">

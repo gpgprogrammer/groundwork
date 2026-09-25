@@ -8,7 +8,7 @@ import { BuyButton, PlusBadge, SprintBadge } from "@/components/upgrade";
 import { cn } from "@/components/ui";
 import { AI_LIMITS } from "@/lib/ai/limits";
 import { annualSavings, PLUS, SPRINT, usd } from "@/lib/billing/plans";
-import { isStripeEnabled } from "@/lib/env";
+import { isStripeEnabled, paymentsPaused } from "@/lib/env";
 import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
@@ -208,7 +208,8 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
       </div>
 
       <p className={cn("mt-12 text-center text-[12px] text-muted", isStripeEnabled && "hidden")}>
-        <PlusBadge className="mr-1.5 align-middle" /> <SprintBadge className="mr-1.5 align-middle" /> Payments are in test mode while Merit connects its payment processor. No card is charged.
+        <PlusBadge className="mr-1.5 align-middle" /> <SprintBadge className="mr-1.5 align-middle" />{" "}
+        {paymentsPaused ? "Purchases open soon. Until then, Merit Plus is free for your first month and Exam Sprint has a free 7-day trial." : "Payments are in test mode while Merit connects its payment processor. No card is charged."}
       </p>
     </div>
   );

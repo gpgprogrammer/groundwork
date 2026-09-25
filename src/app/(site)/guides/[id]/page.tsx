@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Markdown } from "@/components/ask/markdown";
+import { ReportButton } from "@/components/report-button";
 import { CourseIcon } from "@/components/course-icon";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
@@ -43,6 +44,9 @@ export default async function GuidePage({ params, searchParams }: PageProps<"/gu
       <article className="mt-8">
         <Markdown text={guide.body ?? ""} />
       </article>
+      <div className="mt-10 border-t border-line pt-4">
+        <ReportButton kind="guide" targetId={guide.id} />
+      </div>
     </div>
   );
 }

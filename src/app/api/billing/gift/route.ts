@@ -2,7 +2,7 @@ import { originOf } from "@/lib/origin";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createGiftCheckoutUrl, recordGift } from "@/lib/billing/stripe";
-import { isStripeEnabled } from "@/lib/env";
+import { isStripeEnabled, paymentsPaused } from "@/lib/env";
 
 const schema = z.object({
   product: z.enum(["plus-year", "sprint"]),
@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.redirect(`${origin}/pricing/parents?checkout=invalid`, 303);
   const g = parsed.data;
   if (g.buyerEmail === g.studentEmail) return NextResponse.redirect(`${origin}/pricing/parents?checkout=same`, 303);
+  if (paymentsPaused) return NextResponse.redirect(`${origin}/pricing/parents?checkout=paused`, 303);
   if (!isStripeEnabled) {
     await recordGift({ ...g, source: "test" });
     return NextResponse.redirect(`${origin}/pricing/parents?checkout=success&product=${g.product}&test=1&to=${encodeURIComponent(g.studentEmail)}`, 303);

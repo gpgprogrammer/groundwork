@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ledger, listBookings, saveBooking } from "@/lib/bookings";
 import { createFeeCheckoutUrl } from "@/lib/billing/stripe";
 import { getStore } from "@/lib/data/store";
-import { isStripeEnabled } from "@/lib/env";
+import { isStripeEnabled, paymentsPaused } from "@/lib/env";
 import { getViewer } from "@/lib/viewer";
 
 /** Tutor pays the 10% referral fees owed on sessions students paid them for directly. */
@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
   if (!tutor) return NextResponse.redirect(`${origin}/tutors/join`, 303);
   const { owed, owedTotal } = ledger(await listBookings({ tutorId: tutor.id }));
   if (!owed.length || owedTotal <= 0) return NextResponse.redirect(`${origin}/tutor/payouts`, 303);
+  if (paymentsPaused) return NextResponse.redirect(`${origin}/tutor/payouts?payments=paused`, 303);
   if (!isStripeEnabled) {
     for (const b of owed) await saveBooking({ ...b, feeSettled: true });
     return NextResponse.redirect(`${origin}/tutor/payouts?fees=paid&test=1`, 303);

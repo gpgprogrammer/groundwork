@@ -24,3 +24,8 @@ export function Tracker({ uid }: { uid: string | null }) {
 export function trackPlay(id: string) {
   send({ type: "upload_play", ref_id: id, path: location.pathname });
 }
+
+/** Reports a crash the visitor saw (from an error page) so admins can fix it. */
+export function reportClientError(error: Error & { digest?: string }) {
+  send({ type: "error", message: error.message, digest: error.digest, stack: error.stack?.slice(0, 2000), path: location.pathname });
+}
