@@ -5,6 +5,7 @@ import { clearMatch, hideEvent, removeSource } from "@/app/actions/schedule";
 import { beginSprintTrial } from "@/app/actions/sprint";
 import { FocusPicker } from "@/components/focus-picker";
 import { ResyncButton } from "@/components/resync-button";
+import { CalendarBenefits } from "@/components/calendar-benefits";
 import { ScheduleSetup } from "@/components/schedule-setup";
 import { googleCalendarEnabled } from "@/lib/google-calendar";
 import { ago, cn } from "@/components/ui";
@@ -61,10 +62,14 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
         <h1 className="flex items-center gap-3 text-[28px] font-bold tracking-tight text-ink">
           <CalendarDays className="size-7 text-accent" /> Connect your schedule
         </h1>
-        <p className="mt-1 text-[15px] text-muted">Merit lines up the right lessons for every quiz and test on it, and your feed follows what you&apos;re learning in class.</p>
+        <p className="mt-1 text-[15px] text-muted">It takes about a minute, and everything on Merit starts following what you&apos;re learning in class.</p>
         <div className="mt-7">
           <ScheduleSetup googleEnabled={googleCalendarEnabled} />
         </div>
+        <section className="mt-10">
+          <h2 className="text-[15px] font-bold text-ink">What connecting does</h2>
+          <CalendarBenefits variant="list" className="mt-4" />
+        </section>
         <details className="mt-10 rounded-2xl ring-1 ring-line">
           <summary className="cursor-pointer px-5 py-4 text-sm font-medium text-ink">No calendar? Just pick the topics you&apos;re covering in class</summary>
           <div className="px-5 pb-5">
@@ -237,10 +242,11 @@ function SchedulePreview({ catalog, viewer }: { catalog: IndexedCatalog; viewer:
       <h1 className="flex items-center gap-3 text-[28px] font-bold tracking-tight text-ink">
         <CalendarDays className="size-7 text-accent" /> My schedule
       </h1>
-      <p className="mt-1 max-w-2xl text-[15px] text-muted">Connect your school calendar. When a quiz or test is coming, Merit lines up the exact lessons and a Sprint for it, days ahead.</p>
-      <div className="mt-6 flex items-center gap-2">
+      <p className="mt-1 max-w-2xl text-[15px] text-muted">Connect your school calendar and everything on Merit starts following what you&apos;re learning in class.</p>
+      <CalendarBenefits variant="list" className="mt-6" />
+      <div className="mt-10 flex items-center gap-2">
         <span className="rounded-full bg-bg-subtle px-2.5 py-1 text-[12px] font-medium text-muted">Sample week</span>
-        <span className="text-[13px] text-muted">A student taking AP Biology and AP Calculus BC</span>
+        <span className="text-[13px] text-muted">What My schedule looks like for a student taking AP Biology and AP Calculus BC</span>
       </div>
       <div className="mt-4 space-y-4">
         {events.map((e) => (

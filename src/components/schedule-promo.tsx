@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowRight, BellRing, CalendarDays, Sparkles, Target, X } from "lucide-react";
+import { ArrowRight, CalendarDays, X } from "lucide-react";
+import { CALENDAR_BENEFITS } from "./calendar-benefits";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -91,25 +92,15 @@ export function SchedulePromo({ showAt, trialDaysLeft }: { showAt: string; trial
           <p className="mt-1 text-[15px] text-white/85">Merit knows what&apos;s coming, so you know what to study tonight.</p>
         </div>
         <div className="px-6 pb-6 pt-5">
-          <ul className="space-y-3 text-[14.5px] text-ink-2">
-            <li className="flex gap-3">
-              <Sparkles className="mt-0.5 size-5 shrink-0 text-accent" />
-              <span>
-                <span className="font-semibold text-ink">Your feed learns what you&apos;re learning in school.</span> The topics on your calendar move to the top of For you, so Merit keeps pace with your classes.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <CalendarDays className="mt-0.5 size-5 shrink-0 text-accent" />
-              Connect Blackbaud, Canvas, Schoology, Google, or a PDF in about a minute. It stays up to date on its own.
-            </li>
-            <li className="flex gap-3">
-              <BellRing className="mt-0.5 size-5 shrink-0 text-accent" />
-              Before every quiz and test, Merit lines up the right lessons for that exact topic.
-            </li>
-            <li className="flex gap-3">
-              <Target className="mt-0.5 size-5 shrink-0 text-accent" />
-              Big test coming? Turn it into an Exam Sprint with a day-by-day plan.
-            </li>
+          <ul className="space-y-2.5 text-[14px] text-ink-2">
+            {CALENDAR_BENEFITS.map(({ key, Icon, title, body }, i) => (
+              <li key={key} className="flex gap-3">
+                <Icon className="mt-0.5 size-5 shrink-0 text-accent" />
+                <span>
+                  <span className="font-semibold text-ink">{title}.</span> {i < 2 ? body : null}
+                </span>
+              </li>
+            ))}
           </ul>
           <p className="mt-5 rounded-xl bg-accent-soft px-4 py-3 text-[13.5px] text-ink">
             Included with <span className="font-semibold">Merit Plus</span> or <span className="font-semibold">Exam Sprint</span>.{" "}

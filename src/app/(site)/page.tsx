@@ -2,6 +2,7 @@ import { ArrowRight, CalendarCheck, GraduationCap, HeartHandshake, MonitorPlay, 
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { CalendarBenefits } from "@/components/calendar-benefits";
 import { CourseIcon } from "@/components/course-icon";
 import { FunnelLink } from "@/components/landing/funnel-link";
 import { formatDuration } from "@/components/ui";
@@ -14,6 +15,8 @@ export const metadata: Metadata = {
 };
 
 const EXAMPLE = { course: "ap-calculus-bc", topic: "chain-rule" };
+/** The example quiz in the calendar section. */
+const QUIZ = { course: "ap-biology", topic: "cellular-respiration" };
 
 /** Home: what Merit is, for everyone. */
 export default async function HomePage() {
@@ -27,6 +30,10 @@ export default async function HomePage() {
   const mine = viewer ? viewer.state.profile.courseIds.map((id) => catalog.course(id)).filter((c) => c !== undefined) : [];
   const shown = mine.length ? mine : [...catalog.courses].sort((a, b) => catalog.videosForCourse(b.id).length - catalog.videosForCourse(a.id).length).slice(0, 12);
   const lessonCount = `${(Math.floor(catalog.videos.length / 1000) * 1000).toLocaleString("en-US")}+`;
+  const quizCourse = catalog.course(QUIZ.course);
+  const quizTopic = quizCourse ? (catalog.topicIn(quizCourse.id, QUIZ.topic) ?? catalog.topicsForCourse(quizCourse.id)[0]) : undefined;
+  const quizLessons = quizTopic ? catalog.videosForTopic(quizTopic.id).filter((v) => !v.isShort).slice(0, 2) : [];
+  const hasCalendar = Boolean(viewer?.state.schedule?.sources?.length);
 
   const features = [
     { Icon: SquarePlay, title: "The best lessons", body: `${lessonCount} videos from the world's best teachers, sorted by topic and ranked by how well they teach.`, href: "/lessons" },
@@ -34,7 +41,7 @@ export default async function HomePage() {
     { Icon: Sparkles, title: "Merit AI", body: "Stuck at 11pm? Ask anything and get an explanation, practice questions, and the right lesson.", href: "/ask" },
     { Icon: Target, title: "Exam Sprint", body: "A day-by-day plan to exam day with a live readiness score.", href: "/sprint" },
     { Icon: MonitorPlay, title: "Merit tutors' videos", body: "Lessons recorded by the tutors and teachers on Merit, only on Merit.", href: "/videos" },
-    { Icon: CalendarCheck, title: "Your class calendar", body: "Connect it once and Merit lines up lessons for every quiz and test.", href: "/schedule" },
+    { Icon: CalendarCheck, title: "Your class calendar", body: "Connect it once for a feed, a nightly plan, and reminders built around your tests.", href: "#calendar" },
   ];
 
   return (
@@ -121,6 +128,71 @@ export default async function HomePage() {
             </Link>
           ))}
         </div>
+      </section>
+
+      {/* The calendar */}
+      <section id="calendar" className="mt-16 scroll-mt-20">
+        <div className="grid items-center gap-8 lg:grid-cols-[1fr_400px]">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-accent">Connect your calendar</p>
+            <h2 className="mt-1 text-2xl font-bold tracking-tight text-ink sm:text-3xl">Merit works around your classes.</h2>
+            <p className="mt-3 max-w-xl text-[15.5px] leading-relaxed text-ink-2">
+              Connect the calendar your school uses (Blackbaud, Canvas, Schoology, Google Classroom, or any other) and everything on Merit starts following what you&apos;re learning. It takes about a minute: copy your calendar, paste it into Merit.
+            </p>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              {hasCalendar ? (
+                <Link href="/schedule" className="inline-flex h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-white hover:brightness-110">
+                  See my schedule <ArrowRight className="size-4" />
+                </Link>
+              ) : viewer ? (
+                <Link href="/schedule" className="inline-flex h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-white hover:brightness-110">
+                  Connect my calendar <ArrowRight className="size-4" />
+                </Link>
+              ) : (
+                <FunnelLink href="/signup?as=student&next=%2Fschedule" funnel="calendar-signup" className="inline-flex h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-white hover:brightness-110">
+                  Connect my calendar <ArrowRight className="size-4" />
+                </FunnelLink>
+              )}
+              <span className="text-[13px] text-muted">Included with Merit Plus (free for your first month) or Exam Sprint.</span>
+            </div>
+          </div>
+          {quizCourse && quizTopic && quizLessons.length ? (
+            <div className="rounded-2xl p-5 ring-1 ring-line">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[13px] font-medium text-muted">On your calendar · Friday</p>
+                <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-[12px] font-medium text-accent">Example</span>
+              </div>
+              <p className="mt-2 flex items-center gap-2 font-semibold text-ink">
+                <CourseIcon id={quizCourse.id} size={22} /> {quizCourse.shortTitle} quiz: {quizTopic.title}
+                <span className="rounded bg-[#fde8e8] px-1.5 py-0.5 text-[10.5px] font-bold uppercase text-[#b42318]">Test</span>
+              </p>
+              <p className="mt-4 text-[12.5px] font-medium text-muted">Lessons for this quiz</p>
+              <ul className="mt-2 space-y-3">
+                {quizLessons.map((v) => (
+                  <li key={v.id} className="flex gap-3">
+                    <span className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-lg bg-bg-subtle">
+                      <img src={v.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" className="absolute inset-0 size-full object-cover" />
+                      <span className="tabular absolute bottom-1 right-1 rounded bg-black/80 px-1 text-[11px] font-medium text-white">{formatDuration(v.durationSec)}</span>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="line-clamp-2 text-[13.5px] font-medium leading-snug text-ink">{v.title}</span>
+                      <span className="mt-0.5 block truncate text-[12px] text-muted">{v.channelTitle}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-4 text-[13px]">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1.5 font-medium text-accent">
+                  <CalendarCheck className="size-3.5" /> In tonight&apos;s plan
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fff1e8] px-3 py-1.5 font-medium text-[#c2410c]">
+                  <Target className="size-3.5" /> Sprint for this test
+                </span>
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <CalendarBenefits className="mt-8" />
       </section>
 
       {/* Courses */}

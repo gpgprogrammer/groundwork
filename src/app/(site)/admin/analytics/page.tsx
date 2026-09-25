@@ -25,6 +25,7 @@ const FUNNELS: Record<string, string> = {
   "path-teacher": "Teachers and tutors card",
   "path-parent": "Parents card",
   "footer-student": "Bottom: Create a free account",
+  "calendar-signup": "Calendar section: Connect my calendar",
 };
 
 const pct = (n: number) => `${Math.round(n * 100)}%`;
