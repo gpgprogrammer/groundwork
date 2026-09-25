@@ -50,9 +50,14 @@ export default async function AdminPage() {
     <div className="mx-auto max-w-[1200px] px-4 pb-20 pt-8 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-extrabold tracking-tight text-ink">Admin</h1>
-        <Link href="/admin/analytics" className="inline-flex h-10 items-center rounded-full bg-accent px-5 text-sm font-semibold text-white">
-          Open analytics
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/users" className="inline-flex h-10 items-center rounded-full px-5 text-sm font-semibold text-ink ring-1 ring-line-strong hover:bg-bg-subtle">
+            Users
+          </Link>
+          <Link href="/admin/analytics" className="inline-flex h-10 items-center rounded-full bg-accent px-5 text-sm font-semibold text-white">
+            Open analytics
+          </Link>
+        </div>
       </div>
       <p className="mt-1 text-sm text-muted">
         Payments: {isStripeEnabled ? "Stripe live" : "test mode"} · Database: {isSupabaseEnabled ? "Supabase" : "local file"} · AI: {aiOk ? "on" : isAiConfigured ? `unavailable${status?.reason ? ` (${status.reason.slice(0, 90)})` : ""}` : "not configured"}
