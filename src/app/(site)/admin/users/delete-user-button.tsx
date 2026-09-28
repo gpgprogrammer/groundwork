@@ -1,12 +1,15 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deleteAdminUserAccount } from "@/app/actions/admin-users";
 
 export function DeleteUserButton({ userId, email, roles, paid }: { userId: string; email: string; roles: string[]; paid: boolean }) {
   const [error, setError] = useState<string | null>(null);
+  const [removed, setRemoved] = useState(false);
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
   const accountType = roles.filter((role) => role !== "admin").join(" and ") || "user";
 
   function remove() {
@@ -14,13 +17,21 @@ export function DeleteUserButton({ userId, email, roles, paid }: { userId: strin
     if (!window.confirm(`Permanently remove ${email}'s ${accountType} account? Their sign-in, profile, learning history, calendar, and published content will be deleted.${paymentNote} This cannot be undone.`)) return;
     setError(null);
     startTransition(async () => {
-      const result = await deleteAdminUserAccount(userId);
-      if (!result.ok) setError(result.error);
+      try {
+        const result = await deleteAdminUserAccount(userId);
+        if (!result.ok) return setError(result.error);
+        setRemoved(true);
+        router.refresh();
+      } catch {
+        setError("The account could not be removed. Refresh this page and try again.");
+      }
     });
   }
 
+  if (removed) return <span role="status" className="text-[12px] font-semibold text-positive">Account removed</span>;
+
   return (
-    <div className="flex max-w-56 flex-col items-start gap-1.5">
+    <div className="mt-1.5 flex max-w-64 flex-col items-start gap-1.5">
       <button
         type="button"
         onClick={remove}

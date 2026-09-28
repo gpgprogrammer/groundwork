@@ -59,10 +59,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-2xl ring-1 ring-line">
-        <table className="w-full min-w-[1240px] text-left text-sm">
+        <table className="w-full min-w-[1100px] text-left text-sm">
           <thead className="bg-bg-subtle text-[12px] text-muted">
             <tr>
-              {["Email", "Name", "Signed up", "Last sign-in", "Method", "Type", "Courses", "Plan", "Sprint", "Calendar", "Actions"].map((h) => (
+              {["Email", "Name", "Signed up", "Last sign-in", "Method", "Type", "Courses", "Plan", "Sprint", "Calendar"].map((h) => (
                 <th key={h} className="px-3 py-2.5 font-medium">
                   {h}
                 </th>
@@ -75,6 +75,13 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                 <td className="px-3 py-2.5 font-medium text-ink">
                   {u.email}
                   {!u.onboarded ? <span className="ml-1.5 rounded bg-[#fff1e8] px-1.5 py-px text-[11px] font-semibold text-[#c2410c]">setup unfinished</span> : null}
+                  {u.roles.includes("admin") ? (
+                    <span className="mt-1.5 block text-[11.5px] font-semibold text-muted" title="Admin accounts cannot be removed here">
+                      Protected admin
+                    </span>
+                  ) : (
+                    <DeleteUserButton userId={u.id} email={u.email} roles={u.roles} paid={u.plan === "Plus (paid)"} />
+                  )}
                 </td>
                 <td className="px-3 py-2.5 text-ink-2">{u.name || <span className="text-muted">·</span>}</td>
                 <td className="tabular whitespace-nowrap px-3 py-2.5 text-ink-2">{fmt(u.signedUpAt)}</td>
@@ -87,15 +94,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                 </td>
                 <td className="px-3 py-2.5 text-ink-2">{u.sprint ?? <span className="text-muted">·</span>}</td>
                 <td className="px-3 py-2.5">{u.calendar ? <span className="text-positive">Connected</span> : <span className="text-muted">No</span>}</td>
-                <td className="px-3 py-2">
-                  {u.roles.includes("admin") ? (
-                    <span className="whitespace-nowrap text-[12px] font-semibold text-muted" title="Admin accounts cannot be removed here">
-                      Protected admin
-                    </span>
-                  ) : (
-                    <DeleteUserButton userId={u.id} email={u.email} roles={u.roles} paid={u.plan === "Plus (paid)"} />
-                  )}
-                </td>
               </tr>
             ))}
           </tbody>

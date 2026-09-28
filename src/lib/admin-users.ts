@@ -5,8 +5,8 @@ import { getStore } from "@/lib/data/store";
 import { isStripeEnabled, isSupabaseEnabled } from "@/lib/env";
 import { normalizeSchedule } from "@/lib/schedule-model";
 import { createAdminClient } from "@/lib/supabase/server";
-import type { Billing, Contribution, Educator, Profile } from "@/lib/types";
-import { removeObjects } from "@/lib/uploads";
+import type { Billing, Educator, Profile } from "@/lib/types";
+import { removeUserObjects } from "@/lib/uploads";
 
 export type AdminUser = {
   id: string;
@@ -113,12 +113,19 @@ export async function removeAdminUserAccount(input: { actorId: string; targetId:
   if (input.adminEmails.includes(email)) return { ok: false, error: "Admin accounts are protected and cannot be removed here." };
 
   const store = await getStore();
-  const [billing, contributions, planPrefs, tutor] = await Promise.all([
+  const [billing, planPrefs, tutor] = await Promise.all([
     store.getDoc<Billing>("billing", input.targetId),
-    store.listDocs<Contribution>("contributions", { owner: input.targetId }),
     store.getDoc<{ feedToken?: string }>("planPrefs", input.targetId),
     store.listTutors().then((tutors) => tutors.find((item) => item.userId === input.targetId) ?? null),
   ]);
+
+  // Supabase will not delete an auth user while that user owns Storage files.
+  try {
+    await removeUserObjects(input.targetId);
+  } catch (error) {
+    console.error("[admin-users] upload cleanup failed", error);
+    return { ok: false, error: "This account's uploaded files could not be removed. Try again." };
+  }
 
   const hasLiveStripeSubscription = billing?.plus.source === "stripe" && (billing.plus.status === "active" || billing.plus.status === "past_due");
   const subscriptionId = hasLiveStripeSubscription ? billing.plus.stripeSubscriptionId : null;
@@ -149,11 +156,7 @@ export async function removeAdminUserAccount(input: { actorId: string; targetId:
     return { ok: false, error: "The account could not be removed. Try again." };
   }
 
-  const mediaPaths = contributions.flatMap((contribution) =>
-    contribution.media ? [contribution.media.path, contribution.media.path.replace(/\.\w+$/, ".jpg")] : [],
-  );
   await Promise.all([
-    removeObjects([...new Set(mediaPaths)]),
     planPrefs?.feedToken ? store.deleteDoc("planFeeds", planPrefs.feedToken) : Promise.resolve(),
     tutor ? store.deleteDoc("tutorMeta", tutor.id) : Promise.resolve(),
   ]).catch((cleanupError) => console.error("[admin-users] post-deletion cleanup failed", cleanupError));
