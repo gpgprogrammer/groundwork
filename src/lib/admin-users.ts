@@ -131,8 +131,15 @@ export async function removeAdminUserAccount(input: { actorId: string; targetId:
       const { getStripe } = await import("@/lib/billing/stripe");
       await getStripe().subscriptions.cancel(subscriptionId);
     } catch (error) {
-      console.error("[admin-users] subscription cancellation failed", error);
-      return { ok: false, error: "The paid subscription could not be canceled, so the account was not removed. Try again." };
+      if ((error as { code?: string }).code === "resource_missing") {
+        console.warn(`[admin-users] Stripe subscription ${subscriptionId} was already removed`);
+      } else {
+        console.error("[admin-users] subscription cancellation failed", error);
+        return { ok: false, error: "The paid subscription could not be canceled, so the account was not removed. Try again." };
+      }
+    }
+    if (billing) {
+      await store.putDoc("billing", input.targetId, { ...billing, plus: { ...billing.plus, status: "canceled", cancelAtPeriodEnd: false } }, input.targetId);
     }
   }
 

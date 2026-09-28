@@ -182,8 +182,9 @@ async function syncSubscription(sub: Stripe.Subscription) {
   // A cancellation triggered by admin account removal can arrive after the
   // auth user (and its cascaded billing document) has already been deleted.
   if (isSupabaseEnabled) {
-    const { data } = await createAdminClient().auth.admin.getUserById(userId);
-    if (!data.user) return console.warn(`[stripe] ignoring subscription ${sub.id} for deleted user ${userId}`);
+    const { data, error } = await createAdminClient().auth.admin.getUserById(userId);
+    if (!error && !data.user) return console.warn(`[stripe] ignoring subscription ${sub.id} for deleted user ${userId}`);
+    if (error) console.warn(`[stripe] could not verify user ${userId}; subscription event will retry if the write fails`, error.message);
   }
   const b = (await getBilling(userId)) ?? emptyBilling(userId);
   const item = sub.items.data[0];
