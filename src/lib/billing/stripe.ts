@@ -4,7 +4,8 @@ import Stripe from "stripe";
 import { emptyBilling, getBilling, grant, saveBilling, trialEndsAt } from "@/lib/billing/access";
 import { PRODUCTS, TUTOR_COMMISSION, type Product } from "@/lib/billing/plans";
 import { getStore } from "@/lib/data/store";
-import { env, isStripeEnabled } from "@/lib/env";
+import { env, isStripeEnabled, isSupabaseEnabled } from "@/lib/env";
+import { createAdminClient } from "@/lib/supabase/server";
 import type { Billing, Booking, Gift, TutorMeta } from "@/lib/types";
 import type { Viewer } from "@/lib/viewer";
 
@@ -178,6 +179,12 @@ const STATUS: Partial<Record<Stripe.Subscription.Status, Billing["plus"]["status
 async function syncSubscription(sub: Stripe.Subscription) {
   const userId = sub.metadata?.userId;
   if (!userId) return console.warn(`[stripe] subscription ${sub.id} has no userId`);
+  // A cancellation triggered by admin account removal can arrive after the
+  // auth user (and its cascaded billing document) has already been deleted.
+  if (isSupabaseEnabled) {
+    const { data } = await createAdminClient().auth.admin.getUserById(userId);
+    if (!data.user) return console.warn(`[stripe] ignoring subscription ${sub.id} for deleted user ${userId}`);
+  }
   const b = (await getBilling(userId)) ?? emptyBilling(userId);
   const item = sub.items.data[0];
   const end = item?.current_period_end;

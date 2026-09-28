@@ -6,6 +6,7 @@ import { cn } from "@/components/ui";
 import { FILTERS, filterUsers, listAdminUsers, type FilterKey } from "@/lib/admin-users";
 import { env } from "@/lib/env";
 import { getViewer } from "@/lib/viewer";
+import { DeleteUserButton } from "./delete-user-button";
 
 export const metadata: Metadata = { title: "Users", robots: { index: false } };
 
@@ -58,10 +59,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-2xl ring-1 ring-line">
-        <table className="w-full min-w-[1100px] text-left text-sm">
+        <table className="w-full min-w-[1240px] text-left text-sm">
           <thead className="bg-bg-subtle text-[12px] text-muted">
             <tr>
-              {["Email", "Name", "Signed up", "Last sign-in", "Method", "Type", "Courses", "Plan", "Sprint", "Calendar"].map((h) => (
+              {["Email", "Name", "Signed up", "Last sign-in", "Method", "Type", "Courses", "Plan", "Sprint", "Calendar", "Actions"].map((h) => (
                 <th key={h} className="px-3 py-2.5 font-medium">
                   {h}
                 </th>
@@ -86,6 +87,15 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                 </td>
                 <td className="px-3 py-2.5 text-ink-2">{u.sprint ?? <span className="text-muted">·</span>}</td>
                 <td className="px-3 py-2.5">{u.calendar ? <span className="text-positive">Connected</span> : <span className="text-muted">No</span>}</td>
+                <td className="px-3 py-2">
+                  {u.roles.includes("admin") ? (
+                    <span className="whitespace-nowrap text-[12px] font-semibold text-muted" title="Admin accounts cannot be removed here">
+                      Protected admin
+                    </span>
+                  ) : (
+                    <DeleteUserButton userId={u.id} email={u.email} roles={u.roles} paid={u.plan === "Plus (paid)"} />
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
