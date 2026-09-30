@@ -16,7 +16,7 @@ export function ProfileForm({ email, initial, courses }: Props) {
   const [state, action, pending] = useActionState<ProfileFormState, FormData>(updateProfile, {});
   return (
     <form action={action} className="space-y-10">
-      <section className="rounded-2xl border border-line bg-surface p-6">
+      <section className="rounded-2xl bg-surface p-6 ring-2 ring-line">
         <h2 className="text-[15px] font-semibold text-ink">Profile</h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <Field label="Name">
@@ -28,17 +28,17 @@ export function ProfileForm({ email, initial, courses }: Props) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-line bg-surface p-6">
+      <section className="rounded-2xl bg-surface p-6 ring-2 ring-line">
         <h2 className="text-[15px] font-semibold text-ink">What you&apos;re studying</h2>
         <p className="mt-1 text-sm text-muted">This shapes your home page and recommendations.</p>
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
           {courses.map((c) => (
             <label
               key={c.id}
-              className="group flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-bg px-3.5 py-3 transition-colors has-[:checked]:border-ink has-[:checked]:bg-surface"
+              className="group flex cursor-pointer items-center gap-3 rounded-xl bg-surface px-3.5 py-3 ring-1 ring-inset ring-line transition-[background-color,box-shadow] duration-150 hover:bg-bg-subtle has-[:checked]:bg-accent-soft has-[:checked]:ring-2 has-[:checked]:ring-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"
             >
               <input type="checkbox" name="courseIds" value={c.id} defaultChecked={initial.courseIds.includes(c.id)} className="peer sr-only" />
-              <span className="flex size-4 items-center justify-center rounded border border-line-strong text-bg peer-checked:border-ink peer-checked:bg-ink">
+              <span className="flex size-[18px] items-center justify-center rounded-md text-transparent ring-1 ring-inset ring-line-strong transition-colors peer-checked:bg-accent peer-checked:text-white peer-checked:ring-accent">
                 <Check className="size-3" strokeWidth={3} />
               </span>
               <span className="text-sm text-ink">{c.title}</span>

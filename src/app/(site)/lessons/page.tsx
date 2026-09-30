@@ -1,4 +1,5 @@
 import { CalendarDays, Clapperboard, MonitorPlay } from "lucide-react";
+import { LearnBand } from "@/components/learn-band";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Chips, FeedGrid, Shelf, SortControls } from "@/components/feed";
@@ -66,8 +67,10 @@ export default async function Lessons({ searchParams }: PageProps<"/lessons">) {
   }
 
   return (
-    <div className="px-4 sm:px-6">
-      <div className="sticky top-14 z-20 -mx-4 flex items-center gap-3 bg-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+    <>
+    <LearnBand title="Lessons" lede="The best lesson for every topic, ranked by how well it teaches." />
+    <div className="px-4 sm:px-6 lg:px-8">
+      <div className="sticky top-[var(--nav-h)] z-20 -mx-4 flex items-center gap-3 border-b-2 border-line bg-bg/90 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <Chips chips={chips} active={chip} />
         <SortControls sort={result.sort} length={result.length} />
       </div>
@@ -75,15 +78,15 @@ export default async function Lessons({ searchParams }: PageProps<"/lessons">) {
       {viewer && showShelves && upcoming.length ? (
         <div className="pt-4">
           <Shelf
-            icon={<CalendarDays className="size-5 text-accent" />}
+            icon={<CalendarDays className="size-5 text-accent-ink" />}
             title={tonight.length ? "Tonight's plan" : "Coming up on your calendar"}
             action={
-              <Link href={tonight.length ? "/plan" : "/schedule"} className="rounded-full px-3 py-1.5 text-sm font-medium text-accent hover:bg-accent-soft">
+              <Link href={tonight.length ? "/plan" : "/schedule"} className="rounded-full px-3 py-1.5 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-soft">
                 {tonight.length ? "Open plan" : "See schedule"}
               </Link>
             }
           >
-            <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
               {upcoming.map((r) => (
                 <VideoCard key={r.video.id} v={toFeedVideo(catalog, r.video, r.reason)} />
               ))}
@@ -91,33 +94,33 @@ export default async function Lessons({ searchParams }: PageProps<"/lessons">) {
           </Shelf>
         </div>
       ) : viewer && showShelves && !viewer.state.schedule ? (
-        <Link href="/schedule" className="mt-3 flex items-center gap-4 rounded-xl bg-accent-soft px-4 py-3.5 text-sm text-ink transition-opacity hover:opacity-90">
-          <CalendarDays className="size-5 shrink-0 text-accent" />
+        <Link href="/schedule" className="group mt-5 flex items-center gap-4 rounded-2xl bg-accent-soft px-5 py-4 text-sm text-ink transition-transform duration-200 active:scale-[0.99]">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface text-accent-ink"><CalendarDays className="size-5" /></span>
           <span className="min-w-0 flex-1">
             <span className="font-medium">Know what to study tonight.</span>{" "}
             <span className="text-ink-2">Connect your class calendar and Merit plans every night around your next quiz or test.</span>
           </span>
-          <span className="hidden shrink-0 font-medium text-accent sm:block">Connect</span>
+          <span className="hidden shrink-0 items-center gap-1 font-semibold text-accent-ink sm:flex">Connect <span className="transition-transform group-hover:translate-x-0.5">→</span></span>
         </Link>
       ) : null}
 
       {sp.password === "updated" ? (
-        <p role="status" className="mt-3 rounded-xl bg-positive-soft px-4 py-3 text-sm font-medium text-positive">
+        <p role="status" className="fade mt-5 rounded-2xl bg-positive-soft px-5 py-3.5 text-sm font-semibold text-positive">
           Your password is updated.
         </p>
       ) : null}
 
       {checkIn ? (
-        <Link href="/bookings" className="mt-3 flex items-center gap-4 rounded-xl bg-accent-soft px-4 py-3.5 text-sm text-ink hover:opacity-90">
+        <Link href="/bookings" className="mt-5 flex items-center gap-4 rounded-2xl bg-accent-soft px-5 py-4 text-sm text-ink transition-transform duration-200 active:scale-[0.99]">
           <span className="min-w-0 flex-1">
             <span className="font-medium">Did you end up working with the tutor you contacted?</span> <span className="text-ink-2">Tell us in one tap.</span>
           </span>
-          <span className="shrink-0 font-medium text-accent">Answer</span>
+          <span className="shrink-0 font-semibold text-accent-ink">Answer</span>
         </Link>
       ) : null}
 
       <div className="pt-6">
-        <div className="grid grid-cols-1 gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {head.map((v, i) => (
             <Fragment key={v.id}>
               {showShelves && i === 2 ? <SprintFeedCard /> : null}
@@ -129,17 +132,17 @@ export default async function Lessons({ searchParams }: PageProps<"/lessons">) {
       </div>
 
       {uploads.length ? (
-        <div className="mt-10 border-t border-line pt-6">
+        <div className="mt-12 border-t border-line pt-8">
           <Shelf
-            icon={<MonitorPlay className="size-5 text-accent" />}
+            icon={<MonitorPlay className="size-5 text-accent-ink" />}
             title="Merit Tutors' Videos"
             action={
-              <Link href="/videos" className="rounded-full px-3 py-1.5 text-sm font-medium text-ink hover:bg-bg-subtle">
+              <Link href="/videos" className="rounded-full px-3 py-1.5 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-soft">
                 See all
               </Link>
             }
           >
-            <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
               {uploads.map((u) => (
                 <UploadCard key={u.id} u={u} />
               ))}
@@ -149,12 +152,12 @@ export default async function Lessons({ searchParams }: PageProps<"/lessons">) {
       ) : null}
 
       {shorts.length >= 6 ? (
-        <div className="mt-10 border-t border-line pt-6">
+        <div className="mt-12 border-t border-line pt-8">
           <Shelf
-            icon={<Clapperboard className="size-5 text-[#e5484d]" />}
+            icon={<Clapperboard className="size-5 text-danger" />}
             title="Quick lessons"
             action={
-              <Link href="/shorts" className="rounded-full px-3 py-1.5 text-sm font-medium text-ink hover:bg-bg-subtle">
+              <Link href="/shorts" className="rounded-full px-3 py-1.5 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-soft">
                 See all
               </Link>
             }
@@ -174,6 +177,7 @@ export default async function Lessons({ searchParams }: PageProps<"/lessons">) {
         <FeedGrid key={query} initial={rest} nextOffset={page.nextOffset} query={query} />
       </div>
     </div>
+    </>
   );
 }
 

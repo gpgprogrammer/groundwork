@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LearnBand } from "@/components/learn-band";
 import { Chips, FeedGrid } from "@/components/feed";
 import { EmptyState } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
@@ -13,12 +14,13 @@ export default async function ShortsPage({ searchParams }: PageProps<"/shorts">)
   const page = pageOf(catalog, result, 0, 36);
   const query = new URLSearchParams({ chip: "shorts", sort: "views", ...(course ? { course } : {}) }).toString();
   return (
-    <div className="px-4 pb-10 sm:px-6">
-      <div className="sticky top-14 z-20 -mx-4 bg-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+    <>
+    <LearnBand title="Quick lessons" lede="Quick explainers under a minute, one idea at a time." />
+    <div className="px-4 pb-10 sm:px-6 lg:px-8">
+      <div className="sticky top-[var(--nav-h)] z-20 -mx-4 border-b-2 border-line bg-bg/90 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <Chips chips={[{ key: "all", label: "All" }, ...catalog.courses.map((c) => ({ key: c.id, label: c.title }))]} active={course ?? "all"} param="course" />
       </div>
-      <h1 className="sr-only">Quick lessons</h1>
-      <div className="pt-4">
+      <div className="pt-6">
         <FeedGrid
           key={query}
           layout="shorts"
@@ -29,5 +31,6 @@ export default async function ShortsPage({ searchParams }: PageProps<"/shorts">)
         />
       </div>
     </div>
+    </>
   );
 }

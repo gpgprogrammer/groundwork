@@ -1,10 +1,11 @@
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Play } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FeedGrid, SortControls } from "@/components/feed";
 import { MasteryButton } from "@/components/mastery-button";
-import { cn } from "@/components/ui";
+import { cn, EmptyState, panel, panelLink } from "@/components/ui";
+import { courseColors } from "@/components/course-icon";
 import { getCatalog } from "@/lib/catalog";
 import { pageOf, queryFeed } from "@/lib/feed";
 import { topicStatus } from "@/lib/recommend";
@@ -18,7 +19,6 @@ import { OpenAskButton } from "@/components/ask/quick-ask";
 import { ExamCta } from "@/components/upgrade";
 import { daysUntil, examDateFor } from "@/lib/exams";
 import { getViewer } from "@/lib/viewer";
-import { CourseSearch } from "@/components/course-search";
 
 export async function generateMetadata({ params }: PageProps<"/courses/[course]/[topic]">): Promise<Metadata> {
   const { course, topic: slug } = await params;
@@ -58,144 +58,189 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
     };
   })();
 
+  const { from, to } = courseColors(course.id);
+  const top = page.items[0];
+  const status = (id: string) => (viewer ? topicStatus(catalog, viewer.state, id) : "new");
+
   return (
-    <div className="mx-auto grid max-w-[1400px] gap-10 px-4 pb-16 pt-6 sm:px-6 lg:px-10 xl:grid-cols-[1fr_320px]">
-      <div className="min-w-0">
-        <nav className="flex flex-wrap items-center gap-x-1.5 text-[13px] text-muted" aria-label="Breadcrumb">
-          <Link href={`/courses/${course.slug}`} className="hover:text-ink">
-            {course.title}
-          </Link>
-          <span>›</span>
-          <Link href={`/courses/${course.slug}#${unit.slug}`} className="hover:text-ink">
-            Unit {unit.order}: {unit.title}
-          </Link>
-          <span>›</span>
-          <span>{concept.title}</span>
-        </nav>
-        <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-[34px]">{topic.title}</h1>
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <OpenAskButton className="inline-flex h-10 items-center gap-2 rounded-full bg-accent-soft px-4 text-sm font-semibold text-accent hover:brightness-95">
-              <Sparkles className="size-4" /> Ask Merit AI
+    <div className="pb-16" style={{ ["--c" as string]: from, ["--c2" as string]: to }}>
+      {/* Topic hero in the course's colors */}
+      <header className="relative overflow-hidden bg-[linear-gradient(135deg,var(--c),var(--c2))] text-white">
+        <div aria-hidden className="pointer-events-none absolute -right-20 -top-28 size-96 rounded-full border-[48px] border-white/[0.08]" />
+        <div className="relative mx-auto max-w-6xl px-4 pb-8 pt-7 sm:px-6 lg:px-8">
+          <nav className="flex flex-wrap items-center gap-x-1.5 font-brand text-[13.5px] font-bold text-white/75" aria-label="Breadcrumb">
+            <Link href={`/courses/${course.slug}`} className="hover:text-white">
+              {course.title}
+            </Link>
+            <span aria-hidden>›</span>
+            <Link href={`/courses/${course.slug}#${unit.slug}`} className="hover:text-white">
+              Unit {unit.order}: {unit.title}
+            </Link>
+            <span aria-hidden>›</span>
+            <span>{concept.title}</span>
+          </nav>
+          <h1 className="rise display mt-3 text-[36px] sm:text-5xl lg:text-[56px]">{topic.title}</h1>
+          <p className="rise mt-3 max-w-3xl text-[16.5px] leading-relaxed text-white/90" style={{ ["--i" as string]: 1 }}>
+            {topic.summary}
+          </p>
+          {topic.keyPoints.length ? (
+            <ul className="rise mt-4 flex flex-wrap gap-2" style={{ ["--i" as string]: 2 }} aria-label="Key ideas">
+              {topic.keyPoints.map((k) => (
+                <li key={k} className="rounded-full bg-white/15 px-3 py-1.5 font-brand text-[13px] font-bold ring-1 ring-inset ring-white/25">
+                  {k}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {/* What you can do with this topic */}
+          <div className="rise mt-7 grid grid-cols-2 gap-2.5 lg:grid-cols-4" style={{ ["--i" as string]: 3 }}>
+            {top ? (
+              <a
+                href={`/go/${top.id}`}
+                target="_blank"
+                rel="noopener"
+                className="press flex items-center gap-3 rounded-2xl bg-white p-2.5 pr-4 text-[color-mix(in_oklab,var(--c2)_85%,black)] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95 col-span-2 lg:col-span-1"
+              >
+                <span className="relative w-20 shrink-0 overflow-hidden rounded-xl bg-bg-subtle">
+                  <img src={top.thumbnail} alt="" referrerPolicy="no-referrer" className="aspect-video w-full object-cover" />
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/25">
+                    <Play className="size-5 fill-white text-white" />
+                  </span>
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-brand text-[15px] font-extrabold leading-tight">Watch the top lesson</span>
+                  <span className="block truncate text-[12.5px] font-medium text-muted">{top.channelTitle}</span>
+                </span>
+              </a>
+            ) : null}
+            <OpenAskButton className="press flex h-full min-h-14 items-center gap-3 rounded-2xl bg-white/15 px-4 text-left font-brand text-[15px] font-extrabold text-white ring-2 ring-inset ring-white/30 [--ledge:rgb(0_0_0/0.18)] hover:bg-white/25">
+              <Sparkles className="size-5 shrink-0" /> Ask Merit AI
             </OpenAskButton>
-            <MasteryButton topicId={topic.id} mastered={Boolean(viewer?.state.mastered[topic.id])} signedIn={Boolean(viewer)} />
+            <MasteryButton topicId={topic.id} mastered={Boolean(viewer?.state.mastered[topic.id])} signedIn={Boolean(viewer)} onColor />
+            <Link
+              href={`/tutors?course=${course.id}`}
+              className="press flex min-h-14 items-center gap-3 rounded-2xl bg-white/15 px-4 font-brand text-[15px] font-extrabold text-white ring-2 ring-inset ring-white/30 [--ledge:rgb(0_0_0/0.18)] hover:bg-white/25"
+            >
+              <Users className="size-5 shrink-0" /> Find a tutor
+            </Link>
           </div>
         </div>
-        <p className="mt-3 max-w-3xl text-[17px] leading-relaxed text-ink-2">{topic.summary}</p>
-        <CourseSearch courseId={course.id} courseTitle={course.shortTitle} className="mt-4" />
-        <div className="mt-4 flex flex-wrap gap-2">
-          {topic.keyPoints.map((k) => (
-            <span key={k} className="rounded-lg bg-bg-subtle px-3 py-1.5 text-[13px] font-medium text-ink-2">
-              {k}
-            </span>
-          ))}
-        </div>
+      </header>
 
-        {guides.length ? (
-          <section className="mt-8">
-            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-ink">
-              <FileText className="size-4 text-accent" /> Study guides from teachers
-            </h2>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              {guides.map((g) => (
-                <Link key={g.id} href={`/guides/${g.id}`} className="rounded-2xl p-4 ring-1 ring-line hover:bg-bg-subtle">
-                  <p className="font-semibold text-ink">{g.title}</p>
-                  <p className="mt-1 line-clamp-2 text-[13px] text-muted">{(g.body ?? "").replace(/[#*`>\[\]()-]/g, "").slice(0, 160)}</p>
-                </Link>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {uploads.length ? (
-          <section className="mt-8">
-            <h2 className="text-[15px] font-semibold text-ink">From Merit tutors</h2>
-            <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
-              {uploads.slice(0, 6).map((u) => (
-                <UploadCard key={u.id} u={u} />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        <div className="sticky top-14 z-20 -mx-4 mt-8 flex items-center justify-between gap-3 border-b border-line bg-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
-          <p className="text-[15px] font-medium text-ink">
-            {total} videos <span className="hidden font-normal text-muted sm:inline">· ranked by how well they teach</span>
-          </p>
-          <SortControls sort={result.sort} length={result.length} />
-        </div>
-        <div className="pt-5">
-          <FeedGrid
-            key={query}
-            layout="list"
-            ranked={result.sort === "best"}
-            initial={page.items}
-            nextOffset={page.nextOffset}
-            query={query}
-            empty={<p className={total ? "py-16 text-center text-muted" : "py-8 text-center text-muted"}>{total ? "No videos match these filters yet." : "No lessons for this exact topic yet."}</p>}
-          />
-        </div>
-        {fallback ? (
-          <section className="mt-10">
-            <h2 className="text-lg font-bold tracking-tight text-ink">{fallback.title}</h2>
-            <p className="mt-1 text-sm text-muted">{fallback.note}</p>
-            <div className="pt-5">
-              <FeedGrid layout="list" initial={fallback.items} nextOffset={null} query="" />
-            </div>
-          </section>
-        ) : null}
-      </div>
-
-      <aside className="space-y-6 xl:pt-8">
-        <div className="rounded-xl ring-1 ring-line">
-          <p className="border-b border-line px-4 py-3 text-sm font-medium text-ink">
-            Unit {unit.order}: {unit.title}
-          </p>
-          <ul className="py-1.5">
-            {unitTopics.map((t) => {
-              const s = viewer ? topicStatus(catalog, viewer.state, t.id) : "new";
-              return (
-                <li key={t.id}>
-                  <Link
-                    href={`/courses/${course.slug}/${t.slug}`}
-                    aria-current={t.id === topic.id ? "page" : undefined}
-                    className={cn("flex items-center gap-3 px-4 py-2 text-sm hover:bg-bg-subtle", t.id === topic.id ? "bg-bg-subtle font-medium text-ink" : "text-ink-2")}
-                  >
-                    <span
-                      className={cn(
-                        "flex size-4 shrink-0 items-center justify-center rounded-full",
-                        s === "done" ? "bg-accent text-white" : s === "started" ? "ring-2 ring-accent" : "ring-1 ring-line-strong",
-                      )}
-                    >
-                      {s === "done" ? <Check className="size-2.5" strokeWidth={3.5} /> : null}
-                    </span>
-                    <span className="truncate">{t.title}</span>
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 pt-8 sm:px-6 lg:px-8 xl:grid-cols-[1fr_320px] grid-cols-[minmax(0,1fr)]">
+        <div className="min-w-0">
+          {guides.length ? (
+            <section className="mb-8">
+              <h2 className="headline flex items-center gap-2 text-[20px] text-ink">
+                <FileText className="size-5 text-[var(--c)]" /> Study guides from teachers
+              </h2>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {guides.map((g) => (
+                  <Link key={g.id} href={`/guides/${g.id}`} className={cn(panelLink, "p-5")}>
+                    <p className="font-brand text-[16px] font-extrabold text-ink">{g.title}</p>
+                    <p className="mt-1 line-clamp-2 text-[13.5px] text-muted">{(g.body ?? "").replace(/[#*`>\[\]()-]/g, "").slice(0, 160)}</p>
                   </Link>
-                </li>
-              );
-            })}
-          </ul>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {uploads.length ? (
+            <section className="mb-8">
+              <h2 className="headline text-[20px] text-ink">From Merit tutors</h2>
+              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {uploads.slice(0, 6).map((u) => (
+                  <UploadCard key={u.id} u={u} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          <div className="sticky top-[var(--nav-h)] z-20 -mx-4 flex items-center justify-between gap-3 border-b-2 border-line bg-bg/90 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+            <h2 className="headline text-[18px] text-ink">
+              {total} videos <span className="hidden font-brand text-[14px] font-bold text-muted sm:inline">ranked by how well they teach</span>
+            </h2>
+            <SortControls sort={result.sort} length={result.length} />
+          </div>
+          <div className="space-y-4 pt-6">
+            <FeedGrid
+              key={query}
+              layout="list"
+              ranked={result.sort === "best"}
+              initial={page.items}
+              nextOffset={page.nextOffset}
+              query={query}
+              empty={<EmptyState title={total ? "No videos match these filters yet." : "No lessons for this exact topic yet."} body={total ? "Try a different length or sort." : "The best lessons from the rest of the unit are below."} />}
+            />
+          </div>
+          {fallback ? (
+            <section className="mt-10">
+              <h2 className="headline text-[20px] text-ink">{fallback.title}</h2>
+              <p className="mt-1 text-sm text-muted">{fallback.note}</p>
+              <div className="pt-5">
+                <FeedGrid layout="list" initial={fallback.items} nextOffset={null} query="" />
+              </div>
+            </section>
+          ) : null}
         </div>
-        {next ? (
-          <Link href={`/courses/${course.slug}/${next.slug}`} className="group flex items-center justify-between gap-3 rounded-xl bg-bg-subtle px-4 py-3.5 hover:bg-line">
-            <div className="min-w-0">
-              <p className="text-xs text-muted">Next topic</p>
-              <p className="truncate text-[15px] font-medium text-ink">{next.title}</p>
-            </div>
-            <ArrowRight className="size-5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" />
+
+        <aside className="space-y-4">
+          <div className={cn(panel, "overflow-hidden")}>
+            <p className="flex items-center gap-2 border-b-2 border-line px-4 py-3.5 font-brand text-[15px] font-extrabold text-ink">
+              <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--c)] text-[13px] font-black text-white">{unit.order}</span>
+              {unit.title}
+            </p>
+            <ol className="relative px-3 py-2">
+              <span aria-hidden className="absolute bottom-6 left-[calc(0.75rem+15px)] top-6 w-1 rounded-full bg-bg-subtle" />
+              {unitTopics.map((t) => {
+                const s = status(t.id);
+                const here = t.id === topic.id;
+                return (
+                  <li key={t.id} className="relative">
+                    <Link
+                      href={`/courses/${course.slug}/${t.slug}`}
+                      aria-current={here ? "page" : undefined}
+                      className={cn("flex items-center gap-3 rounded-2xl py-1.5 pr-2 text-[14px] transition-colors hover:bg-bg-subtle", here ? "font-extrabold text-ink" : "font-semibold text-ink-2")}
+                    >
+                      <span
+                        className={cn(
+                          "relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full",
+                          s === "done" ? "bg-[var(--c)] text-white" : here ? "bg-surface ring-4 ring-[var(--c)]" : s === "started" ? "bg-surface ring-2 ring-[var(--c)]" : "bg-surface ring-2 ring-line",
+                        )}
+                      >
+                        {s === "done" ? <Check className="size-3.5" strokeWidth={3.5} /> : here ? <span className="size-2.5 rounded-full bg-[var(--c)]" /> : null}
+                      </span>
+                      <span className="truncate">{t.title}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+          {next ? (
+            <Link href={`/courses/${course.slug}/${next.slug}`} className={cn(panelLink, "group flex items-center justify-between gap-3 p-4")}>
+              <div className="min-w-0">
+                <p className="font-brand text-[12.5px] font-extrabold text-muted">Next topic</p>
+                <p className="truncate font-brand text-[16px] font-extrabold text-ink">{next.title}</p>
+              </div>
+              <span className="press-sm flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--c)] text-white [--ledge:var(--c2)]">
+                <ArrowRight className="size-5" />
+              </span>
+            </Link>
+          ) : null}
+          <ExamCta daysLeft={examDate ? daysUntil(examDate) : null} courseId={course.id} courseTitle={course.shortTitle} />
+          <TopicCreators catalog={catalog} topicId={topic.id} courseId={course.id} courseShort={course.shortTitle} />
+          <Link href="/studio/video" className="block px-1 text-[13px] text-muted hover:text-ink">
+            Teacher? <span className="font-bold text-accent-ink">Add a lesson or guide for this topic</span>
           </Link>
-        ) : null}
-        <ExamCta daysLeft={examDate ? daysUntil(examDate) : null} courseId={course.id} courseTitle={course.shortTitle} />
-        <TopicCreators catalog={catalog} topicId={topic.id} courseId={course.id} courseShort={course.shortTitle} />
-        <Link href="/studio/video" className="block px-1 text-[13px] text-muted hover:text-ink">
-          Teacher? <span className="font-medium text-accent">Add a lesson or guide for this topic</span>
-        </Link>
-        {topic.aliases.length ? (
-          <p className="px-1 text-[13px] leading-relaxed text-muted">
-            <span className="font-medium text-ink-2">Also called:</span> {topic.aliases.join(", ")}
-          </p>
-        ) : null}
-      </aside>
+          {topic.aliases.length ? (
+            <p className="px-1 text-[13px] leading-relaxed text-muted">
+              <span className="font-bold text-ink-2">Also called:</span> {topic.aliases.join(", ")}
+            </p>
+          ) : null}
+        </aside>
+      </div>
     </div>
   );
 }
@@ -204,8 +249,8 @@ function TopicCreators({ catalog, topicId, courseId, courseShort }: { catalog: A
   const forTopic = topCreators(catalog, { topicId }, 4);
   const creators = forTopic.length ? forTopic : topCreators(catalog, { courseId }, 4);
   return (
-    <div className="rounded-xl p-4 ring-1 ring-line">
-      <p className="text-sm font-semibold text-ink">{forTopic.length ? "Best teachers for this topic" : `Best ${courseShort} teachers`}</p>
+    <div className="rounded-xl p-4 bg-surface ring-1 ring-line">
+      <p className="font-brand text-[15px] font-extrabold text-ink">{forTopic.length ? "Best teachers for this topic" : `Best ${courseShort} teachers`}</p>
       <ol className="mt-2 space-y-0.5">
         {creators.map((c, i) => (
           <li key={c.channel.id}>

@@ -20,7 +20,7 @@ export default async function AskPage() {
   suggestions.push("Quiz me on the causes of World War I", "Explain limits and continuity with an example", "What's on the AP Biology exam?", "Find a short video on supply and demand");
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] flex-col px-4 sm:px-6">
+    <div className="flex h-[calc(100dvh-4rem-4rem-env(safe-area-inset-bottom))] flex-col px-4 sm:px-6 md:h-[calc(100dvh-4rem)]">
       <Chat suggestions={suggestions.slice(0, 6)} autoFocus />
     </div>
   );

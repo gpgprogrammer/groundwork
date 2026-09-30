@@ -27,7 +27,7 @@ export async function OAuthButtons({ next }: { next?: string }) {
         <form key={p} action={signInWithProvider}>
           <input type="hidden" name="provider" value={p} />
           <input type="hidden" name="next" value={next ?? ""} />
-          <button className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full bg-bg text-[15px] font-medium text-ink ring-1 ring-line-strong hover:bg-bg-subtle">
+          <button className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full bg-bg text-[15px] font-medium text-ink ring-1 ring-line-strong hover:bg-bg-subtle transition-[background-color,transform] duration-150 active:scale-[0.97]">
             {p === "google" ? <GoogleMark /> : <AppleMark />} Continue with {p === "google" ? "Google" : "Apple"}
           </button>
         </form>

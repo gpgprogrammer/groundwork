@@ -24,7 +24,7 @@ export function LogoMark({ className }: { className?: string }) {
 export function Wordmark({ className, tagline = false, onDark = false }: { className?: string; tagline?: boolean; onDark?: boolean }) {
   return (
     <span className={cn("inline-flex flex-col leading-none", className)}>
-      <span className={cn("font-brand text-[1.45em] font-extrabold tracking-[-0.02em]", onDark ? "text-white" : "text-brand-ink")}>
+      <span className={cn("font-brand text-[1.45em] font-bold tracking-[-0.02em]", onDark ? "text-white" : "text-brand-ink")}>
         mer
         <span className="relative inline-block">
           ı
@@ -32,7 +32,7 @@ export function Wordmark({ className, tagline = false, onDark = false }: { class
         </span>
         t
       </span>
-      {tagline ? <span className="mt-[0.25em] pl-[0.1em] text-[0.46em] font-semibold tracking-[0.2em] text-[#3b82f6]">academic tutoring</span> : null}
+      {tagline ? <span className={`mt-[0.25em] pl-[0.1em] text-[0.46em] font-semibold tracking-[0.2em] ${onDark ? "text-white/75" : "text-[#3b82f6]"}`}>academic tutoring</span> : null}
     </span>
   );
 }

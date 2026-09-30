@@ -16,6 +16,7 @@ export type FeedVideo = {
   publishedAt: string;
   durationSec: number;
   isShort: boolean;
+  courseId: string | null;
   courseShort: string | null;
   topicTitle: string | null;
   topicHref: string | null;
@@ -41,6 +42,7 @@ export function toFeedVideo(catalog: IndexedCatalog, v: RankedVideo, reason?: st
     publishedAt: v.publishedAt,
     durationSec: v.durationSec,
     isShort: v.isShort,
+    courseId: course?.id ?? null,
     courseShort: course?.shortTitle ?? null,
     topicTitle: topic?.title ?? null,
     topicHref: topic && course ? `/courses/${course.slug}/${topic.slug}` : null,

@@ -21,11 +21,11 @@ export function ResyncButton() {
           })
         }
         disabled={pending}
-        className="flex h-8 items-center gap-1.5 rounded-full bg-bg-subtle px-3 text-sm font-medium text-ink hover:bg-line"
+        className="press-sm flex h-9 items-center gap-1.5 rounded-xl border-2 border-line bg-surface px-3 font-brand text-[13px] font-extrabold text-ink [--ledge:var(--line)] hover:bg-bg-subtle disabled:opacity-70"
       >
         <RefreshCw className={cn("size-4", pending && "animate-spin")} /> {pending ? "Syncing" : "Sync all"}
       </button>
-      {error ? <p className="mt-1 max-w-48 text-xs text-[#c2410c]">{error}</p> : null}
+      {error ? <p className="mt-1 max-w-48 text-xs font-semibold text-danger" role="alert">{error}</p> : null}
     </div>
   );
 }

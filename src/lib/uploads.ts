@@ -35,7 +35,25 @@ export async function objectSize(path: string) {
 }
 
 export async function removeObjects(paths: string[]) {
-  if (paths.length) await createAdminClient().storage.from(VIDEO_BUCKET).remove(paths);
+  if (!paths.length) return;
+  const { error } = await createAdminClient().storage.from(VIDEO_BUCKET).remove(paths);
+  if (error) throw new Error(error.message);
+}
+
+/** Clears every uploaded object under an account's private folder. */
+export async function removeUserObjects(userId: string) {
+  const storage = createAdminClient().storage.from(VIDEO_BUCKET);
+  const paths: string[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await storage.list(userId, { limit: 1000, offset });
+    if (error) {
+      if (/bucket not found/i.test(error.message)) return;
+      throw new Error(error.message);
+    }
+    paths.push(...(data ?? []).filter((item) => item.id).map((item) => `${userId}/${item.name}`));
+    if ((data ?? []).length < 1000) break;
+  }
+  for (let i = 0; i < paths.length; i += 1000) await removeObjects(paths.slice(i, i + 1000));
 }
 
 export async function listUploads(filter: { educatorId?: string; courseId?: string; topicId?: string } = {}) {

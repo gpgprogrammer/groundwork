@@ -44,7 +44,7 @@ export default function TermsPage() {
         <p>If you believe something on Merit infringes your copyright, <Contact /> with the page link, a description of your work, and your contact details. We remove infringing material promptly and close accounts of repeat infringers.</p>
       </Clause>
       <Clause title="YouTube lessons">
-        <p>Many lessons on Merit are YouTube videos, found and shown using YouTube API Services. They belong to their creators and play on YouTube. By using Merit you agree to be bound by the <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" className="text-accent underline">YouTube Terms of Service</a>. Merit is not affiliated with or endorsed by YouTube or Google.</p>
+        <p>Many lessons on Merit are YouTube videos, found and shown using YouTube API Services. They belong to their creators and play on YouTube. By using Merit you agree to be bound by the <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" className="text-accent-ink underline">YouTube Terms of Service</a>. Merit is not affiliated with or endorsed by YouTube or Google.</p>
       </Clause>
       <Clause title="Conduct">
         <p>Don&apos;t misuse Merit: no scraping, attacks, harassment, spam, cheating on graded work, or fake reviews.</p>

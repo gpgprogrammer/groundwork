@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { setFocusTopics } from "@/app/actions/learning";
-import { Button, cn } from "./ui";
+import { cn } from "./ui";
 
 export type FocusCourse = { id: string; title: string; units: { id: string; title: string; order: number; topics: { id: string; title: string }[] }[] };
 
@@ -26,22 +26,26 @@ export function FocusPicker({ courses, initial, onSaved }: { courses: FocusCours
 
   return (
     <div>
-      <div className="scrollbar-none flex gap-2 overflow-x-auto">
+      <div className="scrollbar-none -mx-1 flex gap-2 overflow-x-auto px-1 pb-1.5 pt-0.5">
         {courses.map((c) => (
           <button
             key={c.id}
             type="button"
             onClick={() => setCourseId(c.id)}
-            className={cn("h-8 shrink-0 rounded-lg px-3 text-sm font-medium", c.id === courseId ? "bg-ink text-bg" : "bg-bg-subtle text-ink hover:bg-line")}
+            aria-pressed={c.id === courseId}
+            className={cn(
+              "press-sm h-10 shrink-0 rounded-xl px-4 font-brand text-[13.5px] font-extrabold",
+              c.id === courseId ? "bg-ink text-bg [--ledge:color-mix(in_oklab,var(--ink)_55%,black)]" : "border-2 border-line bg-surface text-ink-2 [--ledge:var(--line)] hover:bg-bg-subtle",
+            )}
           >
             {c.title}
           </button>
         ))}
       </div>
-      <div className="mt-4 max-h-80 space-y-4 overflow-y-auto pr-1">
+      <div className="mt-4 max-h-80 space-y-4 overflow-y-auto px-0.5 pb-1 pr-1">
         {course?.units.map((u) => (
           <div key={u.id}>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted">
+            <p className="font-brand text-[13.5px] font-extrabold text-ink-2">
               Unit {u.order}: {u.title}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -54,11 +58,11 @@ export function FocusPicker({ courses, initial, onSaved }: { courses: FocusCours
                     onClick={() => toggle(t.id)}
                     aria-pressed={on}
                     className={cn(
-                      "flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium transition-colors",
-                      on ? "bg-accent text-white" : "bg-bg-subtle text-ink hover:bg-line",
+                      "press-sm flex min-h-10 items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-left text-[13.5px] font-semibold",
+                      on ? "bg-[#15803d] text-white [--ledge:#0f5c2b]" : "border-2 border-line bg-surface text-ink [--ledge:var(--line)] hover:bg-bg-subtle",
                     )}
                   >
-                    {on ? <Check className="size-3.5" strokeWidth={3} /> : null}
+                    {on ? <Check className="check-pop size-3.5" strokeWidth={3} /> : null}
                     {t.title}
                   </button>
                 );
@@ -68,8 +72,9 @@ export function FocusPicker({ courses, initial, onSaved }: { courses: FocusCours
         ))}
       </div>
       <div className="mt-4 flex items-center gap-3">
-        <Button
+        <button
           type="button"
+          className="press inline-flex h-11 items-center rounded-2xl bg-[#15803d] px-5 font-brand text-[15px] font-extrabold text-white [--ledge:#0f5c2b] hover:brightness-110 disabled:opacity-60"
           disabled={pending}
           onClick={() =>
             start(async () => {
@@ -81,8 +86,8 @@ export function FocusPicker({ courses, initial, onSaved }: { courses: FocusCours
           }
         >
           {pending ? "Saving…" : `Save ${picked.length ? `(${picked.length})` : ""}`}
-        </Button>
-        {saved ? <span className="text-sm text-positive">Saved. Your feed now leads with these topics.</span> : null}
+        </button>
+        {saved ? <span className="fade text-sm font-semibold text-positive" role="status">Saved. Your feed now leads with these topics.</span> : null}
       </div>
     </div>
   );

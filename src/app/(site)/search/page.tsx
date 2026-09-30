@@ -1,4 +1,5 @@
 import { BookOpen, FileText } from "lucide-react";
+import { LearnBand } from "@/components/learn-band";
 import { Initials, RatingLine } from "@/components/tutoring-ui";
 import { UploadGrid } from "@/components/upload-card";
 import { searchMerit } from "@/lib/search-merit";
@@ -6,7 +7,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Chips, SortControls } from "@/components/feed";
 import { ChannelAvatar, VideoRow } from "@/components/video-card";
-import { formatViews } from "@/components/ui";
+import { EmptyState, formatViews } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
 import { parseLength, parseSort, toFeedVideo } from "@/lib/feed";
 import { compareBy, inLength } from "@/lib/ranking";
@@ -45,20 +46,22 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
   const course = courseId ? catalog.course(courseId) : undefined;
 
   return (
+    <>
+    <LearnBand title={q ? `Results for “${q}”` : "Search"} lede={q ? undefined : "Every AP and SAT topic, lesson, channel, tutor, and study guide on Merit."} />
     <div className="mx-auto max-w-[1100px] px-4 pb-16 sm:px-6">
-      <div className="sticky top-14 z-20 -mx-4 flex flex-wrap items-center gap-3 bg-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+      <div className="sticky top-[var(--nav-h)] z-20 -mx-4 flex flex-wrap items-center gap-3 border-b-2 border-line bg-bg/90 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
         <Chips chips={TYPES} active={type} param="type" />
         {type === "all" || type === "video" ? <SortControls sort={sort} length={length} /> : null}
       </div>
       <div className="scrollbar-none -mx-1 flex gap-2 overflow-x-auto px-1 pb-2 text-[13px]">
-        <Link href={`/search?${new URLSearchParams({ q, ...(type !== "all" ? { type } : {}) })}`} className={!courseId ? "shrink-0 rounded-full bg-accent-soft px-3 py-1 font-medium text-accent" : "shrink-0 rounded-full px-3 py-1 text-muted hover:bg-bg-subtle"}>
+        <Link href={`/search?${new URLSearchParams({ q, ...(type !== "all" ? { type } : {}) })}`} className={!courseId ? "shrink-0 rounded-full bg-accent-soft px-3 py-1 font-medium text-accent-ink" : "shrink-0 rounded-full px-3 py-1 text-muted hover:bg-bg-subtle"}>
           Any course
         </Link>
         {catalog.courses.map((c) => (
           <Link
             key={c.id}
             href={`/search?${new URLSearchParams({ q, course: c.id, ...(type !== "all" ? { type } : {}) })}`}
-            className={courseId === c.id ? "shrink-0 rounded-full bg-accent-soft px-3 py-1 font-medium text-accent" : "shrink-0 rounded-full px-3 py-1 text-muted hover:bg-bg-subtle"}
+            className={courseId === c.id ? "shrink-0 rounded-full bg-accent-soft px-3 py-1 font-medium text-accent-ink" : "shrink-0 rounded-full px-3 py-1 text-muted hover:bg-bg-subtle"}
           >
             {c.shortTitle}
           </Link>
@@ -66,18 +69,18 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
       </div>
 
       {!q ? (
-        <p className="py-24 text-center text-muted">Search for a topic, a concept, or a channel.</p>
+        <div className="pt-10"><EmptyState title="Search every AP and SAT topic" body="Try a topic, a concept, or a channel, like “chain rule”, “Mansa Musa”, or “Khan Academy”." /></div>
       ) : !hits.length && !meritCount ? (
         <div className="py-24 text-center">
           <p className="text-lg font-medium text-ink">No results for “{q}”</p>
-          <p className="mt-2 text-sm text-muted">Try a different spelling or a broader term, or browse <Link href="/courses" className="text-accent hover:underline">courses</Link>.</p>
+          <p className="mt-2 text-sm text-muted">Try a different spelling or a broader term, or browse <Link href="/courses" className="text-accent-ink hover:underline">courses</Link>.</p>
         </div>
       ) : (
-        <div className="space-y-6 pt-3">
+        <div className="space-y-8 pt-4">
           {course ? (
             <p className="text-sm text-muted">
               Results in <span className="font-medium text-ink">{course.title}</span> ·{" "}
-              <Link href={`/search?${new URLSearchParams({ q })}`} className="text-accent hover:underline">
+              <Link href={`/search?${new URLSearchParams({ q })}`} className="text-accent-ink hover:underline">
                 search everything
               </Link>
             </p>
@@ -93,7 +96,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
               <h2 className="mb-3 text-[15px] font-semibold text-ink">Tutors</h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {merit.tutors.map((t) => (
-                  <Link key={t.id} href={`/tutors/${t.id}`} className="flex items-center gap-3 rounded-2xl p-4 ring-1 ring-line hover:bg-bg-subtle">
+                  <Link key={t.id} href={`/tutors/${t.id}`} className="flex items-center gap-3 rounded-2xl p-4 ring-2 ring-line hover:bg-bg-subtle">
                     <Initials name={t.name} size={48} />
                     <span className="min-w-0">
                       <span className="block truncate font-semibold text-ink">{t.name}</span>
@@ -112,8 +115,8 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
               <h2 className="mb-3 text-[15px] font-semibold text-ink">Study guides</h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {merit.guides.map((g) => (
-                  <Link key={g.id} href={`/guides/${g.id}`} className="rounded-2xl p-4 ring-1 ring-line hover:bg-bg-subtle">
-                    <FileText className="size-4 text-accent" />
+                  <Link key={g.id} href={`/guides/${g.id}`} className="rounded-2xl p-4 ring-2 ring-line hover:bg-bg-subtle">
+                    <FileText className="size-4 text-accent-ink" />
                     <p className="mt-2 font-semibold text-ink">{g.title}</p>
                     <p className="mt-1 line-clamp-2 text-[13px] text-muted">{catalog.topic(g.topicId)?.title}</p>
                   </Link>
@@ -126,16 +129,16 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {topics.map((h) =>
                 h.kind === "topic" ? (
-                  <Link key={h.topic.id} href={`/courses/${h.course.slug}/${h.topic.slug}`} className="group rounded-xl bg-bg-subtle p-4 transition-colors hover:bg-line">
+                  <Link key={h.topic.id} href={`/courses/${h.course.slug}/${h.topic.slug}`} className="group rounded-2xl bg-surface p-4 ring-2 ring-line transition-[box-shadow] duration-200 hover:shadow-soft hover:ring-line-strong">
                     <p className="flex items-center gap-2 text-xs font-medium text-muted">
                       <BookOpen className="size-3.5" /> Topic · {h.course.shortTitle}
                     </p>
                     <p className="mt-1.5 text-[16px] font-medium text-ink">{h.topic.title}</p>
                     <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-muted">{h.topic.summary}</p>
-                    <p className="mt-2 text-xs font-medium text-accent">{h.lessons} videos →</p>
+                    <p className="mt-2 text-xs font-medium text-accent-ink">{h.lessons} videos →</p>
                   </Link>
                 ) : h.kind === "course" ? (
-                  <Link key={h.course.id} href={`/courses/${h.course.slug}`} className="rounded-xl bg-bg-subtle p-4 transition-colors hover:bg-line">
+                  <Link key={h.course.id} href={`/courses/${h.course.slug}`} className="rounded-2xl bg-surface p-4 ring-2 ring-line transition-[box-shadow] duration-200 hover:shadow-soft hover:ring-line-strong">
                     <p className="text-xs font-medium text-muted">Course</p>
                     <p className="mt-1.5 text-[16px] font-medium text-ink">{h.course.title}</p>
                     <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-muted">{h.course.description}</p>
@@ -175,5 +178,6 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
         </div>
       )}
     </div>
+    </>
   );
 }

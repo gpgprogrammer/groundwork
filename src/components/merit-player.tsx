@@ -21,7 +21,7 @@ export function MeritPlayer({ id, src, poster, count = true }: { id: string; src
         void recordUploadView(id);
         trackPlay(id);
       }}
-      className="aspect-video w-full rounded-2xl bg-black"
+      className="aspect-video w-full bg-black sm:rounded-2xl sm:shadow-soft"
     />
   );
 }

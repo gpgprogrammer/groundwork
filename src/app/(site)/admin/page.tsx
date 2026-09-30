@@ -1,3 +1,4 @@
+import { BarChart3, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -17,6 +18,10 @@ import { allServices, listPartnerApps } from "@/lib/partners";
 import { listLeads } from "@/lib/leads";
 import type { Billing, Contribution, Gift, Sprint } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
+import { Badge, LinkButton, buttonClass, cn } from "@/components/ui";
+
+/** Small solid action button in a status color (approve, take down). */
+const solid = (bg: string) => cn("inline-flex h-8 select-none items-center justify-center rounded-full px-3.5 text-[13px] font-semibold text-bg transition-[filter,transform] duration-150 ease-out hover:brightness-110 active:scale-[0.97]", bg);
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 
@@ -52,23 +57,29 @@ export default async function AdminPage() {
   const status = aiStatus();
 
   return (
-    <div className="mx-auto max-w-[1200px] px-4 pb-20 pt-8 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-extrabold tracking-tight text-ink">Admin</h1>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/admin/users" className="inline-flex h-10 items-center rounded-full px-5 text-sm font-semibold text-ink ring-1 ring-line-strong hover:bg-bg-subtle">
-            Users
-          </Link>
-          <Link href="/admin/analytics" className="inline-flex h-10 items-center rounded-full bg-accent px-5 text-sm font-semibold text-white">
-            Open analytics
-          </Link>
+    <div className="mx-auto w-full max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-10 lg:px-8">
+      <header className="rise flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="headline text-[28px] text-ink sm:text-[34px]">Admin</h1>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <Badge tone={paymentsMode === "live" ? "positive" : "warn"}>Payments: {paymentsMode === "live" ? "Stripe live" : paymentsMode === "paused" ? "paused until Stripe is connected" : "test mode"}</Badge>
+            <Badge tone={isSupabaseEnabled ? "positive" : "neutral"}>Database: {isSupabaseEnabled ? "Supabase" : "local file"}</Badge>
+            <Badge tone={aiOk ? "positive" : isAiConfigured ? "danger" : "neutral"} className="h-auto min-h-6 max-w-full whitespace-normal py-0.5">
+              AI: {aiOk ? "on" : isAiConfigured ? `unavailable${status?.reason ? ` (${status.reason.slice(0, 90)})` : ""}` : "not configured"}
+            </Badge>
+          </div>
         </div>
-      </div>
-      <p className="mt-1 text-sm text-muted">
-        Payments: {paymentsMode === "live" ? "Stripe live" : paymentsMode === "paused" ? "paused until Stripe is connected" : "test mode"} · Database: {isSupabaseEnabled ? "Supabase" : "local file"} · AI: {aiOk ? "on" : isAiConfigured ? `unavailable${status?.reason ? ` (${status.reason.slice(0, 90)})` : ""}` : "not configured"}
-      </p>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <LinkButton href="/admin/users" variant="outline">
+            <Users className="size-4" /> Users
+          </LinkButton>
+          <LinkButton href="/admin/analytics">
+            <BarChart3 className="size-4" /> Open analytics
+          </LinkButton>
+        </div>
+      </header>
 
-      <div className="tabular mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="rise tabular mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4" style={{ ["--i" as string]: 1 }}>
         {[
           ["Plus MRR", money(mrr)],
           ["Paid Plus members", String(paid.length)],
@@ -79,9 +90,9 @@ export default async function AdminPage() {
           ["Tutoring booked (GMV)", money(gmv)],
           ["Tutor fees earned / owed", `${money(feesEarned)} / ${money(feesOwed)}`],
         ].map(([k, v]) => (
-          <div key={k} className="rounded-2xl bg-bg-subtle p-4">
-            <p className="text-xl font-bold text-ink">{v}</p>
-            <p className="text-[12.5px] text-muted">{k}</p>
+          <div key={k} className="min-w-0 rounded-2xl bg-surface p-4 ring-2 ring-line">
+            <p className="text-[12.5px] font-medium text-muted">{k}</p>
+            <p className="mt-1 truncate text-[22px] font-bold tracking-tight text-ink">{v}</p>
           </div>
         ))}
       </div>
@@ -91,7 +102,7 @@ export default async function AdminPage() {
           <ul className="divide-y divide-line">
             {pendingUploads.map((u) => (
               <li key={u.id} className="flex flex-wrap items-center gap-4 py-3">
-                <Link href={`/videos/${u.id}`} className="relative block aspect-video w-36 shrink-0 overflow-hidden rounded-lg bg-bg-subtle">
+                <Link href={`/videos/${u.id}`} className="relative block aspect-video w-32 shrink-0 overflow-hidden rounded-xl bg-bg-subtle ring-1 ring-line sm:w-36">
                   {u.posterUrl ? <img src={u.posterUrl} alt="" className="absolute inset-0 size-full object-cover" /> : null}
                 </Link>
                 <div className="min-w-0 flex-1 text-sm">
@@ -105,10 +116,10 @@ export default async function AdminPage() {
                 </div>
                 <div className="flex gap-2">
                   <form action={approveUpload.bind(null, u.id)}>
-                    <button className="h-9 rounded-full bg-positive px-4 text-[13px] font-semibold text-white">Approve</button>
+                    <button className={solid("bg-positive")}>Approve</button>
                   </form>
                   <form action={rejectUpload.bind(null, u.id)}>
-                    <button className="h-9 rounded-full px-4 text-[13px] text-muted ring-1 ring-line hover:text-ink">Reject and delete</button>
+                    <button className={buttonClass("outline", "sm")}>Reject and delete</button>
                   </form>
                 </div>
               </li>
@@ -124,7 +135,7 @@ export default async function AdminPage() {
           <ul className="divide-y divide-line">
             {openReports.map((r) => (
               <li key={r.id} className="flex flex-wrap items-start justify-between gap-3 py-3 text-sm">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <Link href={r.href} className="font-semibold text-ink hover:underline">
                     {r.title}
                   </Link>
@@ -138,10 +149,10 @@ export default async function AdminPage() {
                 </div>
                 <div className="flex gap-2">
                   <form action={resolveReport.bind(null, r.id, "remove")}>
-                    <button className="h-9 rounded-full bg-[#c2410c] px-4 text-[13px] font-semibold text-white">Take it down</button>
+                    <button className={solid("bg-danger")}>Take it down</button>
                   </form>
                   <form action={resolveReport.bind(null, r.id, "dismiss")}>
-                    <button className="h-9 rounded-full px-4 text-[13px] text-muted ring-1 ring-line hover:text-ink">Dismiss</button>
+                    <button className={buttonClass("outline", "sm")}>Dismiss</button>
                   </form>
                 </div>
               </li>
@@ -157,7 +168,7 @@ export default async function AdminPage() {
           <ul className="divide-y divide-line">
             {errors.groups.map((g) => (
               <li key={`${g.source}${g.message}`} className="py-2.5 text-sm">
-                <p className="font-mono text-[12.5px] text-ink">{g.message}</p>
+                <p className="break-words font-mono text-[12.5px] text-ink">{g.message}</p>
                 <p className="mt-0.5 text-[12px] text-muted">
                   {g.count}× · {g.source === "server" ? "server" : "in the browser"} · last {new Date(g.last.at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "America/New_York" })} ET
                   {g.paths.size ? ` · ${[...g.paths].slice(0, 3).join(", ")}` : ""}
@@ -167,7 +178,7 @@ export default async function AdminPage() {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted">No errors. 🎉</p>
+          <p className="text-sm text-muted">No errors.</p>
         )}
       </Section>
 
@@ -176,7 +187,7 @@ export default async function AdminPage() {
           <ul className="divide-y divide-line">
             {apps.map((a) => (
               <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
-                <span className="min-w-0">
+                <span className="min-w-0 flex-1">
                   <a href={a.website} target="_blank" rel="noopener noreferrer" className="font-semibold text-ink hover:underline">
                     {a.businessName}
                   </a>{" "}
@@ -188,17 +199,17 @@ export default async function AdminPage() {
                 {a.status !== "approved" ? (
                   <span className="flex gap-2">
                     <form action={reviewPartner.bind(null, a.id, "approved")}>
-                      <button className="h-8 rounded-full bg-accent px-3 text-[13px] font-semibold text-white">Approve</button>
+                      <button className={buttonClass("primary", "sm")}>Approve</button>
                     </form>
                     {a.status === "pending" ? (
                       <form action={reviewPartner.bind(null, a.id, "rejected")}>
-                        <button className="h-8 rounded-full px-3 text-[13px] text-muted ring-1 ring-line">Reject</button>
+                        <button className={buttonClass("outline", "sm")}>Reject</button>
                       </form>
                     ) : null}
                   </span>
                 ) : (
                   <form action={reviewPartner.bind(null, a.id, "rejected")}>
-                    <button className="h-8 rounded-full px-3 text-[13px] text-muted ring-1 ring-line">Unlist</button>
+                    <button className={buttonClass("outline", "sm")}>Unlist</button>
                   </form>
                 )}
               </li>
@@ -213,7 +224,7 @@ export default async function AdminPage() {
         <p className="mb-3 text-sm text-muted">Students who said they had a session with a tutor that the tutor hasn&apos;t logged yet. Follow up with the tutor to collect the 10% fee.</p>
         <ul className="divide-y divide-line text-sm">
           {followUps.map((l) => (
-            <li key={l.id} className="flex justify-between gap-3 py-2">
+            <li key={l.id} className="flex flex-wrap justify-between gap-x-3 gap-y-0.5 py-2.5">
               <span className="text-ink">
                 {l.studentName} → {tutors.find((t) => t.id === l.tutorId)?.name ?? "tutor"}
               </span>
@@ -230,8 +241,8 @@ export default async function AdminPage() {
             .map((s) => ({ s, n: referrals[s.id] ?? 0 }))
             .sort((a, b) => b.n - a.n)
             .map(({ s, n }) => (
-              <li key={s.id} className="flex justify-between border-b border-line py-1.5">
-                <span className="text-ink">{s.name}</span>
+              <li key={s.id} className="flex justify-between gap-3 border-b border-line py-2">
+                <span className="min-w-0 truncate text-ink">{s.name}</span>
                 <span className="tabular text-muted">{n}</span>
               </li>
             ))}
@@ -245,7 +256,7 @@ export default async function AdminPage() {
               const m = meta.get(t.id);
               return (
                 <li key={t.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm">
-                  <span>
+                  <span className="min-w-0 flex-1">
                     <Link href={`/tutors/${t.id}`} className="font-semibold text-ink hover:underline">
                       {t.name}
                     </Link>{" "}
@@ -254,7 +265,7 @@ export default async function AdminPage() {
                     </span>
                   </span>
                   <form action={setTutorVetted.bind(null, t.id, !m?.vetted)}>
-                    <button className="h-8 rounded-full px-3 text-[13px] font-medium ring-1 ring-line hover:bg-bg-subtle">{m?.vetted ? "Remove verified" : "Mark verified"}</button>
+                    <button className={buttonClass(m?.vetted ? "outline" : "secondary", "sm")}>{m?.vetted ? "Remove verified" : "Mark verified"}</button>
                   </form>
                 </li>
               );
@@ -277,7 +288,7 @@ export default async function AdminPage() {
                   {c.kind === "guide" ? `Guide: ${c.title}` : c.kind === "upload" ? `Upload: ${c.title}` : `Video: ${c.video?.title}`} <span className="text-muted">· {c.topicId}</span>
                 </span>
                 <form action={removeContribution.bind(null, c.id)}>
-                  <button className="h-8 shrink-0 rounded-full px-3 text-[13px] text-muted ring-1 ring-line">Remove</button>
+                  <button className={buttonClass("outline", "sm", "shrink-0")}>Remove</button>
                 </form>
               </li>
             ))}
@@ -296,8 +307,8 @@ export default async function AdminPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-10 rounded-2xl p-5 ring-1 ring-line">
-      <h2 className="mb-3 text-[15px] font-semibold text-ink">{title}</h2>
+    <section className="mt-6 rounded-2xl bg-surface p-5 ring-2 ring-line sm:p-6">
+      <h2 className="headline mb-4 text-[17px] text-ink">{title}</h2>
       {children}
     </section>
   );

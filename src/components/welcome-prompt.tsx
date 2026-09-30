@@ -51,37 +51,42 @@ export function WelcomePrompt() {
   if (!visible) return null;
   const next = pathname !== "/" ? `&next=${encodeURIComponent(pathname)}` : "";
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-4 backdrop-blur-[2px] sm:items-center" onClick={close}>
-      <div role="dialog" aria-modal="true" aria-labelledby="welcome-title" onClick={(e) => e.stopPropagation()} className="rise relative w-full max-w-md rounded-3xl bg-bg p-7 shadow-2xl ring-1 ring-line">
-        <button type="button" onClick={close} aria-label="Close" className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full text-muted hover:bg-bg-subtle hover:text-ink">
+    <div className="fade fixed inset-0 z-[60] flex items-end justify-center bg-ink/40 backdrop-blur-[2px] sm:items-center sm:p-4" onClick={close}>
+      <div role="dialog" aria-modal="true" aria-labelledby="welcome-title" onClick={(e) => e.stopPropagation()} className="dialog-in relative max-h-[calc(100dvh-2rem)] w-full overflow-y-auto overscroll-contain rounded-t-[28px] bg-surface shadow-lift ring-1 ring-line sm:max-w-md sm:rounded-[28px] px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-3 sm:p-7">
+        <span aria-hidden className="mx-auto mb-4 block h-1 w-10 rounded-full bg-line-strong sm:hidden" />
+        <button type="button" onClick={close} aria-label="Close" className="absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full text-muted transition-[background-color,color,transform] duration-150 hover:bg-bg-subtle hover:text-ink active:scale-[0.94]">
           <X className="size-5" />
         </button>
-        <LogoMark className="size-11" />
-        <h2 id="welcome-title" className="mt-4 text-2xl font-extrabold tracking-tight text-ink">
+        <LogoMark className="size-12" />
+        <h2 id="welcome-title" className="headline mt-5 text-[26px] text-ink">
           Welcome to Merit
         </h2>
-        <p className="mt-1.5 text-[15px] leading-relaxed text-ink-2">
+        <p className="mt-2 text-[15px] leading-relaxed text-muted">
           Create your free account to get lessons picked for your classes, a study plan for tonight, and Merit Plus free for your first month.
         </p>
         <div className="mt-6 space-y-2.5">
-          <Link href={`/signup?as=student${next}`} onClick={close} className="flex items-center gap-3 rounded-2xl bg-accent p-4 text-white hover:brightness-110">
-            <GraduationCap className="size-6 shrink-0" />
+          <Link href={`/signup?as=student${next}`} onClick={close} className="group flex items-center gap-3.5 rounded-2xl bg-accent p-4 text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.14)] transition-[background-color,transform] duration-150 ease-out hover:bg-accent-hover active:scale-[0.98]">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/15">
+              <GraduationCap className="size-5" />
+            </span>
             <span>
-              <span className="block font-semibold">I&apos;m a student</span>
-              <span className="block text-[13px] text-white/80">Study for AP and SAT exams</span>
+              <span className="block text-[15px] font-semibold">I&apos;m a student</span>
+              <span className="block text-[13px] text-white/85">Study for AP and SAT exams</span>
             </span>
           </Link>
-          <Link href={`/signup?as=teacher${next}`} onClick={close} className="flex items-center gap-3 rounded-2xl bg-bg-subtle p-4 text-ink ring-1 ring-line hover:bg-line">
-            <Presentation className="size-6 shrink-0 text-accent" />
+          <Link href={`/signup?as=teacher${next}`} onClick={close} className="group flex items-center gap-3.5 rounded-2xl bg-surface p-4 text-ink ring-1 ring-inset ring-line-strong transition-[background-color,transform] duration-150 ease-out hover:bg-bg-subtle active:scale-[0.98]">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-ink">
+              <Presentation className="size-5" />
+            </span>
             <span>
-              <span className="block font-semibold">I&apos;m a teacher or tutor</span>
+              <span className="block text-[15px] font-semibold">I&apos;m a teacher or tutor</span>
               <span className="block text-[13px] text-muted">Share lessons, videos, and tutoring</span>
             </span>
           </Link>
         </div>
         <p className="mt-5 text-center text-sm text-muted">
           Already have an account?{" "}
-          <Link href={`/login${pathname !== "/" ? `?next=${encodeURIComponent(pathname)}` : ""}`} onClick={close} className="font-medium text-accent hover:underline">
+          <Link href={`/login${pathname !== "/" ? `?next=${encodeURIComponent(pathname)}` : ""}`} onClick={close} className="font-semibold text-accent-ink hover:underline">
             Sign in
           </Link>
         </p>

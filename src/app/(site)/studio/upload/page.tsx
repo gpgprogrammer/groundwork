@@ -1,3 +1,4 @@
+import { Clock, ShieldCheck, Upload } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { UploadForm } from "@/components/upload-form";
@@ -6,6 +7,8 @@ import { courseTopics, getEducator } from "@/lib/educators";
 import { getStore } from "@/lib/data/store";
 import { listPendingUploads, MAX_VIDEO_BYTES, uploaderIdentity, uploadsEnabled } from "@/lib/uploads";
 import { requireViewer } from "@/lib/viewer";
+import { PageHero } from "@/components/marketing";
+import { cn, Notice, LinkButton, panel } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Upload a video" };
 
@@ -14,16 +17,21 @@ export default async function UploadPage() {
   const who = await uploaderIdentity(viewer.user.id);
   if (!who) {
     return (
-      <div className="mx-auto max-w-2xl px-4 pb-20 pt-10 sm:px-6">
-        <h1 className="text-3xl font-extrabold tracking-tight text-ink">Upload a video</h1>
-        <p className="mt-3 text-[15px] leading-relaxed text-ink-2">Videos on Merit are published under your name, so set up a profile first. Tutors use their tutor listing; teachers use their teacher profile.</p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/tutors/join" className="inline-flex h-11 items-center rounded-full bg-accent px-5 text-sm font-semibold text-white">
-            Create a tutor listing
-          </Link>
-          <Link href="/studio" className="inline-flex h-11 items-center rounded-full px-5 text-sm font-semibold text-ink ring-1 ring-line-strong hover:bg-bg-subtle">
-            Set up a teacher profile
-          </Link>
+      <div className="pb-20">
+        <PageHero world="accent" icon={<Upload />} title="Upload a video" />
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <div className={cn(panel, "rise mt-8 p-6 sm:p-8")} style={{ ["--i" as string]: 1 }}>
+          <p className="font-brand text-[18px] font-extrabold text-ink">First, a profile</p>
+          <p className="mt-2 text-[15.5px] leading-relaxed text-ink-2">Videos on Merit are published under your name, so set up a profile first. Tutors use their tutor listing; teachers use their teacher profile.</p>
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+            <LinkButton href="/tutors/join" size="lg">
+              Create a tutor listing
+            </LinkButton>
+            <LinkButton href="/studio" size="lg" variant="outline">
+              Set up a teacher profile
+            </LinkButton>
+          </div>
+        </div>
         </div>
       </div>
     );
@@ -32,39 +40,55 @@ export default async function UploadPage() {
   const mine = educator?.courseIds ?? tutor?.courseIds ?? viewer.state.profile.courseIds;
   const waiting = await listPendingUploads(viewer.user.id);
   return (
-    <div className="mx-auto max-w-3xl px-4 pb-20 pt-8 sm:px-6">
-      <Link href={who.tutorId ? "/tutor" : "/studio"} className="text-sm text-muted hover:text-ink">
-        ← {who.tutorId ? "Tutor dashboard" : "Teacher studio"}
-      </Link>
-      <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-ink">Upload a video</h1>
-      <p className="mt-2 text-[15px] text-muted">
-        Published on Merit as a Merit exclusive, under <span className="font-medium text-ink">{who.name}</span>. It shows on the topic page, in Merit Tutors&apos; Videos, and on your profile.
-      </p>
+    <div className="pb-20">
+      <PageHero
+        world={who.tutorId ? "violet" : "accent"}
+        back={who.tutorId ? { href: "/tutor", label: "Tutor dashboard" } : { href: "/studio", label: "Teacher studio" }}
+        icon={<Upload />}
+        title="Upload a video"
+        lede={
+          <>
+            Published on Merit as a Merit exclusive, under <span className="font-bold text-white">{who.name}</span>. It shows on the topic page, in Merit Tutors&apos; Videos, and on your profile.
+          </>
+        }
+      />
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
       {waiting.length ? (
-        <div className="mt-6 rounded-2xl bg-accent-soft p-4 text-sm text-ink">
-          <p className="font-semibold">Waiting for review ({waiting.length})</p>
-          <ul className="mt-1 list-disc pl-5 text-ink-2">
+        <div className={cn(panel, "rise mt-6 p-4 sm:p-5")} style={{ ["--i" as string]: 1 }}>
+          <p className="flex items-center gap-2 font-brand text-[15px] font-extrabold text-ink">
+            <span className="flex size-8 items-center justify-center rounded-xl bg-warn-soft text-warn">
+              <Clock className="size-4" />
+            </span>
+            Waiting for review <span className="tabular rounded-full bg-warn-soft px-2.5 py-0.5 text-[12.5px] text-warn">{waiting.length}</span>
+          </p>
+          <ul className="mt-3 space-y-2">
             {waiting.map((w) => (
               <li key={w.id}>
-                <Link href={`/videos/${w.id}`} className="hover:underline">
-                  {w.title}
+                <Link href={`/videos/${w.id}`} className="flex min-h-11 items-center justify-between gap-3 rounded-2xl bg-bg-subtle px-4 font-brand text-[14.5px] font-bold text-ink-2 transition-colors hover:bg-line/60 hover:text-ink">
+                  <span className="truncate">{w.title}</span>
+                  <span aria-hidden className="text-faint">
+                    →
+                  </span>
                 </Link>
               </li>
             ))}
           </ul>
         </div>
       ) : null}
-      <p className="mt-6 text-[13.5px] text-muted">Merit reviews every video before students see it, usually within a day.</p>
-      <div className="mt-6">
-        {uploadsEnabled ? <UploadForm courses={courseTopics(catalog, mine)} maxMb={MAX_VIDEO_BYTES / 1024 / 1024} /> : <p className="rounded-2xl bg-bg-subtle p-5 text-sm text-ink-2">Uploads need the database connected.</p>}
+      <div className={cn(panel, "rise mt-6 p-5 sm:p-7")} style={{ ["--i" as string]: 2 }}>
+        <p className="mb-6 flex items-center gap-2.5 rounded-2xl bg-positive-soft px-4 py-3 text-[13.5px] font-semibold leading-relaxed text-ink">
+          <ShieldCheck className="size-5 shrink-0 text-positive" /> Merit reviews every video before students see it, usually within a day.
+        </p>
+        {uploadsEnabled ? <UploadForm courses={courseTopics(catalog, mine)} maxMb={MAX_VIDEO_BYTES / 1024 / 1024} /> : <Notice tone="warn">Uploads need the database connected.</Notice>}
       </div>
-      <p className="mt-10 text-[12.5px] leading-relaxed text-muted">
+      <p className="mt-8 max-w-[68ch] text-[12.5px] leading-relaxed text-muted">
         By uploading you confirm you own the video or have permission to publish it, and you give Merit a license to host and show it to students. Don&apos;t upload other people&apos;s videos, copyrighted TV or textbook material, or anything with students&apos; faces or names without consent. See the{" "}
-        <Link href="/terms" className="underline">
+        <Link href="/terms" className="font-medium text-ink-2 underline underline-offset-2 hover:text-ink">
           terms
         </Link>
         .
       </p>
+      </div>
     </div>
   );
 }

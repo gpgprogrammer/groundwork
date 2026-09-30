@@ -1,4 +1,4 @@
-import { CircleCheck, CircleAlert } from "lucide-react";
+import { Notice } from "./ui";
 
 const NAMES: Record<string, string> = { "plus-month": "Merit Plus", "plus-year": "Merit Plus", sprint: "Exam Sprint" };
 
@@ -8,29 +8,24 @@ export function CheckoutNotice({ sp }: { sp: Record<string, string | string[] | 
   if (status === "success") {
     const name = NAMES[String(sp.product)] ?? "Your purchase";
     return (
-      <div role="status" className="mb-6 flex items-start gap-3 rounded-2xl bg-positive-soft p-4 text-sm text-ink">
-        <CircleCheck className="mt-0.5 size-5 shrink-0 text-positive" />
-        <div>
-          <p className="font-semibold">{name} is ready. Thank you!</p>
-          {sp.test ? <p className="mt-0.5 text-ink-2">Test mode: payments aren&apos;t connected yet, so no card was charged.</p> : null}
-        </div>
-      </div>
+      <Notice tone="success" role="status" className="mb-6">
+        <p className="font-semibold">{name} is ready. Thank you!</p>
+        {sp.test ? <p className="mt-0.5 text-ink-2">Test mode: payments aren&apos;t connected yet, so no card was charged.</p> : null}
+      </Notice>
     );
   }
   if (status === "paused") {
     return (
-      <div role="status" className="mb-6 flex items-start gap-3 rounded-2xl bg-accent-soft p-4 text-sm text-ink">
-        <CircleAlert className="mt-0.5 size-5 shrink-0 text-accent" />
+      <Notice tone="info" role="status" className="mb-6">
         <p>Purchases open soon. Until then, Merit Plus is free for your first month and Exam Sprint has a free 7-day trial.</p>
-      </div>
+      </Notice>
     );
   }
   if (status === "canceled" || status === "error") {
     return (
-      <div role="status" className="mb-6 flex items-start gap-3 rounded-2xl bg-warn-soft p-4 text-sm text-ink">
-        <CircleAlert className="mt-0.5 size-5 shrink-0 text-warn" />
+      <Notice tone="warn" role="status" className="mb-6">
         <p>{status === "error" ? "Checkout couldn't start. Please try again in a minute." : "Checkout canceled. Nothing was charged."}</p>
-      </div>
+      </Notice>
     );
   }
   return null;

@@ -22,7 +22,7 @@ export default function PrivacyPage() {
       <Clause title="Google Calendar">
         <p>
           If you choose &quot;Connect Google Calendar,&quot; Merit gets read-only access to your Google calendars. Merit reads event titles, dates, and descriptions to find your tests, quizzes, and assignments and match them to lessons, and keeps only those items. Merit never changes your calendars, never shares this data, and never uses it for ads. Merit&apos;s use of information received from Google APIs adheres to the{" "}
-          <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" className="text-accent underline">
+          <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" className="text-accent-ink underline">
             Google API Services User Data Policy
           </a>
           , including the Limited Use requirements. You can disconnect at any time from My schedule, which deletes Merit&apos;s access, or from your Google account settings.
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
       </Clause>
       <Clause title="YouTube API Services">
         <p>
-          Merit uses YouTube API Services to find, describe, and show YouTube lessons. When you watch a lesson on YouTube, Google&apos;s <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-accent underline">Privacy Policy</a> applies. Merit doesn&apos;t access your YouTube or Google account. We store public video details (title, channel, thumbnail, length, view count) to build lesson pages, refresh them regularly, and remove videos that are no longer public. If you signed in with Google, you can revoke Merit&apos;s access at any time from <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-accent underline">Google security settings</a>.
+          Merit uses YouTube API Services to find, describe, and show YouTube lessons. When you watch a lesson on YouTube, Google&apos;s <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-accent-ink underline">Privacy Policy</a> applies. Merit doesn&apos;t access your YouTube or Google account. We store public video details (title, channel, thumbnail, length, view count) to build lesson pages, refresh them regularly, and remove videos that are no longer public. If you signed in with Google, you can revoke Merit&apos;s access at any time from <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-accent-ink underline">Google security settings</a>.
         </p>
       </Clause>
       <Clause title="Sharing">

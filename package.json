@@ -9,7 +9,10 @@
     "lint": "eslint",
     "test": "playwright test",
     "typecheck": "next typegen && tsc --noEmit",
-    "ingest": "tsx scripts/ingest-youtube.ts"
+    "ingest": "tsx scripts/ingest-youtube.ts",
+    "preview:2": "next dev --hostname 127.0.0.1 --port 3200",
+    "test:2": "playwright test -c pw-merit2.config.ts",
+    "shots:2": "node scripts/shots.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.62",

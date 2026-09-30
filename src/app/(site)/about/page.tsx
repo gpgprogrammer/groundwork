@@ -1,8 +1,10 @@
-import { CalendarCheck, GraduationCap, NotebookPen, Sparkles, Target, Users } from "lucide-react";
+import { ArrowRight, CalendarCheck, GraduationCap, NotebookPen, Sparkles, Target, Users } from "lucide-react";
+import { bandCta, bandCtaGhost } from "@/components/learn-band";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LogoMark, Wordmark } from "@/components/logo";
 import { Faq } from "@/components/marketing";
+import { IconTile } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
 
 export const metadata: Metadata = {
@@ -12,54 +14,145 @@ export const metadata: Metadata = {
 
 export default async function AboutPage() {
   const catalog = await getCatalog();
-  const features = [
-    { icon: GraduationCap, title: `${catalog.courses.length} courses, every topic`, body: `Every AP course and the SAT, organized the way the exam is: ${catalog.units.length} units and ${catalog.topics.length} topics, each with the lessons that teach it best.` },
-    { icon: Sparkles, title: "Merit AI", body: "A study partner that explains, quizzes, and finds the right lesson, grounded in the curriculum and the page you're on." },
-    { icon: CalendarCheck, title: "A plan for tonight", body: "Merit Plus turns your class calendar and exam date into a nightly plan, with reminders in the calendar you already use." },
-    { icon: Target, title: "Exam Sprints", body: "A diagnostic, a day-by-day plan to exam day, unlimited exam-style practice, and a readiness score you can watch climb." },
-    { icon: Users, title: "Real tutors", body: "Book top-rated tutors near you or online, or choose from trusted tutoring services, right where you study." },
-    { icon: NotebookPen, title: "Built with teachers", body: "Teachers add the lessons they trust and write study guides for the topics students struggle with." },
+  const stats = [
+    { n: catalog.courses.length, label: "courses" },
+    { n: catalog.units.length, label: "units" },
+    { n: catalog.topics.length, label: "topics" },
   ];
   return (
-    <div className="mx-auto max-w-[1100px] px-4 pb-20 pt-12 sm:px-6">
-      <div className="flex items-center gap-3 text-[34px]">
-        <LogoMark className="size-14" />
-        <Wordmark tagline />
-      </div>
-      <h1 className="mt-8 max-w-3xl text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">Every student deserves a great teacher and a clear plan.</h1>
-      <p className="mt-5 max-w-2xl text-[17px] leading-relaxed text-ink-2">
-        Merit brings together the best lessons for every AP and SAT topic, an AI study partner, and real tutors, then tells you exactly what to study tonight. Learning is free. Planning and exam prep tools are affordable. And when you want a person, the best tutors are a click away.
-      </p>
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Link href="/signup" className="inline-flex h-12 items-center rounded-full bg-accent px-6 text-[15px] font-semibold text-white">
-          Get started free
-        </Link>
-        <Link href="/courses" className="inline-flex h-12 items-center rounded-full px-6 text-[15px] font-semibold text-ink ring-1 ring-line-strong hover:bg-bg-subtle">
-          Browse courses
-        </Link>
-      </div>
-
-      <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {features.map((f) => (
-          <div key={f.title} className="rounded-2xl p-6 ring-1 ring-line">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-accent-soft text-accent">
-              <f.icon className="size-5" />
-            </span>
-            <p className="mt-4 font-semibold text-ink">{f.title}</p>
-            <p className="mt-1 text-[14px] leading-relaxed text-muted">{f.body}</p>
+    <div className="overflow-x-clip">
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)] text-white">
+        <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-[420px] rounded-full border-[56px] border-white/[0.08]" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-40 left-1/3 size-80 rounded-full border-[40px] border-white/[0.06]" />
+        <div className="relative mx-auto max-w-6xl px-4 pb-14 pt-10 sm:px-6 sm:pt-16 lg:px-8 lg:pb-20">
+          <div className="rise flex items-center gap-3 text-[30px] sm:text-[34px]">
+            <LogoMark className="size-12 sm:size-14" />
+            <Wordmark tagline onDark />
           </div>
-        ))}
-      </div>
+          <h1 className="rise display mt-8 max-w-3xl text-[40px] sm:text-[60px]" style={{ ["--i" as string]: 1 }}>
+            Every student deserves a great teacher and a clear plan.
+          </h1>
+          <p className="rise mt-5 max-w-2xl text-[17px] leading-relaxed text-white/90 sm:text-[18px]" style={{ ["--i" as string]: 2 }}>
+            Merit brings together the best lessons for every AP and SAT topic, an AI study partner, and real tutors, then tells you exactly what to study tonight. Learning is free. Planning and exam prep tools are affordable. And when you want a person, the best tutors are a click away.
+          </p>
+          <div className="rise mt-8 flex flex-wrap items-center gap-3" style={{ ["--i" as string]: 3 }}>
+            <Link href="/signup" className={bandCta}>
+              Get started free
+            </Link>
+            <Link href="/courses" className={bandCtaGhost}>
+              Browse courses
+            </Link>
+          </div>
+        </div>
+      </section>
 
-      <div className="mx-auto mt-20 max-w-3xl">
-        <h2 className="text-2xl font-bold tracking-tight text-ink">Questions</h2>
-        <div className="mt-4">
+      {/* What Merit is */}
+      <section className="mx-auto max-w-6xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
+        <div className="grid gap-4 lg:grid-cols-12">
+          {/* Courses: the foundation, with real catalog counts */}
+          <article className="rise flex flex-col justify-between gap-8 rounded-3xl bg-surface p-6 ring-2 ring-line sm:p-8 lg:col-span-7" style={{ ["--i" as string]: 4 }}>
+            <div>
+              <IconTile>
+                <GraduationCap className="size-5" />
+              </IconTile>
+              <h2 className="headline mt-5 text-2xl text-ink">{catalog.courses.length} courses, every topic</h2>
+              <p className="mt-2 max-w-md text-[15px] leading-relaxed text-muted">
+                Every AP course and the SAT, organized the way the exam is: {catalog.units.length} units and {catalog.topics.length} topics, each with the lessons that teach it best.
+              </p>
+            </div>
+            <dl className="grid grid-cols-3 divide-x divide-line rounded-2xl bg-bg-subtle py-4">
+              {stats.map((s) => (
+                <div key={s.label} className="px-4 text-center">
+                  <dt className="sr-only">{s.label}</dt>
+                  <dd className="tabular text-[26px] font-bold tracking-tight text-ink sm:text-[30px]">{s.n.toLocaleString("en-US")}</dd>
+                  <dd className="text-[12.5px] font-medium text-muted">{s.label}</dd>
+                </div>
+              ))}
+            </dl>
+          </article>
+
+          {/* Merit AI */}
+          <article className="rise flex flex-col rounded-3xl bg-accent-soft p-6 sm:p-8 lg:col-span-5" style={{ ["--i" as string]: 5 }}>
+            <IconTile className="bg-surface">
+              <Sparkles className="size-5" />
+            </IconTile>
+            <h2 className="headline mt-5 text-2xl text-ink">Merit AI</h2>
+            <p className="mt-2 text-[15px] leading-relaxed text-ink-2">A study partner that explains, quizzes, and finds the right lesson, grounded in the curriculum and the page you&apos;re on.</p>
+            <Link href="/ask" className="group mt-auto inline-flex items-center gap-1 pt-6 text-[14px] font-semibold text-accent-ink">
+              Ask Merit AI <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+            </Link>
+          </article>
+
+          {/* Plan */}
+          <article className="rise rounded-3xl bg-surface p-6 ring-2 ring-line sm:p-8 lg:col-span-4" style={{ ["--i" as string]: 6 }}>
+            <IconTile>
+              <CalendarCheck className="size-5" />
+            </IconTile>
+            <h2 className="headline mt-5 text-xl text-ink">A plan for tonight</h2>
+            <p className="mt-2 text-[14.5px] leading-relaxed text-muted">Merit Plus turns your class calendar and exam date into a nightly plan, with reminders in the calendar you already use.</p>
+          </article>
+
+          {/* Exam Sprints */}
+          <article className="rise rounded-3xl bg-surface p-6 ring-2 ring-line sm:p-8 lg:col-span-4" style={{ ["--i" as string]: 7 }}>
+            <IconTile tone="sprint">
+              <Target className="size-5" />
+            </IconTile>
+            <h2 className="headline mt-5 text-xl text-ink">Exam Sprints</h2>
+            <p className="mt-2 text-[14.5px] leading-relaxed text-muted">A diagnostic, a day-by-day plan to exam day, unlimited exam-style practice, and a readiness score you can watch climb.</p>
+          </article>
+
+          {/* People */}
+          <article className="rise rounded-3xl bg-surface p-6 ring-2 ring-line sm:p-8 lg:col-span-4" style={{ ["--i" as string]: 8 }}>
+            <ul className="space-y-6">
+              <li className="flex gap-4">
+                <IconTile tone="neutral">
+                  <Users className="size-5" />
+                </IconTile>
+                <div>
+                  <h2 className="font-semibold text-ink">Real tutors</h2>
+                  <p className="mt-1 text-[14px] leading-relaxed text-muted">Book top-rated tutors near you or online, or choose from trusted tutoring services, right where you study.</p>
+                </div>
+              </li>
+              <li className="flex gap-4">
+                <IconTile tone="neutral">
+                  <NotebookPen className="size-5" />
+                </IconTile>
+                <div>
+                  <h2 className="font-semibold text-ink">Built with teachers</h2>
+                  <p className="mt-1 text-[14px] leading-relaxed text-muted">Teachers add the lessons they trust and write study guides for the topics students struggle with.</p>
+                </div>
+              </li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="border-t border-line bg-surface">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_2fr] lg:gap-16 lg:px-8 lg:py-20 grid-cols-[minmax(0,1fr)]">
+          <div>
+            <h2 className="headline text-3xl text-ink">Questions</h2>
+            <p className="mt-3 max-w-xs text-[15px] leading-relaxed text-muted">
+              Anything else? See{" "}
+              <Link href="/how-ranking-works" className="font-medium text-accent-ink hover:underline">
+                how ranking works
+              </Link>{" "}
+              or{" "}
+              <Link href="/pricing" className="font-medium text-accent-ink hover:underline">
+                pricing
+              </Link>
+              .
+            </p>
+          </div>
           <Faq />
         </div>
-      </div>
-      <p className="mt-12 text-[12.5px] text-muted">
-        Lessons are created by their teachers and channels and play on YouTube. AP® and SAT® are trademarks of the College Board, which is not affiliated with Merit Learning.
-      </p>
+        <div className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
+          <p className="text-[12.5px] leading-relaxed text-faint">
+            Lessons are created by their teachers and channels and play on YouTube. AP® and SAT® are trademarks of the College Board, which is not affiliated with Merit Learning.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

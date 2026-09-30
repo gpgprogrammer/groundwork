@@ -19,7 +19,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
   return (
     <div className="space-y-6">
       <CheckoutNotice sp={sp} />
-      <section className="rounded-2xl p-6 ring-1 ring-line">
+      <section className="rounded-2xl p-6 bg-surface ring-2 ring-line">
         <div className="flex items-center gap-2">
           <PlusBadge />
           <h2 className="text-lg font-bold text-ink">{PLUS.name}</h2>
@@ -48,11 +48,11 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
             <div className="mt-5 flex flex-wrap gap-2">
               {billing.plus.source === "stripe" && isStripeEnabled ? (
                 <form action="/api/billing/portal" method="post">
-                  <button className="h-10 rounded-full bg-bg px-4 text-sm font-medium text-ink ring-1 ring-line-strong hover:bg-bg-subtle">Manage billing</button>
+                  <button className="press font-brand h-10 rounded-2xl bg-bg px-4 text-sm font-extrabold text-ink ring-2 ring-inset ring-line hover:bg-bg-subtle [--ledge:var(--line)]">Manage billing</button>
                 </form>
               ) : (
                 <form action={setPlusCancel.bind(null, !plus.cancelAtPeriodEnd)}>
-                  <button className="h-10 rounded-full bg-bg px-4 text-sm font-medium text-ink ring-1 ring-line-strong hover:bg-bg-subtle">
+                  <button className="press font-brand h-10 rounded-2xl bg-bg px-4 text-sm font-extrabold text-ink ring-2 ring-inset ring-line hover:bg-bg-subtle [--ledge:var(--line)]">
                     {plus.cancelAtPeriodEnd ? "Resume Plus" : "Cancel Plus"}
                   </button>
                 </form>
@@ -74,15 +74,15 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
         )}
       </section>
 
-      <section className="rounded-2xl p-6 ring-1 ring-line">
+      <section className="rounded-2xl p-6 bg-surface ring-2 ring-line">
         <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
-          <Target className="size-5 text-[#e0531c]" /> Exam Sprints
+          <Target className="size-5 text-sprint" /> Exam Sprints
         </h2>
         <p className="mt-2 text-[15px] text-ink">
           {billing.sprintPass ? "Unlocked for every class and test, for good. Calendar sync is included." : "Not unlocked yet. One purchase unlocks Exam Sprint for every class and test, plus calendar sync."}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Link href="/sprint" className="inline-flex h-10 items-center gap-1.5 rounded-full bg-gradient-to-r from-[#ff8a3d] to-[#e0531c] px-4 text-sm font-semibold text-white">
+          <Link href="/sprint" className="press font-brand inline-flex h-10 items-center gap-1.5 rounded-2xl bg-sprint px-4 text-sm font-extrabold text-white [--ledge:var(--sprint-press)]">
             Open Exam Sprint <ArrowRight className="size-4" />
           </Link>
           {!billing.sprintPass ? (
@@ -93,7 +93,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
         </div>
       </section>
 
-      <section className="rounded-2xl p-6 ring-1 ring-line">
+      <section className="rounded-2xl p-6 bg-surface ring-2 ring-line">
         <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
           <Receipt className="size-5 text-muted" /> History
         </h2>

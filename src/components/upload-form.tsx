@@ -1,12 +1,14 @@
 "use client";
 
-import { Film, Loader2, Upload } from "lucide-react";
+import { Film, Loader2, RefreshCw, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { publishUpload, startUpload } from "@/app/actions/uploads";
-import { inputClass } from "./form";
+import { FormMessage, inputClass } from "./form";
 import { TopicPicker, type CourseTopics } from "./studio-forms";
-import { cn, formatDuration } from "./ui";
+import { Button, cn, formatDuration, ProgressBar } from "./ui";
+
+const labelText = "mb-1.5 block text-[13px] font-semibold text-ink-2";
 
 /** PUT a file to a signed storage URL, reporting progress. */
 function put(url: string, body: Blob, onProgress?: (p: number) => void) {
@@ -71,6 +73,7 @@ export function UploadForm({ courses, maxMb }: { courses: CourseTopics[]; maxMb:
   const [topicId, setTopicId] = useState("");
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const busy = progress !== null;
   const input = useRef<HTMLInputElement>(null);
 
@@ -112,63 +115,95 @@ export function UploadForm({ courses, maxMb }: { courses: CourseTopics[]; maxMb:
   return (
     <div className="space-y-6">
       <div
+        role="button"
+        tabIndex={busy ? -1 : 0}
+        aria-disabled={busy}
         onClick={() => !busy && input.current?.click()}
-        onDragOver={(e) => e.preventDefault()}
+        onKeyDown={(e) => {
+          if ((e.key === "Enter" || e.key === " ") && !busy) {
+            e.preventDefault();
+            input.current?.click();
+          }
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!dragging) setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
         onDrop={(e) => {
           e.preventDefault();
+          setDragging(false);
           void choose(e.dataTransfer.files[0]);
         }}
-        className={cn("flex cursor-pointer flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-line-strong p-8 text-center hover:border-accent", file && "border-solid")}
+        className={cn(
+          "group relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-5 py-9 text-center outline-none transition-[background-color,border-color,transform] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+          dragging ? "scale-[1.01] border-accent bg-accent-soft" : file ? "border-line bg-bg-subtle/50" : "border-line-strong bg-bg-subtle/40 hover:border-accent hover:bg-accent-soft/50",
+          busy && "pointer-events-none opacity-80",
+        )}
       >
         {meta?.posterUrl ? (
-          <img src={meta.posterUrl} alt="" className="aspect-video w-full max-w-md rounded-xl object-cover" />
+          <img src={meta.posterUrl} alt="" className="fade aspect-video w-full max-w-md rounded-xl object-cover ring-1 ring-line" />
+        ) : file && !meta ? (
+          <span className="flex aspect-video w-full max-w-md items-center justify-center rounded-xl bg-bg-subtle ring-1 ring-line">
+            <Loader2 className="size-6 animate-spin text-muted" />
+          </span>
         ) : (
-          <span className="flex size-14 items-center justify-center rounded-2xl bg-accent-soft text-accent">
-            <Film className="size-7" />
+          <span className={cn("flex size-14 items-center justify-center rounded-2xl bg-surface text-accent-ink shadow-soft ring-2 ring-line transition-transform duration-200 ease-out", dragging ? "-translate-y-1 scale-105" : "group-hover:-translate-y-0.5")}>
+            <Film className="size-6" />
           </span>
         )}
-        <p className="font-semibold text-ink">{file ? file.name : "Drop a video here, or click to choose"}</p>
-        <p className="text-[13px] text-muted">
+        <p className="max-w-full truncate px-2 text-[15px] font-semibold text-ink">{file ? file.name : dragging ? "Drop to add your video" : "Drop a video here, or click to choose"}</p>
+        <p className="tabular text-[13px] text-muted">
           {file && meta ? `${formatDuration(Math.round(meta.duration))} · ${(file.size / 1024 / 1024).toFixed(1)} MB` : `MP4, MOV, or WebM, up to ${maxMb} MB`}
         </p>
-        <input ref={input} type="file" accept="video/mp4,video/quicktime,video/webm" className="sr-only" onChange={(e) => void choose(e.target.files?.[0])} />
+        {file && !busy ? (
+          <span className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-accent-ink">
+            <RefreshCw className="size-3.5" /> Choose a different file
+          </span>
+        ) : null}
+        <input ref={input} type="file" accept="video/mp4,video/quicktime,video/webm" className="sr-only" tabIndex={-1} onChange={(e) => void choose(e.target.files?.[0])} />
       </div>
 
       <label className="block">
-        <span className="mb-1.5 block text-[13px] font-medium text-ink-2">Title</span>
+        <span className={labelText}>Title</span>
         <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className={inputClass} placeholder="The chain rule in 6 minutes" />
       </label>
       <TopicPicker courses={courses} courseId={courseId} setCourseId={setCourseId} topicId={topicId} setTopicId={setTopicId} />
       <label className="block">
-        <span className="mb-1.5 block text-[13px] font-medium text-ink-2">Description (optional)</span>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} maxLength={4000} className={cn(inputClass, "h-auto py-2.5")} placeholder="What students will learn, and timestamps for each part." />
+        <span className={labelText}>
+          Description<span className="font-normal text-faint"> (optional)</span>
+        </span>
+        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} maxLength={4000} className={cn(inputClass, "h-auto py-3 leading-relaxed")} placeholder="What students will learn, and timestamps for each part." />
       </label>
-      <label className="flex items-start gap-3 rounded-xl bg-bg-subtle p-4 text-[13px] text-ink-2">
-        <input type="checkbox" required id="rights" className="mt-0.5 size-4 accent-[var(--accent)]" />
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-bg-subtle p-4 text-[13.5px] leading-relaxed text-ink-2 ring-1 ring-inset ring-line">
+        <input type="checkbox" required id="rights" className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]" />
         This is my own video (or I have the rights to it), and it&apos;s accurate and school-appropriate.
       </label>
       {busy ? (
-        <div>
-          <div className="h-2 overflow-hidden rounded-full bg-line">
-            <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${Math.round((progress ?? 0) * 100)}%` }} />
+        <div className="fade rounded-xl bg-accent-soft/60 p-4 ring-1 ring-inset ring-accent/15" aria-live="polite">
+          <div className="mb-2.5 flex items-center justify-between text-[13.5px] font-semibold text-ink">
+            <span className="flex items-center gap-2">
+              <Loader2 className="size-4 animate-spin text-accent-ink" /> Uploading…
+            </span>
+            <span className="tabular text-accent-ink">{Math.round((progress ?? 0) * 100)}%</span>
           </div>
-          <p className="mt-2 flex items-center gap-2 text-sm text-muted">
-            <Loader2 className="size-4 animate-spin" /> Uploading… {Math.round((progress ?? 0) * 100)}%
-          </p>
+          <ProgressBar value={progress ?? 0} className="h-2 bg-surface" />
         </div>
       ) : null}
-      {error ? <p className="text-sm text-[#c2410c]">{error}</p> : null}
-      <button
+      <FormMessage error={error ?? undefined} />
+      <Button
+        type="button"
+        size="lg"
         disabled={busy || !file || !meta || !title.trim() || !topicId}
         onClick={() => {
           const box = document.getElementById("rights") as HTMLInputElement | null;
           if (box && !box.checked) return setError("Please confirm you have the rights to this video.");
           void submit();
         }}
-        className="inline-flex h-11 items-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-white disabled:opacity-50"
+        className="w-full sm:w-auto"
       >
         <Upload className="size-4" /> {busy ? "Uploading…" : "Publish video"}
-      </button>
+      </Button>
     </div>
   );
 }

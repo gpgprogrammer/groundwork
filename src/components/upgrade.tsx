@@ -8,16 +8,16 @@ import { cn } from "./ui";
 
 export function PlusBadge({ className, onDark }: { className?: string; onDark?: boolean }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-md", onDark ? "bg-white/20" : "bg-gradient-to-r from-[#4287f5] to-[#2346c7]", " px-1.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-white", className)}>
-      <Sparkles className="size-3" /> Plus
+    <span className={cn("inline-flex h-7 items-center gap-1 rounded-full px-3 font-brand text-[12.5px] font-extrabold", onDark ? "bg-white/20 text-white" : "bg-accent text-white", className)}>
+      <Sparkles className="size-3.5" /> Plus
     </span>
   );
 }
 
 export function SprintBadge({ className, onDark }: { className?: string; onDark?: boolean }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-md", onDark ? "bg-white/20" : "bg-gradient-to-r from-[#ff8a3d] to-[#e0531c]", " px-1.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-white", className)}>
-      <Target className="size-3" /> Sprint
+    <span className={cn("inline-flex h-7 items-center gap-1 rounded-full px-3 font-brand text-[12.5px] font-extrabold", onDark ? "bg-white/20 text-white" : "bg-sprint text-white", className)}>
+      <Target className="size-3.5" /> Sprint
     </span>
   );
 }
@@ -34,16 +34,17 @@ export function BuyButton({
   returnTo: string;
   children: ReactNode;
   className?: string;
-  variant?: "primary" | "sprint" | "light" | "outline" | "glass";
+  /** light: white on a dark tile. onBlue / onSprint: white with the world color's text, for solid colored tiles. */
+  variant?: "primary" | "sprint" | "light" | "outline" | "glass" | "onBlue" | "onSprint";
 }) {
   if (paymentsPaused) {
     return (
       <span
         title="Purchases open soon"
-        className={cn("inline-flex h-11 cursor-not-allowed flex-col items-center justify-center rounded-full bg-bg-subtle px-5 text-sm font-semibold leading-tight text-muted ring-1 ring-line", className)}
+        className={cn("press font-brand inline-flex h-11 cursor-not-allowed flex-col items-center justify-center rounded-2xl bg-bg-subtle px-5 text-sm font-extrabold leading-tight text-muted ring-2 ring-inset ring-line [--ledge:var(--line)]", className)}
       >
         {children}
-        <span className="text-[10.5px] font-medium">Opening soon</span>
+        <span className="text-[10.5px] font-semibold">Opening soon</span>
       </span>
     );
   }
@@ -54,12 +55,14 @@ export function BuyButton({
       <button
         type="submit"
         className={cn(
-          "inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition-[filter,background-color]",
-          variant === "primary" && "bg-accent text-white hover:brightness-110",
-          variant === "sprint" && "bg-gradient-to-r from-[#ff8a3d] to-[#e0531c] text-white hover:brightness-110",
-          variant === "light" && "bg-white text-[#0f172a] hover:bg-white/90",
-          variant === "outline" && "bg-bg text-ink ring-1 ring-line-strong hover:bg-bg-subtle",
-          variant === "glass" && "bg-white/10 text-white ring-1 ring-white/25 hover:bg-white/20",
+          "press font-brand inline-flex h-11 select-none items-center justify-center gap-2 whitespace-nowrap rounded-2xl px-5 text-[15px] font-extrabold",
+          variant === "primary" && "bg-accent text-white [--ledge:var(--accent-press)] hover:brightness-110",
+          variant === "sprint" && "bg-sprint text-white [--ledge:var(--sprint-press)] hover:brightness-110",
+          variant === "light" && "bg-white text-[#0f172a] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95",
+          variant === "onBlue" && "bg-white text-[#1d4ed8] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95",
+          variant === "onSprint" && "bg-white text-[#b3400f] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95",
+          variant === "outline" && "bg-surface text-ink ring-2 ring-inset ring-line [--ledge:var(--line)] hover:bg-bg-subtle",
+          variant === "glass" && "bg-white/15 text-white ring-2 ring-inset ring-white/30 [--ledge:rgb(0_0_0/0.18)] hover:bg-white/25",
           className,
         )}
       >
@@ -77,70 +80,74 @@ export function PlusGate({ access, feature, returnTo, children }: { access: Plus
 
 export function PlusLocked({ access, feature, returnTo }: { access: PlusAccess; feature: string; returnTo: string }) {
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-[#0b1530] p-8 text-white sm:p-10">
-      <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-[#3b82f6]/30 blur-3xl" />
-      <div className="relative max-w-xl">
-        <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold">
+    <div className="rise relative overflow-hidden rounded-3xl bg-accent p-7 text-white sm:p-10">
+      <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 size-80 rounded-full border-[44px] border-white/10" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-24 right-40 size-56 rounded-full border-[32px] border-white/[0.07]" />
+      <div className="relative max-w-2xl">
+        <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 font-brand text-[13px] font-extrabold">
           <Lock className="size-3.5" /> {feature} is part of Merit Plus
         </span>
-        <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">Know exactly what to study tonight.</h2>
-        <p className="mt-2 text-[15px] leading-relaxed text-white/75">
+        <h2 className="display mt-5 text-[34px] sm:text-[44px]">Know exactly what to study tonight.</h2>
+        <p className="mt-3 text-[16px] leading-relaxed text-white/90">
           Plus learns what you&apos;re studying in school and suggests the right videos for it, then turns your calendar and exam date into a plan: tonight&apos;s lessons, reminders before every test, and progress you can see.
         </p>
-        <ul className="mt-5 grid gap-2 text-sm sm:grid-cols-2">
+        <ul className="mt-6 grid gap-2 text-[14.5px] sm:grid-cols-2">
           {PLUS.features.map((f) => (
-            <li key={f.key} className="flex items-center gap-2 text-white/90">
-              <Check className="size-4 text-[#7fb2ff]" /> {f.title}
+            <li key={f.key} className="flex items-center gap-2.5 rounded-2xl bg-white/10 px-3 py-2.5 font-brand font-extrabold">
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white">
+                <Check className="size-3.5 text-[#1d4ed8]" strokeWidth={3.5} />
+              </span>
+              {f.title}
             </li>
           ))}
         </ul>
-        <div className="mt-7 flex flex-wrap items-center gap-3">
+        <div className="mt-8 flex flex-wrap items-center gap-3">
           {access.kind === "anonymous" ? (
-            <Link href={`/signup?next=${encodeURIComponent(returnTo)}`} className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[#0f172a] hover:bg-white/90">
+            <Link
+              href={`/signup?next=${encodeURIComponent(returnTo)}`}
+              className="press font-brand inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-6 text-[15.5px] font-extrabold text-[#1d4ed8] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95"
+            >
               Get your first month free <ArrowRight className="size-4" />
             </Link>
           ) : (
             <>
-              <BuyButton product="plus-month" returnTo={returnTo} variant="light">
+              <BuyButton product="plus-month" returnTo={returnTo} variant="onBlue" className="h-12 px-6">
                 {usd(PLUS.monthly)}/month
               </BuyButton>
-              <BuyButton product="plus-year" returnTo={returnTo} variant="glass">
+              <BuyButton product="plus-year" returnTo={returnTo} variant="glass" className="h-12 px-6">
                 {usd(PLUS.annual)}/year
               </BuyButton>
             </>
           )}
-          <Link href="/pricing" className="text-sm font-medium text-white/70 hover:text-white">
+          <Link href="/pricing" className="px-2 font-brand text-[14.5px] font-extrabold text-white/85 transition-colors hover:text-white">
             Compare plans
           </Link>
         </div>
-        {access.kind === "anonymous" ? <p className="mt-3 text-xs text-white/55">No card needed. Plus is free for your first month.</p> : null}
+        {access.kind === "anonymous" ? <p className="mt-3 text-[13px] text-white/80">No card needed. Plus is free for your first month.</p> : null}
       </div>
     </div>
   );
 }
 
-/** A promo that sits in a video grid, sized like a video card. */
+/** A promo tile that sits in a lesson grid, sized like a lesson tile. */
 export function SprintFeedCard({ courseTitle, courseId }: { courseTitle?: string; courseId?: string }) {
   return (
-    <Link href={courseId ? `/sprint?course=${courseId}` : "/sprint"} className="group flex flex-col">
-      <div className="relative flex aspect-video flex-col justify-between overflow-hidden rounded-xl bg-gradient-to-br from-[#ff8a3d] via-[#f0602a] to-[#b83212] p-5 text-white">
-        <div className="pointer-events-none absolute -bottom-10 -right-10 size-44 rounded-full bg-white/15 blur-2xl" />
-        <SprintBadge onDark className="relative w-fit" />
-        <div className="relative">
-          <p className="text-[22px] font-extrabold leading-tight tracking-tight">
-            {courseTitle ? `${courseTitle} in 30 days.` : "Your AP exam, planned day by day."}
-          </p>
-          <p className="mt-1 text-[13px] text-white/85">Free diagnostic · daily plan · unlimited practice</p>
-        </div>
-      </div>
-      <div className="mt-3 flex gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#fff1e8] text-[#e0531c]">
-          <Timer className="size-4.5" />
+    <Link
+      href={courseId ? `/sprint?course=${courseId}` : "/sprint"}
+      className="press group relative flex min-h-[320px] flex-col justify-between overflow-hidden rounded-3xl bg-sprint p-6 text-white [--ledge:var(--sprint-press)]"
+    >
+      <div aria-hidden className="pointer-events-none absolute -bottom-16 -right-16 size-64 rounded-full border-[36px] border-white/10" />
+      <div aria-hidden className="pointer-events-none absolute -right-2 top-16 size-24 rounded-full border-[14px] border-white/10" />
+      <span className="relative inline-flex w-fit items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 font-brand text-[12.5px] font-extrabold">
+        <Target className="size-3.5" /> Exam Sprint
+      </span>
+      <div className="relative">
+        <p className="display text-[30px] leading-[1.05]">{courseTitle ? `${courseTitle} in 30 days.` : "Your AP exam, planned day by day."}</p>
+        <p className="mt-2 text-[14px] text-white/85">Free diagnostic · daily plan · unlimited practice</p>
+        <span className="mt-5 inline-flex h-11 items-center gap-2 rounded-2xl bg-white px-5 font-brand text-[15px] font-extrabold text-sprint-ink">
+          Start an Exam Sprint <Timer className="size-4" />
         </span>
-        <div className="min-w-0">
-          <p className="text-[15px] font-semibold leading-snug text-ink group-hover:underline">Start an Exam Sprint: see your readiness in 10 minutes</p>
-          <p className="mt-1 text-sm text-muted">Merit · {usd(SPRINT.price)} once, diagnostic free</p>
-        </div>
+        <p className="mt-2 text-[12.5px] text-white/75">{usd(SPRINT.price)} once, diagnostic free</p>
       </div>
     </Link>
   );
@@ -148,23 +155,18 @@ export function SprintFeedCard({ courseTitle, courseId }: { courseTitle?: string
 
 export function PlusFeedCard() {
   return (
-    <Link href="/plan" className="group flex flex-col">
-      <div className="relative flex aspect-video flex-col justify-between overflow-hidden rounded-xl bg-gradient-to-br from-[#4287f5] to-[#1e2f8f] p-5 text-white">
-        <div className="pointer-events-none absolute -right-8 -top-8 size-40 rounded-full bg-white/15 blur-2xl" />
-        <PlusBadge onDark className="relative w-fit" />
-        <div className="relative">
-          <p className="text-[22px] font-extrabold leading-tight tracking-tight">Know what to study tonight.</p>
-          <p className="mt-1 text-[13px] text-white/85">A feed that follows your classes, and a plan every day</p>
-        </div>
-      </div>
-      <div className="mt-3 flex gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-          <CalendarCheck className="size-4.5" />
+    <Link href="/plan" className="press group relative flex min-h-[320px] flex-col justify-between overflow-hidden rounded-3xl bg-accent p-6 text-white [--ledge:var(--accent-press)]">
+      <div aria-hidden className="pointer-events-none absolute -right-14 -top-14 size-56 rounded-full border-[32px] border-white/10" />
+      <span className="relative inline-flex w-fit items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 font-brand text-[12.5px] font-extrabold">
+        <Sparkles className="size-3.5" /> Merit Plus
+      </span>
+      <div className="relative">
+        <p className="display text-[30px] leading-[1.05]">Know what to study tonight.</p>
+        <p className="mt-2 text-[14px] text-white/85">Merit Plus suggests videos for what you&apos;re learning in class</p>
+        <span className="mt-5 inline-flex h-11 items-center gap-2 rounded-2xl bg-white px-5 font-brand text-[15px] font-extrabold text-accent-ink">
+          See my plan <CalendarCheck className="size-4" />
         </span>
-        <div className="min-w-0">
-          <p className="text-[15px] font-semibold leading-snug text-ink group-hover:underline">Merit Plus suggests videos for what you&apos;re learning in class</p>
-          <p className="mt-1 text-sm text-muted">Merit · first month free</p>
-        </div>
+        <p className="mt-2 text-[12.5px] text-white/75">First month free</p>
       </div>
     </Link>
   );
@@ -176,28 +178,24 @@ export function ExamCta({ daysLeft, courseId, courseTitle, className }: { daysLe
   return (
     <Link
       href={`/sprint?course=${courseId}`}
-      className={cn(
-        "group flex items-center gap-4 rounded-2xl bg-gradient-to-r from-[#fff4ec] to-[#ffe7d9] p-4 ring-1 ring-[#ffd2b8] transition-shadow hover:shadow-soft dark:from-[#2a1a10] dark:to-[#2a140a] dark:ring-[#5a2e14]",
-        className,
-      )}
+      className={cn("press group relative flex items-center gap-4 overflow-hidden rounded-3xl bg-sprint p-4 text-white [--ledge:var(--sprint-press)] hover:brightness-105", className)}
     >
-      <span className="flex size-11 shrink-0 flex-col items-center justify-center rounded-xl bg-gradient-to-br from-[#ff8a3d] to-[#e0531c] text-white">
+      <div aria-hidden className="pointer-events-none absolute -right-10 -top-12 size-32 rounded-full border-[18px] border-white/10" />
+      <span className="relative flex size-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-white text-[#b3400f]">
         {daysLeft !== null ? (
           <>
-            <span className="tabular text-[15px] font-extrabold leading-none">{daysLeft}</span>
-            <span className="text-[9px] font-semibold uppercase leading-none">days</span>
+            <span className="tabular font-brand text-[20px] font-black leading-none">{daysLeft}</span>
+            <span className="mt-0.5 font-brand text-[9.5px] font-extrabold uppercase leading-none tracking-wide">days</span>
           </>
         ) : (
-          <Target className="size-5" />
+          <Target className="size-6" />
         )}
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-semibold text-ink">
-          {soon ? `Exam in ${daysLeft} days? Build my plan.` : `Get the ${courseTitle} score you want.`}
-        </span>
-        <span className="block text-[13px] text-ink-2">Free diagnostic, then a day-by-day Exam Sprint to exam day.</span>
+      <span className="relative min-w-0 flex-1">
+        <span className="block font-brand text-[16px] font-extrabold leading-snug">{soon ? `Exam in ${daysLeft} days? Build my plan.` : `Get the ${courseTitle} score you want.`}</span>
+        <span className="mt-0.5 block text-[13px] text-white/85">Free diagnostic, then a day-by-day Exam Sprint to exam day.</span>
       </span>
-      <ArrowRight className="size-5 shrink-0 text-[#e0531c] transition-transform group-hover:translate-x-0.5" />
+      <ArrowRight className="relative size-5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
     </Link>
   );
 }

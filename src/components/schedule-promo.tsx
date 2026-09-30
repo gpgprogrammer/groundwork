@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { dismissSchedulePromo } from "@/app/actions/prompts";
+import { buttonClass } from "./ui";
 
 /** Seconds before the popup can be closed, so it gets read first. */
 const LOCK_SECONDS = 5;
@@ -67,52 +68,64 @@ export function SchedulePromo({ showAt, trialDaysLeft }: { showAt: string; trial
 
   if (!visible) return null;
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-4 backdrop-blur-[2px] sm:items-center" onClick={close}>
+    <div className="fade fixed inset-0 z-[60] flex items-end justify-center bg-ink/40 backdrop-blur-[2px] sm:items-center sm:p-4" onClick={close}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="schedule-promo-title"
         onClick={(e) => e.stopPropagation()}
-        className="rise relative w-full max-w-md overflow-hidden rounded-3xl bg-bg shadow-2xl ring-1 ring-line"
+        className="dialog-in relative max-h-[calc(100dvh-2rem)] w-full overflow-y-auto overscroll-contain rounded-t-[28px] bg-surface shadow-lift ring-1 ring-line sm:max-w-md sm:rounded-[28px]"
       >
         {locked ? (
-          <span role="timer" aria-label={`You can close this in ${lockLeft} seconds`} className="tabular absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-white/20 text-[14px] font-semibold text-white">
+          <span
+            role="timer"
+            aria-label={`You can close this in ${lockLeft} seconds`}
+            className="tabular absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-surface text-[14px] font-semibold text-muted ring-1 ring-line"
+          >
             {lockLeft}
           </span>
         ) : (
-          <button type="button" onClick={dismiss} aria-label="Close" className="absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-bg/80 text-muted hover:bg-bg-subtle hover:text-ink">
+          <button
+            type="button"
+            onClick={dismiss}
+            aria-label="Close"
+            className="fade absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-surface/80 text-muted transition-[background-color,color,transform] duration-150 hover:bg-bg-subtle hover:text-ink active:scale-[0.94]"
+          >
             <X className="size-5" />
           </button>
         )}
-        <div className="bg-gradient-to-br from-accent to-[#1d4ed8] px-6 pb-6 pt-8 text-white">
-          <CalendarDays className="size-9" />
-          <h2 id="schedule-promo-title" className="mt-4 text-2xl font-extrabold tracking-tight">
+        <div className="bg-accent-soft px-6 pb-6 pt-3 sm:pt-7">
+          <span aria-hidden className="mx-auto mb-4 block h-1 w-10 rounded-full bg-accent/25 sm:hidden" />
+          <span className="flex size-12 items-center justify-center rounded-2xl bg-accent text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.14)]">
+            <CalendarDays className="size-6" />
+          </span>
+          <h2 id="schedule-promo-title" className="headline mt-5 text-[26px] text-ink">
             Sync your schedule
           </h2>
-          <p className="mt-1 text-[15px] text-white/85">Merit knows what&apos;s coming, so you know what to study tonight.</p>
+          <p className="mt-1.5 text-[15px] leading-relaxed text-ink-2">Merit knows what&apos;s coming, so you know what to study tonight.</p>
         </div>
-        <div className="px-6 pb-6 pt-5">
-          <ul className="space-y-2.5 text-[14px] text-ink-2">
+        <div className="px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-5 sm:pb-6">
+          <ul className="space-y-3 text-[14px] leading-relaxed text-ink-2">
             {CALENDAR_BENEFITS.map(({ key, Icon, title, body }, i) => (
               <li key={key} className="flex gap-3">
-                <Icon className="mt-0.5 size-5 shrink-0 text-accent" />
+                <Icon className="mt-0.5 size-[18px] shrink-0 text-accent-ink" />
                 <span>
                   <span className="font-semibold text-ink">{title}.</span> {i < 2 ? body : null}
                 </span>
               </li>
             ))}
           </ul>
-          <p className="mt-5 rounded-xl bg-accent-soft px-4 py-3 text-[13.5px] text-ink">
-            Included with <span className="font-semibold">Merit Plus</span> or <span className="font-semibold">Exam Sprint</span>.{" "}
+          <p className="mt-5 rounded-2xl bg-bg-subtle px-4 py-3 text-[13.5px] leading-relaxed text-ink-2">
+            Included with <span className="font-semibold text-ink">Merit Plus</span> or <span className="font-semibold text-ink">Exam Sprint</span>.{" "}
             {trialDaysLeft != null ? (
               <>
-                Your first month of Plus is free: <span className="font-semibold">{trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"} left</span>.
+                Your first month of Plus is free: <span className="font-semibold text-ink">{trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"} left</span>.
               </>
             ) : (
               <>Merit Plus is free for your first month.</>
             )}
           </p>
-          <Link ref={cta} href="/schedule" onClick={dismiss} className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-white hover:brightness-110">
+          <Link ref={cta} href="/schedule" onClick={dismiss} className={buttonClass("primary", "lg", "mt-5 w-full")}>
             Sync my schedule <ArrowRight className="size-4" />
           </Link>
         </div>

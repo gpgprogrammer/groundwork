@@ -6,6 +6,7 @@ import { Faq } from "@/components/marketing";
 import { BillingToggle } from "@/components/pricing-client";
 import { BuyButton, PlusBadge, SprintBadge } from "@/components/upgrade";
 import { cn } from "@/components/ui";
+import { WorldBand } from "@/components/learn-band";
 import { AI_LIMITS } from "@/lib/ai/limits";
 import { annualSavings, PLUS, SPRINT, usd } from "@/lib/billing/plans";
 import { isStripeEnabled, paymentsPaused } from "@/lib/env";
@@ -35,7 +36,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
   const priceBlock = (period: "year" | "month") => (
     <div>
       <p className="flex items-baseline gap-1.5">
-        <span className="text-5xl font-extrabold tracking-tight">{usd(period === "year" ? PLUS.annual : PLUS.monthly)}</span>
+        <span className="font-brand text-5xl font-black tracking-tight">{usd(period === "year" ? PLUS.annual : PLUS.monthly)}</span>
         <span className="text-white/70">/{period}</span>
       </p>
       <p className="mt-1 text-[13px] text-white/70">{period === "year" ? `That's ${usd(PLUS.annual / 12)} a month.` : "Cancel anytime."}</p>
@@ -53,22 +54,25 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
   );
 
   return (
-    <div className="mx-auto max-w-[1200px] px-4 pb-20 pt-10 sm:px-6">
-      <CheckoutNotice sp={sp} />
-      <div className="mx-auto max-w-2xl text-center">
-        <h1 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">Understand what you&apos;re studying tonight.</h1>
-        <p className="mt-4 text-[17px] leading-relaxed text-ink-2">
-          Every course and lesson is free, forever. Plus plans your nights around your real schedule. Exam Sprint gets you ready for one big exam.
-        </p>
+    <>
+    <WorldBand
+      size="lg"
+      className="pb-24 text-center lg:pb-28 [&_h1]:mx-auto [&_p]:mx-auto"
+      kicker={<span className="mx-auto rounded-full bg-white/15 px-3.5 py-1.5 ring-1 ring-inset ring-white/25">Pricing</span>}
+      title="Understand what you're studying tonight."
+      lede="Every course and lesson is free, forever. Plus plans your nights around your real schedule. Exam Sprint gets you ready for one big exam."
+    />
+    <div className="mx-auto max-w-[1200px] px-4 pb-20 sm:px-6">
+      <div className="pt-6">
+        <CheckoutNotice sp={sp} />
       </div>
-
-      <div className="mt-12 grid gap-5 lg:grid-cols-3">
+      <div className="relative -mt-24 grid gap-5 lg:-mt-28 lg:grid-cols-3">
         {/* Free */}
-        <section className="flex flex-col rounded-3xl p-7 ring-1 ring-line">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
-            <GraduationCap className="size-5 text-accent" /> Free
+        <section className="flex flex-col rounded-[28px] bg-surface p-7 shadow-[0_6px_0_0_var(--line)] ring-2 ring-line">
+          <h2 className="flex items-center gap-2 font-brand text-[20px] font-black text-ink">
+            <GraduationCap className="size-5 text-accent-ink" /> Free
           </h2>
-          <p className="mt-4 text-5xl font-extrabold tracking-tight text-ink">$0</p>
+          <p className="mt-4 font-brand text-5xl font-black tracking-tight text-ink">$0</p>
           <p className="mt-1 text-[13px] text-muted">Forever. No card.</p>
           <ul className="mt-6 flex-1 space-y-3 text-[14.5px] text-ink-2">
             {[
@@ -90,10 +94,10 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
         </section>
 
         {/* Plus */}
-        <section className="relative flex flex-col overflow-hidden rounded-3xl bg-gradient-to-br from-[#2d5ff0] via-[#2346c7] to-[#172a7a] p-7 text-white shadow-lift">
-          <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-white/15 blur-3xl" />
+        <section className="relative flex flex-col overflow-hidden rounded-[28px] bg-accent p-7 text-white shadow-[0_6px_0_0_var(--accent-press)] ring-4 ring-white dark:ring-surface">
+          <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full border-[28px] border-white/10" />
           <div className="relative flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-bold">
+            <h2 className="flex items-center gap-2 font-brand text-[20px] font-black">
               <Sparkles className="size-5" /> {PLUS.name}
             </h2>
             <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide">First month free</span>
@@ -103,41 +107,41 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
           </div>
           <ul className="relative mt-7 space-y-3 text-[14.5px]">
             <li className="flex gap-2.5 font-medium">
-              <Check className="mt-0.5 size-4 shrink-0 text-[#a9c8ff]" /> Everything in Free
+              <Check className="mt-0.5 size-4 shrink-0 text-white/80" /> Everything in Free
             </li>
             {PLUS.features.map((f) => (
               <li key={f.key} className="flex gap-2.5">
-                <Check className="mt-0.5 size-4 shrink-0 text-[#a9c8ff]" />
+                <Check className="mt-0.5 size-4 shrink-0 text-white/80" />
                 <span>
                   <span className="font-semibold">{f.title}.</span> <span className="text-white/75">{f.body}</span>
                 </span>
               </li>
             ))}
             <li className="flex gap-2.5">
-              <Check className="mt-0.5 size-4 shrink-0 text-[#a9c8ff]" /> <span className="text-white/90">{AI_LIMITS.plus} AI questions a day</span>
+              <Check className="mt-0.5 size-4 shrink-0 text-white/80" /> <span className="text-white/90">{AI_LIMITS.plus} AI questions a day</span>
             </li>
           </ul>
         </section>
 
         {/* Sprint */}
-        <section className="flex flex-col rounded-3xl p-7 ring-2 ring-[#ff8a3d]">
+        <section className="flex flex-col rounded-[28px] bg-surface p-7 shadow-[0_6px_0_0_var(--sprint-press)] ring-2 ring-sprint">
           <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
-              <Target className="size-5 text-[#e0531c]" /> {SPRINT.name}
+            <h2 className="flex items-center gap-2 font-brand text-[20px] font-black text-ink">
+              <Target className="size-5 text-sprint" /> {SPRINT.name}
             </h2>
-            <span className="rounded-full bg-[#fff1e8] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[#c2410c] dark:bg-[#3a1d0c] dark:text-[#ffb489]">
+            <span className="rounded-full bg-sprint-soft px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-sprint-ink">
               One-time
             </span>
           </div>
           <p className="mt-4 flex items-baseline gap-1.5">
-            <span className="text-5xl font-extrabold tracking-tight text-ink">{usd(SPRINT.price)}</span>
+            <span className="font-brand text-5xl font-black tracking-tight text-ink">{usd(SPRINT.price)}</span>
             <span className="text-muted">once</span>
           </p>
           <p className="mt-1 text-[13px] text-muted">Try it free for 7 days. Then pay once: every class and every test, forever, with calendar sync.</p>
           <ul className="mt-6 flex-1 space-y-3 text-[14.5px] text-ink-2">
             {SPRINT.features.map((f) => (
               <li key={f.title} className="flex gap-2.5">
-                <Check className="mt-0.5 size-4 shrink-0 text-[#e0531c]" />
+                <Check className="mt-0.5 size-4 shrink-0 text-sprint" />
                 <span>
                   <span className="font-semibold text-ink">{f.title}.</span> {f.body}
                 </span>
@@ -145,7 +149,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
             ))}
           </ul>
           <div className="mt-8 space-y-2">
-            <Link href="/sprint" className="flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ff8a3d] to-[#e0531c] text-[15px] font-semibold text-white hover:brightness-110">
+            <Link href="/sprint" className="flex h-12 items-center justify-center gap-2 rounded-full bg-sprint text-[15px] font-semibold text-white hover:brightness-110 transition-[background-color,transform] duration-150 active:scale-[0.97]">
               Take the free diagnostic <ArrowRight className="size-4" />
             </Link>
             {viewer ? (
@@ -158,26 +162,26 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
       </div>
 
       <section className="mt-6 grid gap-5 md:grid-cols-2">
-        <Link href="/pricing/parents" className="group flex items-center gap-5 rounded-3xl bg-bg-subtle p-7 hover:bg-line">
-          <HeartHandshake className="size-10 shrink-0 text-[#e0531c]" />
+        <Link href="/pricing/parents" className="press group flex items-center gap-5 rounded-[28px] bg-sprint-soft p-7 ring-2 ring-sprint/15 [--ledge:color-mix(in_oklab,var(--sprint)_25%,transparent)]">
+          <HeartHandshake className="size-10 shrink-0 text-sprint" />
           <div>
             <p className="text-lg font-bold text-ink">Buying for your student?</p>
             <p className="mt-1 text-[14px] text-ink-2">Pay for Plus or an Exam Sprint with your card. It unlocks the moment they sign in with their email.</p>
-            <p className="mt-2 text-sm font-semibold text-accent group-hover:underline">Parent checkout →</p>
+            <p className="mt-2 text-sm font-semibold text-accent-ink group-hover:underline">Parent checkout →</p>
           </div>
         </Link>
-        <Link href="/ask" className="group flex items-center gap-5 rounded-3xl bg-bg-subtle p-7 hover:bg-line">
-          <Bot className="size-10 shrink-0 text-accent" />
+        <Link href="/ask" className="press group flex items-center gap-5 rounded-[28px] bg-[#fdeef6] p-7 ring-2 ring-[#db2777]/15 [--ledge:#f9a8d4] dark:bg-[#3d1830]">
+          <Bot className="size-10 shrink-0 text-accent-ink" />
           <div>
             <p className="text-lg font-bold text-ink">Try Merit AI free</p>
             <p className="mt-1 text-[14px] text-ink-2">Ask it to explain a topic, quiz you, or find the best lesson. No account needed for your first {AI_LIMITS.anonymous} questions.</p>
-            <p className="mt-2 text-sm font-semibold text-accent group-hover:underline">Ask a question →</p>
+            <p className="mt-2 text-sm font-semibold text-accent-ink group-hover:underline">Ask a question →</p>
           </div>
         </Link>
       </section>
 
       <section className="mx-auto mt-20 max-w-3xl">
-        <h2 className="text-center text-3xl font-bold tracking-tight text-ink">How an Exam Sprint works</h2>
+        <h2 className="text-center headline text-[28px] sm:text-[34px] text-ink">How an Exam Sprint works</h2>
         <ol className="mt-10 grid gap-4 sm:grid-cols-2">
           {[
             ["Take the diagnostic", "Ten minutes of exam-style questions across every unit, plus how confident you feel. Free."],
@@ -185,8 +189,8 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
             ["Follow the daily plan", "Each day: the one or two best lessons for your weakest topics and a practice set. Weak spots come back until they stick."],
             ["Walk in ready", "Weekly checkpoints, free-response feedback, and one-page cram sheets for the last week."],
           ].map(([t, b], i) => (
-            <li key={t} className="rounded-2xl p-6 ring-1 ring-line">
-              <span className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-[#ff8a3d] to-[#e0531c] text-sm font-bold text-white">{i + 1}</span>
+            <li key={t} className="rounded-2xl p-6 bg-surface ring-2 ring-line">
+              <span className="flex size-8 items-center justify-center rounded-full bg-sprint text-sm font-bold text-white">{i + 1}</span>
               <p className="mt-4 font-semibold text-ink">{t}</p>
               <p className="mt-1 text-[14px] leading-relaxed text-muted">{b}</p>
             </li>
@@ -212,5 +216,6 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
         {paymentsPaused ? "Purchases open soon. Until then, Merit Plus is free for your first month and Exam Sprint has a free 7-day trial." : "Payments are in test mode while Merit connects its payment processor. No card is charged."}
       </p>
     </div>
+    </>
   );
 }

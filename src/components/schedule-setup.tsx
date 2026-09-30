@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { connectCalendarUrl, findBlackbaud, findMySchool, importIcsFile, previewImport, saveImport, type PreviewResult, type ScheduleResult } from "@/app/actions/schedule";
 import type { Candidate } from "@/lib/extract-events";
 import type { SchoolPortal } from "@/lib/school-detect";
-import { Button, cn } from "./ui";
+import { cn } from "./ui";
 
 const LMS = /(myschoolapp|blackbaud|instructure|schoology|veracross|brightspace|d2l|moodle)\./i;
 const isLink = (t: string) => /^(webcal|https?):\/\/\S+$/i.test(t.trim());
@@ -137,16 +137,16 @@ export function ScheduleSetup({ googleEnabled }: { googleEnabled: boolean }) {
     <div className="@container space-y-5">
       {googleEnabled ? (
         <>
-          <a href="/api/calendar/google/start" className="flex items-center gap-4 rounded-2xl p-4 ring-1 ring-line hover:bg-bg-subtle">
+          <a href="/api/calendar/google/start" className="press flex items-center gap-4 rounded-3xl border-2 border-line bg-surface p-4 [--ledge:var(--line)] hover:bg-bg-subtle">
             <GoogleMark />
             <span className="min-w-0 flex-1">
-              <span className="block font-semibold text-ink">Connect Google Calendar</span>
+              <span className="block font-brand text-[16px] font-extrabold text-ink">Connect Google Calendar</span>
               <span className="block text-[13px] text-muted">One click. Includes Google Classroom, and stays in sync on its own.</span>
             </span>
-            <span className="hidden h-9 items-center rounded-full bg-ink px-4 text-sm font-semibold text-bg sm:inline-flex">Connect</span>
+            <span className="press-sm hidden h-10 items-center rounded-xl bg-[#15803d] px-4 font-brand text-sm font-extrabold text-white [--ledge:#0f5c2b] sm:inline-flex">Connect</span>
           </a>
-          <p className="flex items-center gap-3 text-[12px] font-medium uppercase tracking-wide text-muted">
-            <span className="h-px flex-1 bg-line" /> or copy and paste your school calendar <span className="h-px flex-1 bg-line" />
+          <p className="flex items-center gap-3 text-center font-brand text-[12.5px] font-extrabold uppercase tracking-wide text-muted">
+            <span className="h-0.5 flex-1 rounded-full bg-line" /> or copy and paste your school calendar <span className="h-0.5 flex-1 rounded-full bg-line" />
           </p>
         </>
       ) : null}
@@ -156,13 +156,13 @@ export function ScheduleSetup({ googleEnabled }: { googleEnabled: boolean }) {
           {portal === undefined ? (
             <Loader2 className="size-4 animate-spin text-muted" />
           ) : portal ? (
-            <button type="button" onClick={() => open(portal.calendarUrl)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline">
+            <button type="button" onClick={() => open(portal.calendarUrl)} className="press-sm inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#15803d] px-3.5 font-brand text-[13.5px] font-extrabold text-white [--ledge:#0f5c2b] hover:brightness-110">
               Open my {SYSTEM[portal.system]} calendar <ExternalLink className="size-3.5" />
             </button>
           ) : (
             <div className="space-y-1.5">
               <form
-                className="flex items-center gap-1 rounded-full bg-bg px-2.5 text-[13px] ring-1 ring-line-strong focus-within:ring-2 focus-within:ring-accent"
+                className="flex h-11 items-center gap-1 rounded-xl bg-surface pl-3 pr-1 text-[13px] ring-2 ring-inset ring-line-strong focus-within:ring-positive"
                 onSubmit={(e) => {
                   e.preventDefault();
                   start(async () => {
@@ -176,15 +176,15 @@ export function ScheduleSetup({ googleEnabled }: { googleEnabled: boolean }) {
               >
                 <input value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="yourschool" aria-label="Your school's Blackbaud address" className="h-8 w-24 min-w-0 flex-1 bg-transparent outline-none" />
                 <span className="shrink-0 text-[12px] text-muted">.myschoolapp.com</span>
-                <button className="ml-1 font-semibold text-accent" disabled={!prefix.trim()}>
+                <button className="ml-1 h-8 rounded-lg bg-[#15803d] px-3 font-brand text-[13px] font-extrabold text-white disabled:opacity-50" disabled={!prefix.trim()}>
                   Open
                 </button>
               </form>
-              <p className="text-[12px] text-muted">
+              <p className="text-[12.5px] text-muted">
                 Not Blackbaud?{" "}
                 {OTHERS.map((o, i) => (
                   <span key={o.name}>
-                    <button type="button" onClick={() => open(o.href)} className="text-accent hover:underline">
+                    <button type="button" onClick={() => open(o.href)} className="font-semibold text-positive hover:underline">
                       {o.name}
                     </button>
                     {i < OTHERS.length - 1 ? " · " : ""}
@@ -195,16 +195,16 @@ export function ScheduleSetup({ googleEnabled }: { googleEnabled: boolean }) {
           )}
         </Step>
         <Step n={2} title="Select all and copy">
-          <p className="text-sm text-ink-2">
+          <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-2">
             Press <Kbd>⌘A</Kbd> then <Kbd>⌘C</Kbd>
           </p>
-          <p className="mt-1 text-[12px] text-muted">On Windows: Ctrl+A, Ctrl+C</p>
+          <p className="mt-2 text-[12.5px] text-muted">On Windows: Ctrl+A, Ctrl+C</p>
         </Step>
         <Step n={3} title="Paste it here">
-          <p className="text-sm text-ink-2">
+          <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-2">
             Come back and press <Kbd>⌘V</Kbd>
           </p>
-          <p className="mt-1 text-[12px] text-muted">Anywhere on this page</p>
+          <p className="mt-2 text-[12.5px] text-muted">Anywhere on this page</p>
         </Step>
       </ol>
 
@@ -219,20 +219,26 @@ export function ScheduleSetup({ googleEnabled }: { googleEnabled: boolean }) {
           setDragging(false);
           handle.current({ files: [...e.dataTransfer.files] });
         }}
-        className={cn("flex flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition-colors", dragging ? "border-accent bg-accent-soft" : "border-line-strong")}
+        className={cn(
+          "flex min-h-56 flex-col items-center justify-center rounded-3xl border-[3px] border-dashed px-5 py-9 text-center transition-[background-color,border-color,transform] duration-200",
+          dragging ? "scale-[1.01] border-positive bg-positive-soft" : "border-line-strong bg-bg-subtle/50",
+        )}
       >
         {pending ? (
-          <p className="flex items-center gap-2 text-[15px] font-medium text-ink">
-            <Loader2 className="size-5 animate-spin text-accent" /> Reading your calendar…
+          <p className="flex items-center gap-3 font-brand text-[17px] font-extrabold text-ink" role="status">
+            <Loader2 className="size-6 animate-spin text-positive" /> Reading your calendar…
           </p>
         ) : (
           <>
-            <button type="button" onClick={pasteButton} className="inline-flex h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-white hover:brightness-110">
-              <ClipboardPaste className="size-4" /> Paste my calendar
+            <span aria-hidden className="mb-4 flex size-16 items-center justify-center rounded-3xl bg-positive-soft text-positive">
+              <ClipboardPaste className="size-8" strokeWidth={2.2} />
+            </span>
+            <button type="button" onClick={pasteButton} className="press inline-flex h-14 items-center gap-2.5 rounded-2xl bg-[#15803d] px-7 font-brand text-[17px] font-extrabold text-white [--ledge:#0f5c2b] hover:brightness-110">
+              <ClipboardPaste className="size-5" /> Paste my calendar
             </button>
-            <p className="mt-3 text-[13px] text-muted">
+            <p className="mt-4 max-w-md text-[13.5px] leading-relaxed text-muted">
               Also works with a calendar link, a screenshot, a PDF, or an .ics file.{" "}
-              <button type="button" onClick={() => fileInput.current?.click()} className="inline-flex items-center gap-1 font-medium text-accent hover:underline">
+              <button type="button" onClick={() => fileInput.current?.click()} className="inline-flex items-center gap-1 font-bold text-positive hover:underline">
                 <Upload className="size-3.5" /> Choose a file
               </button>
             </p>
@@ -254,36 +260,36 @@ export function ScheduleSetup({ googleEnabled }: { googleEnabled: boolean }) {
       </div>
 
       {error ? (
-        <p className="text-sm text-[#c2410c]" role="alert">
+        <p className="fade rounded-2xl bg-danger-soft px-4 py-3 text-sm font-semibold text-danger" role="alert">
           {error}
         </p>
       ) : null}
       {result ? (
-        <p className="flex items-start gap-2 text-sm text-positive" role="status">
-          <Check className="mt-0.5 size-4 shrink-0" />
+        <p className="fade flex items-start gap-2 rounded-2xl bg-positive-soft px-4 py-3 text-sm font-semibold text-positive" role="status">
+          <Check className="check-pop mt-0.5 size-4 shrink-0" strokeWidth={3} />
           Added {result.added} {result.added === 1 ? "test or assignment" : "tests and assignments"} from {result.label}.
         </p>
       ) : null}
 
       {preview ? (
-        <div className="rounded-2xl ring-1 ring-line">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
-            <p className="text-sm font-semibold text-ink">
+        <div className="pop overflow-hidden rounded-3xl bg-surface ring-2 ring-line">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-line bg-positive-soft px-4 py-3.5">
+            <p className="font-brand text-[15px] font-extrabold text-ink">
               We found {preview.candidates.length} dated {preview.candidates.length === 1 ? "item" : "items"}. Check the ones to add.
             </p>
-            <div className="flex gap-2 text-[12.5px]">
-              <button type="button" className="font-medium text-accent" onClick={() => setPicked(new Set(preview.candidates.map((_, i) => i)))}>
+            <div className="flex gap-1.5 font-brand text-[13px] font-extrabold">
+              <button type="button" className="h-8 rounded-lg bg-surface px-3 text-positive ring-2 ring-inset ring-line" onClick={() => setPicked(new Set(preview.candidates.map((_, i) => i)))}>
                 All
               </button>
-              <button type="button" className="font-medium text-muted" onClick={() => setPicked(new Set())}>
+              <button type="button" className="h-8 rounded-lg bg-surface px-3 text-muted ring-2 ring-inset ring-line" onClick={() => setPicked(new Set())}>
                 None
               </button>
             </div>
           </div>
-          <ul className="max-h-80 divide-y divide-line overflow-y-auto">
+          <ul className="max-h-80 divide-y-2 divide-line overflow-y-auto">
             {preview.candidates.map((c: Candidate, i) => (
               <li key={i}>
-                <label className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm hover:bg-bg-subtle">
+                <label className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-2.5 text-sm hover:bg-bg-subtle">
                   <input
                     type="checkbox"
                     checked={picked.has(i)}
@@ -295,19 +301,21 @@ export function ScheduleSetup({ googleEnabled }: { googleEnabled: boolean }) {
                         return n;
                       })
                     }
-                    className="size-4 accent-[var(--accent)]"
+                    className="size-5 shrink-0 accent-[#15803d]"
                   />
                   <span className="tabular w-24 shrink-0 text-[12.5px] text-muted">{new Date(`${c.date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
-                  <span className="min-w-0 flex-1 truncate text-ink">{c.title}</span>
+                  <span className="min-w-0 flex-1 truncate font-semibold text-ink">{c.title}</span>
                   {c.kind === "test" || c.kind === "assignment" ? (
-                    <span className={cn("shrink-0 rounded px-1.5 py-0.5 text-[10.5px] font-bold uppercase", c.kind === "test" ? "bg-[#fde8e8] text-[#b42318]" : "bg-bg-subtle text-ink-2")}>{c.kind === "test" ? "Test" : "Due"}</span>
+                    <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 font-brand text-[11.5px] font-extrabold", c.kind === "test" ? "bg-sprint-soft text-sprint-ink" : "bg-accent-soft text-accent-ink")}>{c.kind === "test" ? "Test" : "Due"}</span>
                   ) : null}
                 </label>
               </li>
             ))}
           </ul>
-          <div className="flex items-center justify-end border-t border-line px-4 py-3">
-            <Button
+          <div className="flex items-center justify-end border-t-2 border-line px-4 py-3.5">
+            <button
+              type="button"
+              className="press inline-flex h-12 items-center rounded-2xl bg-[#15803d] px-6 font-brand text-[15.5px] font-extrabold text-white [--ledge:#0f5c2b] hover:brightness-110 disabled:pointer-events-none disabled:opacity-50"
               disabled={pending || !picked.size}
               onClick={() =>
                 start(async () => {
@@ -320,13 +328,13 @@ export function ScheduleSetup({ googleEnabled }: { googleEnabled: boolean }) {
               }
             >
               Add {picked.size} to my schedule
-            </Button>
+            </button>
           </div>
         </div>
       ) : null}
 
       <div className="text-[13px]">
-        <button type="button" onClick={() => setShowSync((v) => !v)} className="font-medium text-accent hover:underline" aria-expanded={showSync}>
+        <button type="button" onClick={() => setShowSync((v) => !v)} className="font-bold text-positive hover:underline" aria-expanded={showSync}>
           Want it to update on its own?
         </button>
         {showSync ? (
@@ -343,17 +351,17 @@ export function ScheduleSetup({ googleEnabled }: { googleEnabled: boolean }) {
 
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
-    <li className="rounded-2xl bg-bg-subtle p-4">
-      <p className="flex items-center gap-2 text-[13px] font-semibold text-ink">
-        <span className="flex size-5 items-center justify-center rounded-full bg-accent text-[11px] text-white">{n}</span> {title}
+    <li className="rounded-3xl bg-surface p-4 ring-2 ring-line">
+      <p className="flex items-center gap-3 font-brand text-[16px] font-extrabold leading-tight text-ink">
+        <span className="press-sm tabular flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#15803d] text-[18px] font-black text-white [--ledge:#0f5c2b]">{n}</span> {title}
       </p>
-      <div className="mt-2.5">{children}</div>
+      <div className="mt-3.5">{children}</div>
     </li>
   );
 }
 
 function Kbd({ children }: { children: React.ReactNode }) {
-  return <kbd className="rounded-md bg-bg px-1.5 py-0.5 font-sans text-[12.5px] font-semibold text-ink ring-1 ring-line-strong">{children}</kbd>;
+  return <kbd className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border-2 border-b-4 border-line-strong bg-surface px-1.5 font-brand text-[13px] font-extrabold text-ink">{children}</kbd>;
 }
 
 function GoogleMark() {

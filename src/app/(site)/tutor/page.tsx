@@ -1,12 +1,14 @@
-import { BadgeCheck, CalendarClock, Wallet } from "lucide-react";
+import { BadgeCheck, CalendarClock, CalendarDays, ChevronRight, Hourglass, Inbox, CircleCheckBig, Upload, UserPlus, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 import { AvailabilityEditor } from "@/components/booking-client";
-import { BookingStatus, money } from "@/components/booking-ui";
+import { BookingStatus, DateTile, money, sessionWhen } from "@/components/booking-ui";
 import { RequestStatus } from "@/components/request-status";
-import { Initials, RatingLine } from "@/components/tutoring-ui";
-import { ago } from "@/components/ui";
+import { heroBtn, heroBtnGhost, WORLD_ON_WHITE, WorldHero } from "@/components/marketing";
+import { Initials, RatingLine, StatTile, V } from "@/components/tutoring-ui";
+import { ago, cn, EmptyState, Notice, panel, panelLink } from "@/components/ui";
 import { getTutorMeta, ledger, listBookings } from "@/lib/bookings";
 import { listLeads } from "@/lib/leads";
 import { LogSessionForm } from "@/components/lead-ui";
@@ -19,6 +21,21 @@ export const metadata: Metadata = { title: "Tutor dashboard" };
 
 function upcomingOf<T extends { status: string; startsAt: string }>(bookings: T[], now = Date.now()) {
   return bookings.filter((b) => (b.status === "requested" || b.status === "confirmed") && new Date(b.startsAt).getTime() > now - 3 * 3600000).reverse();
+}
+
+function Section({ title, sub, count, children, i }: { title: string; sub?: string; count?: number; children: ReactNode; i: number }) {
+  return (
+    <section className="rise" style={{ ["--i" as string]: i }}>
+      <div className="mb-4">
+        <h2 className="headline flex items-center gap-2 text-[22px] text-ink">
+          {title}
+          {count ? <span className="tabular inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-[#7c3aed] px-2 font-brand text-[13px] font-black text-white">{count}</span> : null}
+        </h2>
+        {sub ? <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-muted">{sub}</p> : null}
+      </div>
+      {children}
+    </section>
+  );
 }
 
 export default async function TutorDashboard() {
@@ -40,156 +57,212 @@ export default async function TutorDashboard() {
   const past = bookings.filter((b) => !upcoming.includes(b)).slice(0, 12);
   const pendingCount = bookings.filter((b) => b.status === "requested").length;
 
+  const stats: { label: string; value: string | number; icon: ReactNode; hot?: boolean }[] = [
+    { label: "Waiting for you", value: pendingCount, icon: <Hourglass className="size-[18px]" aria-hidden />, hot: pendingCount > 0 },
+    { label: "Sessions completed", value: money$.sessions, icon: <CircleCheckBig className="size-[18px]" aria-hidden /> },
+    { label: "Earned (after fees)", value: money(money$.net), icon: <Wallet className="size-[18px]" aria-hidden /> },
+    { label: "Students referred", value: referrals[t.id] ?? 0, icon: <UserPlus className="size-[18px]" aria-hidden /> },
+  ];
+
   return (
-    <div className="mx-auto max-w-[1100px] px-4 pb-20 pt-6 sm:px-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <Initials name={t.name} size={64} />
-          <div>
-            <h1 className="flex items-center gap-2 text-[28px] font-bold tracking-tight text-ink">
-              Tutor dashboard {meta.vetted ? <BadgeCheck className="size-6 text-accent" aria-label="Merit Verified" /> : null}
-            </h1>
-            <p className="text-sm text-muted">
-              <RatingLine rating={t.rating} count={t.reviewCount} />
-            </p>
+    <div className="pb-20">
+      <WorldHero world="violet" inner="pb-10 pt-8">
+        <div className="rise flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+            <span className="shrink-0 rounded-full bg-white p-1 shadow-[0_4px_0_0_rgb(0_0_0/0.2)]">
+              <Initials name={t.name} size={76} />
+            </span>
+            <div className="min-w-0">
+              <p className="font-brand text-[14px] font-extrabold text-white/80">Tutor dashboard</p>
+              <h1 className="display mt-0.5 flex items-center gap-2 text-[32px] sm:text-[44px]">
+                <span className="truncate">{t.name}</span>
+                {meta.vetted ? <BadgeCheck className="size-7 shrink-0" aria-label="Merit Verified" /> : null}
+              </h1>
+              <p className="mt-1.5 inline-flex h-8 items-center rounded-full bg-white px-3 text-[13.5px]">
+                <RatingLine rating={t.rating} count={t.reviewCount} />
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap">
+            <Link href="/tutors/join" className={cn(heroBtn, WORLD_ON_WHITE.violet, "col-span-2 sm:col-span-1")}>
+              Edit listing
+            </Link>
+            <Link href={`/tutors/${t.id}`} className={heroBtnGhost}>
+              Public profile
+            </Link>
+            <Link href="/studio/upload" className={heroBtnGhost}>
+              <Upload className="size-4" aria-hidden /> Upload
+            </Link>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Link href="/studio/upload" className="flex h-9 items-center rounded-full bg-accent px-4 text-sm font-medium text-white">
-            Upload a video
-          </Link>
-          <Link href={`/tutors/${t.id}`} className="flex h-9 items-center rounded-full bg-bg-subtle px-4 text-sm font-medium text-ink hover:bg-line">
-            Public profile
-          </Link>
-          <Link href="/tutors/join" className="flex h-9 items-center rounded-full bg-ink px-4 text-sm font-medium text-bg">
-            Edit listing
-          </Link>
-        </div>
-      </div>
+      </WorldHero>
 
-      <dl className="tabular mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
-        {[
-          ["Waiting for you", pendingCount],
-          ["Sessions completed", money$.sessions],
-          ["Earned (after fees)", money(money$.net)],
-          ["Students referred", referrals[t.id] ?? 0],
-        ].map(([k, v]) => (
-          <div key={k as string} className="rounded-2xl bg-bg-subtle p-5">
-            <dd className="text-2xl font-bold text-ink">{v}</dd>
-            <dt className="text-sm text-muted">{k}</dt>
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-2 gap-3 pt-6 lg:grid-cols-4">
+        {stats.map((s, i) => (
+          <div key={s.label} className="rise" style={{ ["--i" as string]: i + 1 }}>
+            <StatTile
+              label={s.label}
+              value={s.value}
+              icon={s.icon}
+              tone={s.hot ? "violet" : i === 2 ? "soft" : "surface"}
+              className="h-full"
+            />
           </div>
         ))}
-      </dl>
+      </div>
 
       {!meta.availability.length ? (
-        <p className="mt-6 flex items-center gap-3 rounded-2xl bg-warn-soft p-4 text-sm text-ink">
-          <CalendarClock className="size-5 shrink-0 text-warn" /> Add your weekly hours below so students can book you directly.
-        </p>
+        <Notice tone="warn" className="mt-5">
+          Add your weekly hours below so students can book you directly.
+        </Notice>
       ) : null}
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_380px]">
-        <div className="min-w-0">
-          <h2 className="text-xl font-bold tracking-tight text-ink">Upcoming sessions</h2>
-          <div className="mt-4 space-y-2">
-            {upcoming.map((b) => (
-              <Link key={b.id} href={`/bookings/${b.id}`} className="flex items-center gap-4 rounded-2xl p-4 ring-1 ring-line hover:bg-bg-subtle">
-                <Initials name={b.studentName} size={40} />
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-ink">{b.studentName}</p>
-                  <p className="text-[13px] text-muted">
-                    {new Date(b.startsAt).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · {b.minutes} min
-                    {b.courseId ? ` · ${catalog.course(b.courseId)?.shortTitle}` : ""}
-                  </p>
-                </div>
-                <BookingStatus b={b} />
-              </Link>
-            ))}
-            {!upcoming.length ? <p className="rounded-2xl bg-bg-subtle px-5 py-6 text-sm text-muted">No upcoming sessions yet.</p> : null}
-          </div>
+      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8 grid-cols-[minmax(0,1fr)]">
+        <div className="min-w-0 space-y-10">
+          <Section title="Upcoming sessions" count={upcoming.length} i={2}>
+            {upcoming.length ? (
+              <ul className="space-y-3">
+                {upcoming.map((b) => {
+                  const w = sessionWhen(b.startsAt);
+                  return (
+                    <li key={b.id}>
+                      <Link href={`/bookings/${b.id}`} className={cn(panelLink, "group flex items-center gap-4 p-4 sm:gap-5")}>
+                        <DateTile iso={b.startsAt} size="lg" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-brand text-[18px] font-extrabold text-ink">{b.studentName}</p>
+                          <BookingStatus b={b} className="mt-1.5" />
+                          <p className="tabular mt-2 truncate text-[13.5px] font-semibold text-muted">
+                            {w.day} · {w.time} · {b.minutes} min
+                            {b.courseId ? ` · ${catalog.course(b.courseId)?.shortTitle}` : ""}
+                          </p>
+                        </div>
+                        <ChevronRight className="hidden size-4 shrink-0 text-faint transition-transform duration-200 ease-out group-hover:translate-x-0.5 sm:block" aria-hidden />
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <EmptyState icon={<CalendarDays className="size-5" />} title="No upcoming sessions yet." body="When a student books one of your open hours, it shows up here for you to confirm." />
+            )}
+          </Section>
+
+          <Section title="Messages" count={requests.length} i={3}>
+            {requests.length ? (
+              <ul className="space-y-3">
+                {requests.map((r) => (
+                  <li key={r.id} className={cn(panel, "p-4 sm:p-5")}>
+                    <div className="flex items-start gap-3">
+                      <Initials name={r.name} size={40} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <p className="truncate font-brand text-[16px] font-extrabold text-ink">{r.name}</p>
+                          <span className="shrink-0 text-xs text-muted">{ago(r.createdAt)}</span>
+                        </div>
+                        <a href={`mailto:${r.email}`} className={cn("break-all text-sm font-bold hover:underline", V.ink)}>
+                          {r.email}
+                        </a>
+                      </div>
+                    </div>
+                    <p className={cn("mt-3 whitespace-pre-line rounded-2xl p-4 text-[15px] leading-relaxed text-ink", V.soft)}>{r.message}</p>
+                    {r.courseId || r.availability ? (
+                      <p className="mt-2 text-[12.5px] text-muted">{[r.courseId ? catalog.course(r.courseId)?.title : null, r.availability].filter(Boolean).join(" · ")}</p>
+                    ) : null}
+                    <RequestStatus id={r.id} status={r.status} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState icon={<Inbox className="size-5" />} title="No messages yet." body="Students who message you from your profile show up here." />
+            )}
+          </Section>
+
+          <Section
+            title="Students Merit referred"
+            sub="If you work with any of these students outside Merit in the next 12 months, log the session here. The 10% referral fee is added to your fees due."
+            count={openLeads.length}
+            i={4}
+          >
+            {openLeads.length ? (
+              <ul className="space-y-3">
+                {openLeads.map((l) => (
+                  <li key={l.id} className={cn(panel, "p-4 sm:p-5")}>
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-brand text-[16px] font-extrabold text-ink">{l.studentName}</p>
+                        <p className="break-all text-[13px] text-muted">{l.studentEmail}</p>
+                      </div>
+                      {l.status === "reported" ? (
+                        <span className="inline-flex h-7 items-center rounded-full bg-warn-soft px-3 font-brand text-xs font-extrabold text-warn">Student reported a session</span>
+                      ) : (
+                        <span className="text-[12px] text-muted">Referred {ago(l.createdAt)}</span>
+                      )}
+                    </div>
+                    <LogSessionForm leadId={l.id} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="rounded-3xl border-2 border-dashed border-line px-5 py-5 text-sm font-semibold text-muted">No open referrals.</p>
+            )}
+          </Section>
 
           {past.length ? (
-            <>
-              <h2 className="mt-10 text-xl font-bold tracking-tight text-ink">Past sessions</h2>
-              <div className="mt-4 divide-y divide-line rounded-2xl ring-1 ring-line">
+            <Section title="Past sessions" i={5}>
+              <ul className={cn(panel, "divide-y divide-line overflow-hidden")}>
                 {past.map((b) => (
-                  <Link key={b.id} href={`/bookings/${b.id}`} className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-bg-subtle">
-                    <span className="truncate text-ink">
-                      {b.studentName} · {new Date(b.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </span>
-                    <span className="flex shrink-0 items-center gap-3">
-                      <span className="tabular text-muted">{b.amount ? money(b.amount) : "Free"}</span>
-                      <BookingStatus b={b} />
-                    </span>
-                  </Link>
+                  <li key={b.id}>
+                    <Link href={`/bookings/${b.id}`} className="flex min-h-16 items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-bg-subtle sm:px-5">
+                      <DateTile iso={b.startsAt} muted />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-brand font-extrabold text-ink">{b.studentName}</span>
+                        <span className="tabular block text-[12.5px] text-muted">{new Date(b.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-3">
+                        <span className="tabular font-brand font-extrabold text-ink-2">{b.amount ? money(b.amount) : "Free"}</span>
+                        <BookingStatus b={b} />
+                      </span>
+                    </Link>
+                  </li>
                 ))}
-              </div>
-            </>
+              </ul>
+            </Section>
           ) : null}
-
-          <h2 className="mt-10 text-xl font-bold tracking-tight text-ink">Students Merit referred</h2>
-          <p className="mt-1 text-[13px] text-muted">If you work with any of these students outside Merit in the next 12 months, log the session here. The 10% referral fee is added to your fees due.</p>
-          <div className="mt-4 space-y-3">
-            {openLeads.map((l) => (
-              <div key={l.id} className="rounded-2xl p-4 ring-1 ring-line">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-semibold text-ink">
-                    {l.studentName} <span className="font-normal text-muted">· {l.studentEmail}</span>
-                  </p>
-                  {l.status === "reported" ? (
-                    <span className="rounded-full bg-warn-soft px-2.5 py-0.5 text-[12px] font-semibold text-warn">Student reported a session</span>
-                  ) : (
-                    <span className="text-[12px] text-muted">Referred {ago(l.createdAt)}</span>
-                  )}
-                </div>
-                <LogSessionForm leadId={l.id} />
-              </div>
-            ))}
-            {!openLeads.length ? <p className="rounded-2xl bg-bg-subtle px-5 py-6 text-sm text-muted">No open referrals.</p> : null}
-          </div>
-
-          <h2 className="mt-10 text-xl font-bold tracking-tight text-ink">Messages</h2>
-          <div className="mt-4 space-y-3">
-            {requests.map((r) => (
-              <div key={r.id} className="rounded-2xl p-5 ring-1 ring-line">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-ink">{r.name}</p>
-                    <a href={`mailto:${r.email}`} className="text-sm text-accent hover:underline">
-                      {r.email}
-                    </a>
-                  </div>
-                  <span className="text-xs text-muted">{ago(r.createdAt)}</span>
-                </div>
-                <p className="mt-3 text-[15px] leading-relaxed text-ink-2">{r.message}</p>
-                <p className="mt-2 text-xs text-muted">{[r.courseId ? catalog.course(r.courseId)?.title : null, r.availability].filter(Boolean).join(" · ")}</p>
-                <RequestStatus id={r.id} status={r.status} />
-              </div>
-            ))}
-            {!requests.length ? <p className="rounded-2xl bg-bg-subtle px-5 py-6 text-sm text-muted">No messages yet.</p> : null}
-          </div>
         </div>
 
-        <aside className="space-y-5">
-          <section className="rounded-2xl p-5 ring-1 ring-line">
-            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-ink">
-              <CalendarClock className="size-4 text-accent" /> Weekly hours
-            </h2>
-            <p className="mt-1 text-[13px] text-muted">Students can book any open 30-minute start time in these windows, with at least 12 hours&apos; notice.</p>
-            <div className="mt-4">
-              <AvailabilityEditor initial={meta.availability} timezone={meta.timezone} />
-            </div>
-          </section>
-          <Link href="/tutor/payouts" className="flex items-center gap-4 rounded-2xl p-5 ring-1 ring-line hover:bg-bg-subtle">
-            <Wallet className="size-6 shrink-0 text-accent" />
-            <span className="min-w-0 flex-1">
-              <span className="block text-[15px] font-semibold text-ink">Payouts and fees</span>
-              <span className="block text-[13px] text-muted">
-                {meta.payoutsEnabled ? "Students can pay you through Merit" : "Set up payouts to get paid through Merit"}
-                {money$.owedTotal ? ` · ${money(money$.owedTotal)} in fees due` : ""}
+        <aside className={cn("min-w-0", !meta.availability.length && "order-first lg:order-none")}>
+          <div className="space-y-4">
+            <section className={cn(panel, "rise p-5")} style={{ ["--i" as string]: 3 }}>
+              <div className="flex items-start gap-3">
+                <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-2xl", V.solid)}>
+                  <CalendarClock className="size-5" aria-hidden />
+                </span>
+                <div className="min-w-0">
+                  <h2 className="font-brand text-[18px] font-extrabold text-ink">Weekly hours</h2>
+                  <p className="mt-0.5 text-[13px] leading-relaxed text-muted">Students can book any open 30-minute start time in these windows, with at least 12 hours&apos; notice.</p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <AvailabilityEditor initial={meta.availability} timezone={meta.timezone} />
+              </div>
+            </section>
+            <Link href="/tutor/payouts" className={cn(panelLink, "group flex items-center gap-3.5 p-5")}>
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-positive text-white">
+                <Wallet className="size-5" aria-hidden />
               </span>
-            </span>
-          </Link>
+              <span className="min-w-0 flex-1">
+                <span className="block font-brand text-[16px] font-extrabold text-ink">Payouts and fees</span>
+                <span className="block text-[13px] leading-snug text-muted">
+                  {meta.payoutsEnabled ? "Students can pay you through Merit" : "Set up payouts to get paid through Merit"}
+                  {money$.owedTotal ? ` · ${money(money$.owedTotal)} in fees due` : ""}
+                </span>
+              </span>
+              <ChevronRight className="size-4 shrink-0 text-faint transition-transform duration-200 ease-out group-hover:translate-x-0.5" aria-hidden />
+            </Link>
+          </div>
         </aside>
+      </div>
       </div>
     </div>
   );

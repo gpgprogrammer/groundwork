@@ -4,6 +4,11 @@ import { ArrowRight } from "lucide-react";
 import { useActionState, useState } from "react";
 import { createSprint, type CreateState } from "@/app/actions/sprint";
 import { StudyTimeInput } from "../study-time-input";
+import { selectClass, inputClass } from "../form";
+import { buttonClass } from "../ui";
+
+/** The shared field style, made chunkier for the Sprint start tile. */
+const chunky = (base: string) => base.replace("h-11", "h-12").replace("rounded-xl", "rounded-2xl").replace("ring-1 ring-inset", "ring-2 ring-inset").replace("text-[15px]", "text-[16px] font-semibold").replace("focus:ring-accent", "focus:ring-sprint");
 
 type Opt = { id: string; title: string; category: string; defaultDate: string | null };
 
@@ -16,8 +21,8 @@ export function SprintStartForm({ courses, initialCourse, signedIn }: { courses:
     return (
       <div className="space-y-4">
         <label className="block">
-          <span className="mb-1.5 block text-[13px] font-medium text-white/80">Exam</span>
-          <select value={courseId} onChange={(e) => setCourseId(e.target.value)} className="h-12 w-full rounded-xl bg-white px-3 text-[15px] text-[#0f172a]">
+          <span className="mb-1.5 block font-brand text-[14px] font-extrabold text-ink">Exam</span>
+          <select value={courseId} onChange={(e) => setCourseId(e.target.value)} className={chunky(selectClass)}>
             <option value="">Choose your exam</option>
             {groups.map((g) => (
               <optgroup key={g} label={g}>
@@ -28,18 +33,18 @@ export function SprintStartForm({ courses, initialCourse, signedIn }: { courses:
             ))}
           </select>
         </label>
-        <a href={`/signup?next=${encodeURIComponent(`/sprint${courseId ? `?course=${courseId}` : ""}`)}`} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold text-[#0f172a] hover:bg-white/90">
+        <a href={`/signup?next=${encodeURIComponent(`/sprint${courseId ? `?course=${courseId}` : ""}`)}`} className={buttonClass("sprint", "lg", "w-full")}>
           Start the free diagnostic <ArrowRight className="size-4" />
         </a>
-        <p className="text-center text-[12px] text-white/70">Free account, no card. Takes 20 seconds.</p>
+        <p className="text-center text-[12.5px] text-muted">Free account, no card. Takes 20 seconds.</p>
       </div>
     );
   }
   return (
     <form action={action} className="space-y-4">
       <label className="block">
-        <span className="mb-1.5 block text-[13px] font-medium text-white/80">Exam</span>
-        <select name="courseId" required value={courseId} onChange={(e) => setCourseId(e.target.value)} className="h-12 w-full rounded-xl bg-white px-3 text-[15px] text-[#0f172a]">
+        <span className="mb-1.5 block font-brand text-[14px] font-extrabold text-ink">Exam</span>
+        <select name="courseId" required value={courseId} onChange={(e) => setCourseId(e.target.value)} className={chunky(selectClass)}>
           <option value="" disabled>
             Choose your exam
           </option>
@@ -58,14 +63,14 @@ export function SprintStartForm({ courses, initialCourse, signedIn }: { courses:
       </label>
       <div>
         <label className="block">
-          <span className="mb-1.5 block text-[13px] font-medium text-white/80">Exam date</span>
-          <input key={courseId} type="date" name="examDate" required defaultValue={course?.defaultDate ?? ""} className="h-12 w-full rounded-xl bg-white px-3 text-[15px] text-[#0f172a]" />
+          <span className="mb-1.5 block font-brand text-[14px] font-extrabold text-ink">Exam date</span>
+          <input key={courseId} type="date" name="examDate" required defaultValue={course?.defaultDate ?? ""} className={chunky(inputClass)} />
         </label>
       </div>
-      <StudyTimeInput defaultMinutes={45} label="How much time do you have each day?" onDark />
-      {course?.defaultDate ? <p className="text-[12px] text-white/70">AP exams run the first two weeks of May. Check your exact date with your AP coordinator.</p> : null}
-      {state.error ? <p className="text-sm font-medium text-[#ffd2b8]">{state.error}</p> : null}
-      <button type="submit" disabled={pending} className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold text-[#0f172a] hover:bg-white/90 disabled:opacity-60">
+      <StudyTimeInput defaultMinutes={45} label="How much time do you have each day?" />
+      {course?.defaultDate ? <p className="text-[12.5px] text-muted">AP exams run the first two weeks of May. Check your exact date with your AP coordinator.</p> : null}
+      {state.error ? <p className="text-sm font-medium text-danger" role="alert">{state.error}</p> : null}
+      <button type="submit" disabled={pending} className={buttonClass("sprint", "lg", "w-full")}>
         {pending ? "Setting up…" : "Start the free diagnostic"} <ArrowRight className="size-4" />
       </button>
     </form>

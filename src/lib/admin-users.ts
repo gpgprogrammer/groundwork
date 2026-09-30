@@ -2,10 +2,11 @@ import "server-only";
 import { plusAccess } from "@/lib/billing/access";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
-import { isSupabaseEnabled } from "@/lib/env";
+import { isStripeEnabled, isSupabaseEnabled } from "@/lib/env";
 import { normalizeSchedule } from "@/lib/schedule-model";
 import { createAdminClient } from "@/lib/supabase/server";
 import type { Billing, Educator, Profile } from "@/lib/types";
+import { removeUserObjects } from "@/lib/uploads";
 
 export type AdminUser = {
   id: string;
@@ -96,4 +97,69 @@ export type FilterKey = keyof typeof FILTERS;
 export function filterUsers(users: AdminUser[], q: string, filter: FilterKey) {
   const needle = q.trim().toLowerCase();
   return users.filter((u) => FILTERS[filter].test(u) && (!needle || u.email.includes(needle) || u.name.toLowerCase().includes(needle)));
+}
+
+export type RemoveAdminUserResult = { ok: true } | { ok: false; error: string };
+
+/** Permanently removes a non-admin account and the data owned by it. */
+export async function removeAdminUserAccount(input: { actorId: string; targetId: string; adminEmails: string[] }): Promise<RemoveAdminUserResult> {
+  if (!isSupabaseEnabled) return { ok: false, error: "Account removal is only available when the live database is connected." };
+  if (input.actorId === input.targetId) return { ok: false, error: "You cannot remove your own admin account." };
+
+  const db = createAdminClient();
+  const { data, error } = await db.auth.admin.getUserById(input.targetId);
+  if (error || !data.user) return { ok: false, error: "That account no longer exists." };
+  const email = (data.user.email ?? "").trim().toLowerCase();
+  if (input.adminEmails.includes(email)) return { ok: false, error: "Admin accounts are protected and cannot be removed here." };
+
+  const store = await getStore();
+  const [billing, planPrefs, tutor] = await Promise.all([
+    store.getDoc<Billing>("billing", input.targetId),
+    store.getDoc<{ feedToken?: string }>("planPrefs", input.targetId),
+    store.listTutors().then((tutors) => tutors.find((item) => item.userId === input.targetId) ?? null),
+  ]);
+
+  // Supabase will not delete an auth user while that user owns Storage files.
+  try {
+    await removeUserObjects(input.targetId);
+  } catch (error) {
+    console.error("[admin-users] upload cleanup failed", error);
+    return { ok: false, error: "This account's uploaded files could not be removed. Try again." };
+  }
+
+  const hasLiveStripeSubscription = billing?.plus.source === "stripe" && (billing.plus.status === "active" || billing.plus.status === "past_due");
+  const subscriptionId = hasLiveStripeSubscription ? billing.plus.stripeSubscriptionId : null;
+  if (hasLiveStripeSubscription && !subscriptionId) {
+    return { ok: false, error: "Cancel this account's active Stripe subscription before removing it." };
+  }
+  if (subscriptionId) {
+    if (!isStripeEnabled) return { ok: false, error: "Cancel this account's active Stripe subscription before removing it." };
+    try {
+      const { getStripe } = await import("@/lib/billing/stripe");
+      await getStripe().subscriptions.cancel(subscriptionId);
+    } catch (error) {
+      if ((error as { code?: string }).code === "resource_missing") {
+        console.warn(`[admin-users] Stripe subscription ${subscriptionId} was already removed`);
+      } else {
+        console.error("[admin-users] subscription cancellation failed", error);
+        return { ok: false, error: "The paid subscription could not be canceled, so the account was not removed. Try again." };
+      }
+    }
+    if (billing) {
+      await store.putDoc("billing", input.targetId, { ...billing, plus: { ...billing.plus, status: "canceled", cancelAtPeriodEnd: false } }, input.targetId);
+    }
+  }
+
+  const { error: deleteError } = await db.auth.admin.deleteUser(input.targetId);
+  if (deleteError) {
+    console.error("[admin-users] auth account deletion failed", deleteError);
+    return { ok: false, error: "The account could not be removed. Try again." };
+  }
+
+  await Promise.all([
+    planPrefs?.feedToken ? store.deleteDoc("planFeeds", planPrefs.feedToken) : Promise.resolve(),
+    tutor ? store.deleteDoc("tutorMeta", tutor.id) : Promise.resolve(),
+  ]).catch((cleanupError) => console.error("[admin-users] post-deletion cleanup failed", cleanupError));
+
+  return { ok: true };
 }

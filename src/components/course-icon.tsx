@@ -91,6 +91,14 @@ const MARKS: Record<string, Mark> = {
   "sat-reading-writing": { icon: BookText, from: "#ef5a6f", to: "#b52a45" },
 };
 
+export const hasCourseIcon = (id: string) => id in MARKS;
+
+/** The course's two brand colors, for full-bleed course heroes. */
+export function courseColors(id: string) {
+  const m = MARKS[id];
+  return { from: m?.from ?? "#4287f5", to: m?.to ?? "#2346c7" };
+}
+
 export function courseColor(id: string) {
   return MARKS[id]?.from ?? "#3b82f6";
 }

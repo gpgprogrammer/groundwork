@@ -12,14 +12,15 @@ const LINKS = [
 export function SettingsNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex gap-1 md:flex-col" aria-label="Settings">
+    <nav className="scrollbar-none -mx-1 flex gap-1 overflow-x-auto px-1 md:flex-col" aria-label="Settings">
       {LINKS.map((l) => (
         <Link
           key={l.href}
           href={l.href}
+          aria-current={pathname === l.href ? "page" : undefined}
           className={cn(
-            "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-            pathname === l.href ? "bg-bg-subtle text-ink" : "text-muted hover:text-ink",
+            "shrink-0 rounded-full px-4 py-2 text-[14px] font-semibold transition-colors md:rounded-xl",
+            pathname === l.href ? "bg-accent-soft text-accent-ink" : "text-muted hover:bg-bg-subtle hover:text-ink",
           )}
         >
           {l.label}

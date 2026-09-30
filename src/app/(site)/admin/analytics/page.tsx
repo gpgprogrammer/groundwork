@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { money } from "@/components/booking-ui";
-import { cn } from "@/components/ui";
+import { PageHeader, SegmentedLinks, cn } from "@/components/ui";
 import { getViewer } from "@/lib/viewer";
 import { loadAnalytics } from "./data";
 import { LiveRefresh } from "./live-refresh";
@@ -40,26 +40,16 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
   const t = a.traffic;
 
   return (
-    <div className="mx-auto max-w-[1300px] px-4 pb-20 pt-8 sm:px-6">
+    <div className="mx-auto w-full max-w-7xl px-4 pb-24 pt-8 sm:px-6 sm:pt-10 lg:px-8">
       <LiveRefresh />
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <Link href="/admin" className="text-sm text-muted hover:text-ink">
-            ← Admin
-          </Link>
-          <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-ink">Analytics</h1>
-        </div>
-        <div className="flex gap-1 rounded-full bg-bg-subtle p-1">
-          {RANGES.map((r) => (
-            <Link key={r.d} href={`/admin/analytics?range=${r.d}`} className={cn("rounded-full px-3 py-1.5 text-[13px] font-medium", r.d === days ? "bg-bg text-ink shadow-sm" : "text-muted hover:text-ink")}>
-              {r.label}
-            </Link>
-          ))}
-        </div>
-      </div>
+      <PageHeader
+        back={{ href: "/admin", label: "Admin" }}
+        title="Analytics"
+        actions={<SegmentedLinks label="Date range" active={String(days)} items={RANGES.map((r) => ({ key: String(r.d), label: r.label, href: `/admin/analytics?range=${r.d}` }))} />}
+      />
 
-      <div className="mt-6 flex items-center gap-3 rounded-2xl bg-positive-soft px-5 py-4">
-        <span className="relative flex size-3">
+      <div className="rise mt-6 flex items-center gap-3 rounded-2xl bg-positive-soft px-5 py-4" style={{ ["--i" as string]: 1 }}>
+        <span className="relative flex size-3 shrink-0">
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-positive opacity-60" />
           <span className="relative inline-flex size-3 rounded-full bg-positive" />
         </span>
@@ -82,10 +72,10 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
         <Bars series={t.series.map((s) => ({ at: s.at, a: s.views, b: s.visitors }))} hourly={t.hourly} />
         <p className="mt-2 flex gap-4 text-[12px] text-muted">
           <span className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-sm bg-accent" /> Page views
+            <span className="size-2.5 rounded-full bg-accent" /> Page views
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-sm bg-[#93c5fd]" /> Visitors
+            <span className="size-2.5 rounded-full bg-accent/35" /> Visitors
           </span>
         </p>
       </Card>
@@ -143,10 +133,10 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
       <Card title="Tutors" className="mt-8">
         <div className="overflow-x-auto">
           <table className="tabular w-full min-w-[720px] text-left text-sm">
-            <thead className="text-[12px] text-muted">
+            <thead className="border-b border-line text-[12px] text-muted">
               <tr>
                 {["Tutor", "Profile views", "Contacts", "Link clicks", "Bookings", "GMV", "Commission", "Referred sessions"].map((h) => (
-                  <th key={h} className="px-2 pb-2 font-medium">
+                  <th key={h} scope="col" className="whitespace-nowrap px-2 pb-2.5 font-semibold">
                     {h}
                   </th>
                 ))}
@@ -154,7 +144,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
             </thead>
             <tbody className="divide-y divide-line">
               {a.tutoring.rows.map((r) => (
-                <tr key={r.id}>
+                <tr key={r.id} className="transition-colors duration-150 hover:bg-bg-subtle/50">
                   <td className="px-2 py-2">
                     <Link href={`/tutors/${r.id}`} className="font-medium text-ink hover:underline">
                       {r.name}
@@ -174,7 +164,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
           {!a.tutoring.rows.length ? <p className="py-4 text-sm text-muted">No tutors yet.</p> : null}
         </div>
       </Card>
-      <p className="mt-8 text-[12px] text-muted">
+      <p className="mt-8 max-w-3xl text-[12px] leading-relaxed text-muted">
         First-party analytics: stored in Merit&apos;s own database with a random visitor id. No IP addresses, no third-party trackers. Page views started counting when this dashboard shipped; money and tutoring numbers include earlier history.
       </p>
     </div>
@@ -184,26 +174,26 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mt-8">
-      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-muted">{title}</h2>
-      <div className="tabular grid grid-cols-2 gap-3 md:grid-cols-4">{children}</div>
+      <h2 className="headline mb-3 text-[17px] text-ink">{title}</h2>
+      <div className="tabular grid grid-cols-2 gap-3 lg:grid-cols-4">{children}</div>
     </section>
   );
 }
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-2xl bg-bg-subtle p-4">
-      <p className="text-2xl font-bold text-ink">{value}</p>
-      <p className="text-[12.5px] text-ink-2">{label}</p>
-      {hint ? <p className="mt-0.5 text-[11.5px] text-muted">{hint}</p> : null}
+    <div className="min-w-0 rounded-2xl bg-surface p-4 ring-2 ring-line">
+      <p className="text-[12.5px] font-medium text-muted">{label}</p>
+      <p className="mt-1 break-words text-[22px] font-bold leading-tight tracking-tight text-ink">{value}</p>
+      {hint ? <p className="mt-1 text-[11.5px] leading-snug text-faint">{hint}</p> : null}
     </div>
   );
 }
 
 function Card({ title, children, className }: { title: string; children: ReactNode; className?: string }) {
   return (
-    <section className={cn("rounded-2xl p-5 ring-1 ring-line", className)}>
-      <h2 className="mb-3 text-[15px] font-semibold text-ink">{title}</h2>
+    <section className={cn("min-w-0 rounded-2xl bg-surface p-5 ring-2 ring-line", className)}>
+      <h2 className="mb-3 text-[14.5px] font-semibold text-ink">{title}</h2>
       {children}
     </section>
   );
@@ -215,7 +205,7 @@ function Table({ title, rows, empty = "No data yet." }: { title: string; rows: [
       {rows.length ? (
         <ul className="tabular divide-y divide-line text-sm">
           {rows.map(([k, v], i) => (
-            <li key={i} className="flex items-center justify-between gap-4 py-1.5">
+            <li key={i} className="flex items-center justify-between gap-4 py-2">
               <span className="min-w-0 truncate text-ink-2">{k}</span>
               <span className="shrink-0 font-medium text-ink">{v}</span>
             </li>
@@ -240,7 +230,7 @@ function Bars({ series, hourly }: { series: { at: string; a: number; b: number }
           <g key={s.at}>
             <title>{`${label(s.at)}: ${s.a} views, ${s.b} visitors`}</title>
             <rect x={i * w + w * 0.1} width={w * 0.8} y={40 - (s.a / max) * 38} height={(s.a / max) * 38} fill="var(--accent)" rx="0.3" />
-            <rect x={i * w + w * 0.3} width={w * 0.4} y={40 - (s.b / max) * 38} height={(s.b / max) * 38} fill="#93c5fd" rx="0.3" />
+            <rect x={i * w + w * 0.3} width={w * 0.4} y={40 - (s.b / max) * 38} height={(s.b / max) * 38} fill="color-mix(in oklab, var(--accent) 35%, var(--surface))" rx="0.3" />
           </g>
         ))}
       </svg>

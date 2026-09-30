@@ -263,6 +263,13 @@ test("a teacher sets up a studio and publishes a study guide on a topic", async 
   await page.getByText(/only add accurate, school-appropriate material/).click();
   await page.getByRole("button", { name: "Save and open my studio" }).click();
   await page.waitForURL(/\/studio\?welcome=1/);
+  const profile = await page.getByRole("link", { name: "View public profile" }).getAttribute("href");
+  await page.goto(profile!);
+  const upload = page.getByRole("link", { name: "Upload a video" }).first();
+  await expect(upload).toHaveAttribute("href", "/studio/upload");
+  await upload.click();
+  await page.waitForURL(/\/studio\/upload/);
+  await expect(page.getByRole("heading", { name: "Upload a video" })).toBeVisible();
   await page.goto("/studio/guide");
   await page.getByLabel("Course").selectOption("ap-calculus-bc");
   await page.getByLabel("Topic").selectOption("ap-calculus-bc/chain-rule");
@@ -273,6 +280,13 @@ test("a teacher sets up a studio and publishes a study guide on a topic", async 
   const guide = new URL(page.url()).pathname;
   await page.goto("/courses/ap-calculus-bc/chain-rule");
   await expect(page.locator(`a[href="${guide}"]`)).toBeVisible();
+});
+
+test("Merit Tutors' Videos is available from both Learn and Tutors", async ({ page }) => {
+  for (const path of ["/courses", "/tutors"]) {
+    await page.goto(path);
+    await expect(page.getByRole("navigation", { name: "Section" }).getByRole("link", { name: "Merit Tutors' Videos" })).toHaveAttribute("href", "/videos");
+  }
 });
 
 test("a student books a tutor's open hour; the tutor confirms and Merit's 10% fee is recorded", async ({ browser }) => {

@@ -1,11 +1,17 @@
 "use client";
 
-import { Loader2, Search } from "lucide-react";
+import { Check, Loader2, Search } from "lucide-react";
 import { useActionState, useMemo, useState, useTransition } from "react";
 import { previewVideo, publishGuide, publishVideo, saveEducatorProfile, type StudioState, type VideoPreview } from "@/app/actions/educator";
 import { Markdown } from "./ask/markdown";
-import { inputClass } from "./form";
-import { cn, formatDuration, formatViews } from "./ui";
+import { FormMessage, inputClass, selectClass } from "./form";
+import { Button, cn, formatDuration, formatViews } from "./ui";
+
+const labelText = "mb-1.5 block font-brand text-[13.5px] font-extrabold text-ink-2";
+const optional = <span className="font-normal text-faint"> (optional)</span>;
+const textareaClass = cn(inputClass, "h-auto py-3 leading-relaxed");
+const chip = "press-sm flex min-h-10 items-center gap-1.5 rounded-2xl px-4 py-1.5 font-brand text-[13.5px] font-extrabold ring-2 ring-inset transition-[background-color,color,box-shadow,transform] duration-100 ease-out";
+const pledgeClass = "flex cursor-pointer items-start gap-3 rounded-2xl bg-bg-subtle p-4 text-[14px] font-medium leading-relaxed text-ink ring-2 ring-inset ring-line transition-colors duration-150 hover:bg-line/50 has-[:checked]:bg-accent-soft has-[:checked]:ring-accent";
 
 export type CourseTopics = { id: string; title: string; category: string; topics: { id: string; title: string; unit: string }[] };
 
@@ -15,14 +21,14 @@ export function TopicPicker({ courses, courseId, setCourseId, topicId, setTopicI
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <label className="block">
-        <span className="mb-1.5 block text-[13px] font-medium text-ink-2">Course</span>
+        <span className={labelText}>Course</span>
         <select
           value={courseId}
           onChange={(e) => {
             setCourseId(e.target.value);
             setTopicId("");
           }}
-          className={inputClass}
+          className={selectClass}
         >
           <option value="">Choose a course</option>
           {courses.map((c) => (
@@ -33,8 +39,8 @@ export function TopicPicker({ courses, courseId, setCourseId, topicId, setTopicI
         </select>
       </label>
       <label className="block">
-        <span className="mb-1.5 block text-[13px] font-medium text-ink-2">Topic</span>
-        <select name="topicId" value={topicId} onChange={(e) => setTopicId(e.target.value)} required disabled={!course} className={inputClass}>
+        <span className={labelText}>Topic</span>
+        <select name="topicId" value={topicId} onChange={(e) => setTopicId(e.target.value)} required disabled={!course} className={selectClass}>
           <option value="">Choose a topic</option>
           {units.map((u) => (
             <optgroup key={u} label={u}>
@@ -57,38 +63,50 @@ export function EducatorForm({ courses, initial }: { courses: { id: string; titl
   const [state, action, pending] = useActionState<StudioState, FormData>(saveEducatorProfile, {});
   const groups = [...new Set(courses.map((c) => c.category))];
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
-          <span className="mb-1.5 block text-[13px] font-medium text-ink-2">Name students will see</span>
+          <span className={labelText}>Name students will see</span>
           <input name="name" defaultValue={initial.name} required maxLength={60} className={inputClass} placeholder="Ms. Rivera" />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-[13px] font-medium text-ink-2">School or organization (optional)</span>
+          <span className={labelText}>School or organization{optional}</span>
           <input name="school" defaultValue={initial.school} maxLength={100} className={inputClass} />
         </label>
       </div>
       <label className="block">
-        <span className="mb-1.5 block text-[13px] font-medium text-ink-2">Headline</span>
+        <span className={labelText}>Headline</span>
         <input name="headline" defaultValue={initial.headline} required maxLength={100} className={inputClass} placeholder="AP Chemistry teacher, 12 years" />
       </label>
       <label className="block">
-        <span className="mb-1.5 block text-[13px] font-medium text-ink-2">About you (optional)</span>
-        <textarea name="bio" defaultValue={initial.bio} rows={3} maxLength={1200} className={cn(inputClass, "h-auto py-2.5")} />
+        <span className={labelText}>About you{optional}</span>
+        <textarea name="bio" defaultValue={initial.bio} rows={3} maxLength={1200} className={textareaClass} />
       </label>
-      <fieldset>
-        <legend className="mb-2 text-[13px] font-medium text-ink-2">Courses you teach</legend>
-        <div className="space-y-3">
+      <fieldset className="border-t-2 border-line pt-6">
+        <legend className="sr-only">Courses you teach</legend>
+        <p aria-hidden className="font-brand text-[18px] font-extrabold text-ink">
+          Courses you teach
+        </p>
+        <p className="mt-0.5 text-[13px] text-muted">Pick every course you want to add lessons and guides for.</p>
+        <div className="mt-4 space-y-4">
           {groups.map((g) => (
             <div key={g}>
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">{g}</p>
-              <div className="flex flex-wrap gap-1.5">
+              <p className="mb-2 font-brand text-[12.5px] font-extrabold text-muted">{g}</p>
+              <div className="flex flex-wrap gap-2">
                 {courses
                   .filter((c) => c.category === g)
                   .map((c) => (
                     <label key={c.id} className="cursor-pointer">
                       <input type="checkbox" name="courseIds" value={c.id} defaultChecked={initial.courseIds.includes(c.id)} className="peer sr-only" />
-                      <span className="block rounded-full px-3 py-1.5 text-[13px] text-ink-2 ring-1 ring-line-strong peer-checked:bg-accent peer-checked:text-white peer-checked:ring-accent">{c.title}</span>
+                      <span
+                        className={cn(
+                          chip,
+                          "bg-surface text-ink ring-line [--ledge:var(--line)] hover:bg-bg-subtle peer-checked:bg-accent peer-checked:text-white peer-checked:ring-accent peer-checked:[--ledge:var(--accent-press)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent [&>svg]:hidden peer-checked:[&>svg]:block",
+                        )}
+                      >
+                        <Check className="size-3.5" strokeWidth={3} aria-hidden />
+                        {c.title}
+                      </span>
                     </label>
                   ))}
               </div>
@@ -96,14 +114,15 @@ export function EducatorForm({ courses, initial }: { courses: { id: string; titl
           ))}
         </div>
       </fieldset>
-      <label className="flex items-start gap-3 rounded-xl bg-bg-subtle p-4 text-[13.5px] text-ink-2">
-        <input type="checkbox" name="pledge" required className="mt-0.5 size-4 accent-[var(--accent)]" />
+      <label className={pledgeClass}>
+        <input type="checkbox" name="pledge" required className="mt-0.5 size-[18px] shrink-0 accent-[var(--accent)]" />
         I&apos;ll only add accurate, school-appropriate material, and I have the right to share anything I write here.
       </label>
-      {state.error ? <p className="text-sm text-[#c2410c]">{state.error}</p> : null}
-      <button disabled={pending} className="h-11 rounded-full bg-accent px-6 text-sm font-semibold text-white disabled:opacity-60">
+      <FormMessage error={state.error} />
+      <Button type="submit" size="lg" disabled={pending} className="w-full sm:w-auto">
+        {pending ? <Loader2 className="size-4 animate-spin" /> : null}
         {pending ? "Saving…" : "Save and open my studio"}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -134,56 +153,73 @@ export function AddVideoForm({ courses }: { courses: CourseTopics[] }) {
   return (
     <div className="space-y-6">
       <div>
-        <label className="mb-1.5 block text-[13px] font-medium text-ink-2" htmlFor="yt-url">
+        <label className={labelText} htmlFor="yt-url">
           YouTube link
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <input
             id="yt-url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), lookup())}
             placeholder="https://www.youtube.com/watch?v=…"
+            inputMode="url"
             className={inputClass}
           />
-          <button type="button" onClick={lookup} disabled={!url.trim() || looking} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-ink px-4 text-sm font-semibold text-bg disabled:opacity-50">
+          <Button type="button" onClick={lookup} disabled={!url.trim() || looking} className="h-11 shrink-0 px-5">
             {looking ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />} Look up
-          </button>
+          </Button>
         </div>
-        {lookupError ? <p className="mt-2 text-sm text-[#c2410c]">{lookupError}</p> : null}
+        {lookupError ? (
+          <div className="mt-2">
+            <FormMessage error={lookupError} />
+          </div>
+        ) : null}
       </div>
 
+      {looking && !preview ? (
+        <div aria-hidden className="flex gap-4 rounded-2xl bg-surface p-3 ring-2 ring-line">
+          <span className="skeleton aspect-video w-32 shrink-0 rounded-xl sm:w-44" />
+          <span className="flex-1 space-y-2 py-1">
+            <span className="skeleton block h-4 w-4/5 rounded-full" />
+            <span className="skeleton block h-3 w-1/2 rounded-full" />
+          </span>
+        </div>
+      ) : null}
+
       {preview ? (
-        <form action={action} className="space-y-5">
+        <form action={action} className="fade space-y-6">
           <input type="hidden" name="videoId" value={preview.id} />
-          <div className="flex gap-4 rounded-2xl p-3 ring-1 ring-line">
-            <span className="relative w-44 shrink-0 overflow-hidden rounded-lg bg-bg-subtle">
+          <div className="flex gap-3 rounded-2xl bg-surface p-3 ring-2 ring-line sm:gap-4">
+            <span className="relative w-32 shrink-0 overflow-hidden rounded-xl bg-bg-subtle sm:w-44">
               <img src={preview.thumbnail} alt="" className="aspect-video w-full object-cover" referrerPolicy="no-referrer" />
-              {preview.durationSec ? <span className="tabular absolute bottom-1 right-1 rounded bg-black/80 px-1 text-[11px] text-white">{formatDuration(preview.durationSec)}</span> : null}
+              {preview.durationSec ? <span className="tabular absolute bottom-1 right-1 rounded-md bg-black/80 px-1.5 py-px text-[11px] font-medium text-white">{formatDuration(preview.durationSec)}</span> : null}
             </span>
-            <div className="min-w-0">
-              <p className="line-clamp-2 font-medium text-ink">{preview.title}</p>
+            <div className="min-w-0 py-0.5">
+              <p className="line-clamp-2 font-brand text-[16px] font-extrabold leading-snug text-ink">{preview.title}</p>
               <p className="mt-1 text-[13px] text-muted">
                 {preview.channelTitle}
-                {preview.views ? ` · ${formatViews(preview.views)} views` : ""}
+                {preview.views ? <span className="tabular">{` · ${formatViews(preview.views)} views`}</span> : ""}
               </p>
-              {preview.alreadyListed ? <p className="mt-1 text-[12.5px] text-positive">Already in Merit&apos;s library. Your pick adds your note and a teacher badge.</p> : null}
+              {preview.alreadyListed ? <p className="mt-1.5 text-[12.5px] font-medium text-positive">Already in Merit&apos;s library. Your pick adds your note and a teacher badge.</p> : null}
             </div>
           </div>
           {preview.suggestedTopics.length ? (
             <div>
-              <p className="mb-1.5 text-[13px] font-medium text-ink-2">Suggested topics</p>
-              <div className="flex flex-wrap gap-1.5">
+              <p className={labelText}>Suggested topics</p>
+              <div className="flex flex-wrap gap-2">
                 {preview.suggestedTopics.map((t) => (
                   <button
                     type="button"
                     key={t.id}
+                    aria-pressed={topicId === t.id}
                     onClick={() => {
                       setCourseId(t.courseId);
                       setTopicId(t.id);
                     }}
-                    className={cn("rounded-full px-3 py-1.5 text-[13px] ring-1", topicId === t.id ? "bg-accent text-white ring-accent" : "text-ink-2 ring-line-strong hover:bg-bg-subtle")}
+                    className={cn(chip, topicId === t.id ? "bg-accent text-white ring-accent [--ledge:var(--accent-press)]" : "bg-surface text-ink ring-line [--ledge:var(--line)] hover:bg-bg-subtle")}
                   >
+                    {topicId === t.id ? <Check className="size-3.5" strokeWidth={3} aria-hidden /> : null}
                     {t.title}
                   </button>
                 ))}
@@ -192,13 +228,14 @@ export function AddVideoForm({ courses }: { courses: CourseTopics[] }) {
           ) : null}
           <TopicPicker courses={courses} courseId={courseId} setCourseId={setCourseId} topicId={topicId} setTopicId={setTopicId} />
           <label className="block">
-            <span className="mb-1.5 block text-[13px] font-medium text-ink-2">Your note for students (optional)</span>
-            <textarea name="note" rows={3} maxLength={1000} className={cn(inputClass, "h-auto py-2.5")} placeholder="Why this one? What should they watch for? e.g. “Best explanation of the chain rule I’ve found. Skip to 4:10 for the worked example.”" />
+            <span className={labelText}>Your note for students{optional}</span>
+            <textarea name="note" rows={3} maxLength={1000} className={textareaClass} placeholder="Why this one? What should they watch for? e.g. “Best explanation of the chain rule I’ve found. Skip to 4:10 for the worked example.”" />
           </label>
-          {state.error ? <p className="text-sm text-[#c2410c]">{state.error}</p> : null}
-          <button disabled={pending || !topicId} className="h-11 rounded-full bg-accent px-6 text-sm font-semibold text-white disabled:opacity-50">
+          <FormMessage error={state.error} />
+          <Button type="submit" size="lg" disabled={pending || !topicId} className="w-full sm:w-auto">
+            {pending ? <Loader2 className="size-4 animate-spin" /> : null}
             {pending ? "Adding…" : "Add to Merit"}
-          </button>
+          </Button>
         </form>
       ) : null}
     </div>
@@ -212,18 +249,24 @@ export function GuideForm({ courses }: { courses: CourseTopics[] }) {
   const [tab, setTab] = useState<"write" | "preview">("write");
   const [state, action, pending] = useActionState<StudioState, FormData>(publishGuide, {});
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} className="space-y-6">
       <TopicPicker courses={courses} courseId={courseId} setCourseId={setCourseId} topicId={topicId} setTopicId={setTopicId} />
       <label className="block">
-        <span className="mb-1.5 block text-[13px] font-medium text-ink-2">Title</span>
+        <span className={labelText}>Title</span>
         <input name="title" required maxLength={120} className={inputClass} placeholder="Chain rule: the 3-step method that never fails" />
       </label>
       <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-[13px] font-medium text-ink-2">Guide</span>
-          <div className="flex gap-1 text-[12px]">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <span className="font-brand text-[13.5px] font-extrabold text-ink-2">Guide</span>
+          <div className="flex gap-1.5 pb-1">
             {(["write", "preview"] as const).map((t) => (
-              <button type="button" key={t} onClick={() => setTab(t)} className={cn("rounded-md px-2 py-1 font-medium capitalize", tab === t ? "bg-bg-subtle text-ink" : "text-muted")}>
+              <button
+                type="button"
+                key={t}
+                aria-pressed={tab === t}
+                onClick={() => setTab(t)}
+                className={cn("press-sm h-9 rounded-full px-4 font-brand text-[13px] font-extrabold capitalize transition-[background-color,color,box-shadow,transform] duration-100", tab === t ? "bg-accent text-white [--ledge:var(--accent-press)]" : "bg-surface text-muted ring-2 ring-inset ring-line [--ledge:var(--line)] hover:text-ink")}
+              >
                 {t}
               </button>
             ))}
@@ -238,13 +281,21 @@ export function GuideForm({ courses }: { courses: CourseTopics[] }) {
           className={cn(inputClass, "h-auto py-3 font-mono text-[13.5px] leading-relaxed", tab === "preview" && "hidden")}
           placeholder={"### The idea\nExplain it in plain words.\n\n### Worked example\n1. Step one…\n\n### Common mistakes\n- …"}
         />
-        {tab === "preview" ? <div className="min-h-64 rounded-xl p-4 ring-1 ring-line">{body ? <Markdown text={body} /> : <p className="text-muted">Nothing to preview yet.</p>}</div> : null}
-        <p className="mt-1.5 text-[12px] text-muted">Formatting: ### headings, **bold**, *italics*, - bullet lists, 1. numbered lists, [links](https://…).</p>
+        {tab === "preview" ? (
+          <div className="fade min-h-64 rounded-2xl bg-surface px-5 py-5 ring-2 ring-inset ring-line sm:px-7">
+            {body ? <Markdown text={body} variant="prose" /> : <p className="text-muted">Nothing to preview yet.</p>}
+          </div>
+        ) : null}
+        <p className="mt-2 text-[12.5px] leading-relaxed text-muted">
+          Formatting: <code className="font-mono text-ink-2">###</code> headings, <code className="font-mono text-ink-2">**bold**</code>, <code className="font-mono text-ink-2">*italics*</code>, <code className="font-mono text-ink-2">-</code> bullet lists,{" "}
+          <code className="font-mono text-ink-2">1.</code> numbered lists, <code className="font-mono text-ink-2">[links](https://…)</code>.
+        </p>
       </div>
-      {state.error ? <p className="text-sm text-[#c2410c]">{state.error}</p> : null}
-      <button disabled={pending || !topicId} className="h-11 rounded-full bg-accent px-6 text-sm font-semibold text-white disabled:opacity-50">
+      <FormMessage error={state.error} />
+      <Button type="submit" size="lg" disabled={pending || !topicId} className="w-full sm:w-auto">
+        {pending ? <Loader2 className="size-4 animate-spin" /> : null}
         {pending ? "Publishing…" : "Publish guide"}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { FeedVideo } from "@/lib/feed";
 import { LENGTHS, SORTS, type LengthKey, type SortKey } from "@/lib/ranking";
+import { CourseIcon, hasCourseIcon } from "./course-icon";
 import { cn } from "./ui";
 import { ShortCard, VideoCard, VideoRow } from "./video-card";
 
@@ -43,13 +44,13 @@ export function Chips({ chips, active, param = "chip" }: { chips: { key: string;
   return (
     <div className="relative min-w-0 flex-1">
       {edges.left ? (
-        <div className="absolute inset-y-0 left-0 z-10 flex items-center bg-gradient-to-r from-bg from-60% to-transparent pr-8">
-          <button onClick={() => scroll(-1)} className="flex size-8 items-center justify-center rounded-full hover:bg-bg-subtle" aria-label="Scroll left">
+        <div className="absolute inset-y-0 left-0 z-10 hidden items-center bg-gradient-to-r from-bg from-60% to-transparent pr-10 sm:flex">
+          <button onClick={() => scroll(-1)} className="flex size-8 items-center justify-center rounded-full bg-surface text-ink shadow-soft ring-1 ring-line transition-transform active:scale-95" aria-label="Scroll left">
             <ChevronLeft className="size-5" />
           </button>
         </div>
       ) : null}
-      <div ref={ref} onScroll={measure} className="scrollbar-none flex gap-3 overflow-x-auto" role="tablist">
+      <div ref={ref} onScroll={measure} className="scrollbar-none flex gap-2 overflow-x-auto" role="tablist">
         {chips.map((c) => (
           <button
             key={c.key}
@@ -57,17 +58,19 @@ export function Chips({ chips, active, param = "chip" }: { chips: { key: string;
             aria-selected={active === c.key}
             onClick={() => update({ [param]: c.key === "all" ? null : c.key })}
             className={cn(
-              "h-8 shrink-0 rounded-lg px-3 text-sm font-medium transition-colors",
-              active === c.key ? "bg-ink text-bg" : "bg-bg-subtle text-ink hover:bg-line",
+              "flex h-10 shrink-0 items-center gap-2 rounded-2xl px-3.5 font-brand text-[14px] font-extrabold transition-[background-color,color,transform] duration-150 active:scale-[0.96]",
+              hasCourseIcon(c.key) && "pl-1.5",
+              active === c.key ? "bg-ink text-bg" : "bg-surface text-ink-2 ring-2 ring-inset ring-line hover:bg-bg-subtle hover:text-ink",
             )}
           >
+            {hasCourseIcon(c.key) ? <CourseIcon id={c.key} size={26} /> : null}
             {c.label}
           </button>
         ))}
       </div>
       {edges.right ? (
-        <div className="absolute inset-y-0 right-0 z-10 flex items-center bg-gradient-to-l from-bg from-60% to-transparent pl-8">
-          <button onClick={() => scroll(1)} className="flex size-8 items-center justify-center rounded-full hover:bg-bg-subtle" aria-label="Scroll right">
+        <div className="absolute inset-y-0 right-0 z-10 hidden items-center bg-gradient-to-l from-bg from-60% to-transparent pl-10 sm:flex">
+          <button onClick={() => scroll(1)} className="flex size-8 items-center justify-center rounded-full bg-surface text-ink shadow-soft ring-1 ring-line transition-transform active:scale-95" aria-label="Scroll right">
             <ChevronRight className="size-5" />
           </button>
         </div>
@@ -105,17 +108,19 @@ function Dropdown<K extends string>({
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label={`${label}: ${options[value]}`}
         className={cn(
-          "flex h-8 items-center gap-1.5 rounded-lg px-3 text-sm font-medium",
-          isDefault ? "bg-bg-subtle text-ink hover:bg-line" : "bg-accent-soft text-accent",
+          "flex h-10 items-center gap-1.5 rounded-2xl px-3.5 font-brand text-[14px] font-extrabold transition-[background-color,transform] duration-150 active:scale-[0.96]",
+          isDefault ? "bg-surface text-ink-2 ring-2 ring-inset ring-line hover:bg-bg-subtle" : "bg-accent-soft text-accent-ink ring-2 ring-inset ring-accent/30",
         )}
       >
         {icon}
         <span className="hidden sm:inline">{isDefault ? label : options[value]}</span>
       </button>
       {open ? (
-        <div className={cn("fade absolute top-10 z-30 w-52 rounded-xl bg-surface py-2 shadow-lift ring-1 ring-line", align === "right" ? "right-0" : "left-0")}>
-          <p className="px-4 pb-1 pt-1 text-xs font-medium text-muted">{label}</p>
+        <div className={cn("pop absolute top-11 z-30 w-56 rounded-2xl bg-surface p-1.5 shadow-lift ring-2 ring-line", align === "right" ? "right-0 origin-top-right" : "left-0 origin-top-left")}>
+          <p className="px-3 pb-1 pt-1.5 text-[12px] font-semibold text-muted">{label}</p>
           {(Object.keys(options) as K[]).map((k) => (
             <button
               key={k}
@@ -123,10 +128,10 @@ function Dropdown<K extends string>({
                 onChange(k);
                 setOpen(false);
               }}
-              className="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-ink hover:bg-bg-subtle"
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[14px] font-medium text-ink transition-colors hover:bg-bg-subtle"
             >
               {options[k]}
-              {k === value ? <Check className="size-4 text-accent" /> : null}
+              {k === value ? <Check className="size-4 text-accent-ink" /> : null}
             </button>
           ))}
         </div>
@@ -218,14 +223,26 @@ export function FeedGrid({ initial, nextOffset, query, layout = "grid", empty, r
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {items.map((v) => (
             <VideoCard key={v.id} v={v} />
           ))}
         </div>
       )}
-      <div ref={sentinel} className="flex h-20 items-center justify-center" aria-hidden={offset === null}>
-        {offset !== null ? <span className="size-6 animate-spin rounded-full border-2 border-line-strong border-t-ink" /> : null}
+      <div ref={sentinel} aria-hidden={offset === null}>
+        {offset !== null && loading ? (
+          <div className="grid grid-cols-1 gap-x-5 gap-y-10 pt-10 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" aria-label="Loading more">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className={i ? "hidden sm:block" : undefined}>
+                <div className="skeleton aspect-video rounded-xl" />
+                <div className="skeleton mt-3 h-4 w-4/5 rounded-full" />
+                <div className="skeleton mt-2 h-3 w-1/2 rounded-full" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="h-20" />
+        )}
       </div>
     </>
   );
@@ -234,9 +251,9 @@ export function FeedGrid({ initial, nextOffset, query, layout = "grid", empty, r
 /** Horizontal shelf of videos with a heading, like YouTube's rows. */
 export function Shelf({ title, icon, action, children }: { title: ReactNode; icon?: ReactNode; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="border-b border-line pb-8 pt-2">
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-ink">
+    <section className="pb-8 pt-2">
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <h2 className="headline flex items-center gap-2.5 text-[20px] text-ink">
           {icon}
           {title}
         </h2>

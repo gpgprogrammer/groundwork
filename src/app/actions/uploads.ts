@@ -67,6 +67,11 @@ export async function publishUpload(input: z.infer<typeof publishSchema>): Promi
     views: 0,
   };
   await (await getStore()).putDoc("contributions", c.id, c, viewer.user.id);
+  const who = await uploaderIdentity(viewer.user.id);
+  revalidatePath("/videos");
+  revalidatePath("/studio");
+  if (who?.educator) revalidatePath(`/educators/${viewer.user.id}`);
+  if (who?.tutorId) revalidatePath(`/tutors/${who.tutorId}`);
   revalidatePath("/", "layout");
   return { ok: true, id: c.id };
 }

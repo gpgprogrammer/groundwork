@@ -1,36 +1,36 @@
 "use client";
 
 import {
+  CalendarCheck,
   CalendarDays,
+  ChartColumn,
+  ChevronDown,
   Clapperboard,
-  SquarePlay,
-  MonitorPlay,
+  Clock,
+  CreditCard,
   GraduationCap,
   History,
   House,
   Info,
+  LibraryBig,
   LogOut,
   Menu,
+  MonitorPlay,
+  NotebookPen,
   Search,
   Settings,
+  Shield,
   Sigma,
+  Sparkles,
+  SquarePlay,
+  Target,
   ThumbsUp,
-  UserRound,
   Users,
   X,
-  Clock,
-  ChevronRight,
-  Sparkles,
-  Target,
-  CalendarCheck,
-  ChartColumn,
-  NotebookPen,
-  Shield,
-  CreditCard,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { signOut } from "@/app/actions/auth";
 import type { Suggestion } from "@/app/api/search/route";
 import { CourseIcon } from "../course-icon";
@@ -51,140 +51,212 @@ export type ShellData = {
   channels: { id: string; title: string; thumbnail: string | null }[];
 };
 
-const SIDEBAR_KEY = "gw:sidebar";
-const sidebarListeners = new Set<() => void>();
-function subscribeSidebar(cb: () => void) {
-  sidebarListeners.add(cb);
-  return () => sidebarListeners.delete(cb);
-}
-function readSidebar() {
-  try {
-    return localStorage.getItem(SIDEBAR_KEY) !== "mini";
-  } catch {
-    return true;
-  }
-}
-function writeSidebar(expanded: boolean) {
-  try {
-    localStorage.setItem(SIDEBAR_KEY, expanded ? "full" : "mini");
-  } catch {}
-  sidebarListeners.forEach((l) => l());
-}
+const isActive = (pathname: string, href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
 
+/** Pages that manage their own full-height layout (no footer, no bottom padding). */
+const FULL_HEIGHT = /^\/ask$/;
+
+/**
+ * The five places in Merit. Each has its own color, used for its icon and active state,
+ * and a set of paths it "owns" so the right tab lights up anywhere inside it.
+ */
+const SECTIONS = [
+  { key: "learn", label: "Learn", href: "/courses", icon: GraduationCap, tint: "text-accent-ink", on: "bg-accent-soft text-accent-ink", owns: ["/courses", "/lessons", "/shorts", "/videos", "/search", "/channel", "/guides", "/educators", "/library"] },
+  { key: "practice", label: "Practice", href: "/sprint", icon: Target, tint: "text-sprint", on: "bg-sprint-soft text-sprint-ink", owns: ["/sprint"] },
+  { key: "plan", label: "Plan", href: "/plan", icon: CalendarCheck, tint: "text-positive", on: "bg-positive-soft text-positive", owns: ["/plan", "/schedule", "/progress"] },
+  { key: "tutors", label: "Tutors", href: "/tutors", icon: Users, tint: "text-[#7c3aed] dark:text-[#b69cff]", on: "bg-[#f3edff] text-[#6d28d9] dark:bg-[#2a1f45] dark:text-[#c9b5ff]", owns: ["/tutors", "/tutor", "/bookings"] },
+  { key: "ask", label: "Ask AI", href: "/ask", icon: Sparkles, tint: "text-[#db2777] dark:text-[#ff8cc6]", on: "bg-[#fdeef6] text-[#be185d] dark:bg-[#3d1830] dark:text-[#ffb3d9]", owns: ["/ask"] },
+] as const;
+
+const sectionFor = (pathname: string) => SECTIONS.find((s) => s.owns.some((o) => isActive(pathname, o)));
+
+/** Second-level tabs inside a section. */
+const SUBNAV: Record<string, { href: string; label: string }[]> = {
+  learn: [
+    { href: "/courses", label: "Courses" },
+    { href: "/lessons", label: "Lessons" },
+    { href: "/shorts", label: "Quick lessons" },
+    { href: "/videos", label: "Merit Tutors' Videos" },
+    { href: "/library", label: "Your library" },
+  ],
+  plan: [
+    { href: "/plan", label: "Tonight" },
+    { href: "/schedule", label: "My schedule" },
+    { href: "/progress", label: "Progress" },
+  ],
+  tutors: [
+    { href: "/tutors", label: "Find a tutor" },
+    { href: "/videos", label: "Merit Tutors' Videos" },
+    { href: "/bookings", label: "My sessions" },
+    { href: "/tutors/join", label: "Tutor on Merit" },
+  ],
+};
+
+/**
+ * Merit 2.0 chrome: a bold top bar with the five places in Merit, a sub-bar for the section you're in,
+ * a bottom tab bar on phones, and a drawer with everything else.
+ */
 export function ShellFrame({ data, children }: { data: ShellData; children: ReactNode }) {
   const pathname = usePathname();
-  // Desktop: expanded vs. mini rail (remembered). Mobile: drawer open vs. closed.
-  const expanded = useSyncExternalStore(subscribeSidebar, readSidebar, () => true);
+  const signedIn = Boolean(data.user);
   const [drawer, setDrawer] = useState(false);
   const [lastPath, setLastPath] = useState(pathname);
   if (pathname !== lastPath) {
     setLastPath(pathname);
     setDrawer(false);
   }
-
-  const toggle = () => {
-    if (window.matchMedia("(min-width: 1280px)").matches) writeSidebar(!expanded);
-    else setDrawer((d) => !d);
-  };
+  const fullHeight = FULL_HEIGHT.test(pathname);
+  const section = sectionFor(pathname);
+  const sub = section ? SUBNAV[section.key]?.filter((l) => signedIn || !["/library", "/bookings"].includes(l.href)) : undefined;
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <TopBar data={data} onMenu={toggle} />
-      <div className="flex flex-1 pt-14">
-        <aside
-          className={cn(
-            "fixed bottom-0 left-0 top-14 z-30 hidden overflow-y-auto pb-6 md:block",
-            expanded ? "w-[72px] xl:w-60" : "w-[72px]",
-          )}
-          aria-label="Sidebar"
-        >
-          <div className={cn("hidden", expanded && "xl:block")}>
-            <FullNav data={data} pathname={pathname} />
-          </div>
-          <div className={cn(expanded && "xl:hidden")}>
-            <MiniNav pathname={pathname} />
-          </div>
-        </aside>
-        {drawer ? (
-          <div className="fixed inset-0 z-50 md:block xl:block">
-            <div className="fade absolute inset-0 bg-black/50" onClick={() => setDrawer(false)} />
-            <div className="slide-in absolute inset-y-0 left-0 w-64 overflow-y-auto bg-bg pb-6">
-              <div className="flex h-14 items-center gap-4 px-4">
-                <button onClick={() => setDrawer(false)} className="flex size-10 items-center justify-center rounded-full hover:bg-bg-subtle" aria-label="Close menu">
-                  <X className="size-5" />
-                </button>
-                <Logo href="/" />
-              </div>
-              <FullNav data={data} pathname={pathname} />
-            </div>
-          </div>
-        ) : null}
-        <main className={cn("min-w-0 flex-1", expanded ? "md:pl-[72px] xl:pl-60" : "md:pl-[72px]")}>{children}</main>
+    <div className="flex min-h-[100dvh] flex-col">
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[80] focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-bg">
+        Skip to content
+      </a>
+      <TopBar data={data} section={section?.key} onMenu={() => setDrawer(true)} />
+      <div
+        className={cn(
+          "flex flex-1 pt-[var(--nav-h)]",
+          sub ? "[--nav-h:calc(4rem+44px)] lg:[--nav-h:calc(4rem+48px)]" : "[--nav-h:4rem]",
+        )}
+      >
+        {sub ? <SubNav items={sub} pathname={pathname} /> : null}
+        {drawer ? <Drawer data={data} pathname={pathname} onClose={() => setDrawer(false)} /> : null}
+        <main id="main" className={cn("flex min-w-0 flex-1 flex-col", !fullHeight && "pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0")}>
+          <div className="flex-1">{children}</div>
+          {!fullHeight ? <SiteFooter signedIn={signedIn} /> : null}
+        </main>
       </div>
+      <TabBar pathname={pathname} onMore={() => setDrawer(true)} />
       <QuickAsk />
     </div>
   );
 }
 
-function TopBar({ data, onMenu }: { data: ShellData; onMenu: () => void }) {
+/* ---------------------------------------------------------------- Top bar */
+
+function TopBar({ data, section, onMenu }: { data: ShellData; section?: string; onMenu: () => void }) {
   const [mobileSearch, setMobileSearch] = useState(false);
+  const signedIn = Boolean(data.user);
   return (
-    <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between gap-4 bg-bg/95 px-2 backdrop-blur sm:px-4">
-      {mobileSearch ? (
-        <div className="flex flex-1 items-center gap-2 sm:hidden">
-          <button onClick={() => setMobileSearch(false)} className="flex size-10 items-center justify-center rounded-full hover:bg-bg-subtle" aria-label="Close search">
-            <X className="size-5" />
-          </button>
-          <SearchBox autoFocus />
-        </div>
-      ) : (
-        <>
-          <div className="flex shrink-0 items-center gap-1 sm:gap-3">
-            <button onClick={onMenu} className="flex size-10 items-center justify-center rounded-full hover:bg-bg-subtle" aria-label="Menu">
+    <header className="fixed inset-x-0 top-0 z-40 border-b-2 border-line bg-bg/90 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150">
+      <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-2 px-3 sm:px-5 lg:gap-4">
+        {mobileSearch ? (
+          <div className="fade flex flex-1 items-center gap-2 md:hidden">
+            <IconButton onClick={() => setMobileSearch(false)} label="Close search">
+              <X className="size-5" />
+            </IconButton>
+            <SearchBox autoFocus />
+          </div>
+        ) : (
+          <>
+            <IconButton onClick={onMenu} label="Menu" className="md:hidden">
               <Menu className="size-5" />
-            </button>
-            <Logo href="/" />
-          </div>
-          <div className="hidden max-w-[640px] flex-1 sm:flex">
-            <SearchBox />
-          </div>
-          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-            <Link
-              href="/sprint"
-              className="hidden h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-[#ff8a3d] to-[#e0531c] px-3.5 text-[13px] font-semibold text-white hover:brightness-110 lg:flex"
-            >
-              <Target className="size-4" /> Exam Sprint
-            </Link>
-            <button onClick={() => setMobileSearch(true)} className="flex size-10 items-center justify-center rounded-full hover:bg-bg-subtle sm:hidden" aria-label="Search">
-              <Search className="size-5" />
-            </button>
-            {data.user ? (
-              <>
-                <Link
-                  href="/schedule"
-                  className="relative flex size-10 items-center justify-center rounded-full hover:bg-bg-subtle"
-                  aria-label="My schedule"
-                  title="My schedule"
-                >
-                  <CalendarDays className="size-5" />
-                  {!data.hasSchedule ? <span className="absolute right-2 top-2 size-2 rounded-full bg-accent ring-2 ring-bg" /> : null}
-                </Link>
-                <UserMenu data={data} />
-              </>
-            ) : (
-              <Link
-                href="/login"
-                className="flex h-9 items-center gap-1.5 rounded-full border border-line-strong px-3 text-sm font-medium text-accent hover:border-transparent hover:bg-accent-soft"
-              >
-                <UserRound className="size-5" /> Sign in
-              </Link>
-            )}
-          </div>
-        </>
-      )}
+            </IconButton>
+            <Logo href="/" className="shrink-0 px-1 text-[18px]" />
+
+            <nav aria-label="Primary" className="ml-2 hidden items-center gap-1 md:flex lg:ml-4">
+              {SECTIONS.map((s) => {
+                const on = section === s.key;
+                return (
+                  <Link
+                    key={s.key}
+                    href={s.href}
+                    aria-current={on ? "page" : undefined}
+                    className={cn(
+                      "flex h-10 items-center gap-2 rounded-2xl px-3 font-brand text-[15px] font-extrabold transition-[background-color,color,transform] duration-150 active:scale-[0.96] xl:px-3.5",
+                      on ? s.on : "text-ink-2 hover:bg-bg-subtle hover:text-ink",
+                    )}
+                  >
+                    <s.icon className={cn("size-[19px]", on ? "" : s.tint)} strokeWidth={2.4} />
+                    <span className={cn(s.key === "ask" && "hidden lg:inline")}>{s.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="ml-auto hidden min-w-0 flex-1 justify-end md:flex">
+              <div className="w-full max-w-[340px]">
+                <SearchBox />
+              </div>
+            </div>
+
+            <div className="ml-auto flex shrink-0 items-center gap-1.5 md:ml-0 sm:gap-2">
+              <IconButton onClick={() => setMobileSearch(true)} label="Search" className="md:hidden">
+                <Search className="size-5" />
+              </IconButton>
+              {signedIn ? (
+                <>
+                  <Link
+                    href="/schedule"
+                    className="relative hidden size-10 items-center justify-center rounded-2xl text-ink transition-colors hover:bg-bg-subtle sm:flex"
+                    aria-label="My schedule"
+                    title="My schedule"
+                  >
+                    <CalendarDays className="size-5" />
+                    {!data.hasSchedule ? <span className="absolute right-2 top-2 size-2 rounded-full bg-accent ring-2 ring-bg" aria-hidden /> : null}
+                  </Link>
+                  <UserMenu data={data} />
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="hidden h-10 items-center rounded-2xl px-3.5 font-brand text-[15px] font-extrabold text-ink transition-colors hover:bg-bg-subtle sm:flex">
+                    Sign in
+                  </Link>
+                  <Link href="/signup" className="press flex h-10 items-center rounded-2xl bg-accent px-4 font-brand text-[15px] font-extrabold text-white [--ledge:var(--accent-press)] hover:brightness-110">
+                    <span className="sm:hidden">Join free</span>
+                    <span className="hidden sm:inline">Get started</span>
+                  </Link>
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </header>
   );
 }
+
+/** Tabs for the section you're in: Courses / Lessons / Quick lessons, or Tonight / Schedule / Progress. */
+function SubNav({ items, pathname }: { items: { href: string; label: string }[]; pathname: string }) {
+  const active = [...items].sort((a, b) => b.href.length - a.href.length).find((l) => isActive(pathname, l.href))?.href;
+  return (
+    <nav aria-label="Section" className="fixed inset-x-0 top-[calc(4rem+env(safe-area-inset-top))] z-30 border-b-2 border-line bg-bg/90 backdrop-blur-xl">
+      <div className="scrollbar-none mx-auto flex h-11 max-w-[1400px] items-center gap-1 overflow-x-auto px-3 sm:px-5 lg:h-12">
+        {items.map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            aria-current={active === l.href ? "page" : undefined}
+            className={cn(
+              "relative flex h-full shrink-0 items-center px-3 font-brand text-[14.5px] font-extrabold transition-colors",
+              active === l.href ? "text-ink" : "text-muted hover:text-ink",
+            )}
+          >
+            {l.label}
+            {active === l.href ? <span className="absolute inset-x-3 -bottom-[2px] h-[3px] rounded-full bg-accent" aria-hidden /> : null}
+          </Link>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+function IconButton({ onClick, label, children, className }: { onClick: () => void; label: string; children: ReactNode; className?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className={cn("flex size-10 shrink-0 items-center justify-center rounded-2xl text-ink transition-[background-color,transform] duration-150 hover:bg-bg-subtle active:scale-95", className)}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ---------------------------------------------------------------- Search */
 
 function SearchBox({ autoFocus }: { autoFocus?: boolean }) {
   const router = useRouter();
@@ -200,6 +272,8 @@ function SearchBox({ autoFocus }: { autoFocus?: boolean }) {
       const t = e.target as HTMLElement | null;
       const typing = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
       if ((e.key === "/" && !typing) || (e.key === "k" && (e.metaKey || e.ctrlKey))) {
+        // Only the visible search box claims the shortcut.
+        if (!inputRef.current?.offsetParent) return;
         e.preventDefault();
         inputRef.current?.focus();
       }
@@ -250,9 +324,11 @@ function SearchBox({ autoFocus }: { autoFocus?: boolean }) {
   const shown = q.trim() ? items : [];
 
   return (
-    <form ref={boxRef} onSubmit={submit} role="search" className="relative flex w-full items-center">
-      <div className="flex h-10 flex-1 items-center rounded-l-full border border-line-strong bg-bg pl-4 shadow-[inset_0_1px_2px_rgb(0_0_0/0.06)] focus-within:border-accent">
-        <Search className="mr-3 hidden size-4 text-muted sm:hidden" />
+    <form ref={boxRef} onSubmit={submit} role="search" className="relative w-full">
+      <div className="group flex h-10 w-full items-center rounded-full bg-bg-subtle pl-3.5 pr-1 ring-1 ring-inset ring-transparent transition-[background-color,box-shadow] duration-150 focus-within:bg-surface focus-within:ring-2 focus-within:ring-accent hover:ring-line-strong">
+        <button type="submit" className="flex shrink-0 items-center text-muted" aria-label="Search" tabIndex={-1}>
+          <Search className="size-[18px]" />
+        </button>
         <input
           ref={inputRef}
           value={q}
@@ -270,27 +346,40 @@ function SearchBox({ autoFocus }: { autoFocus?: boolean }) {
             } else if (e.key === "ArrowUp") {
               e.preventDefault();
               setActive((a) => Math.max(-1, a - 1));
-            } else if (e.key === "Escape") setOpen(false);
+            } else if (e.key === "Escape") {
+              setOpen(false);
+              inputRef.current?.blur();
+            }
           }}
-          placeholder="Search a topic, like “chain rule” or “Mansa Musa”"
-          className="h-full w-full bg-transparent text-[16px] text-ink outline-none placeholder:text-muted"
+          placeholder="Search topics, like “chain rule”"
+          className="h-full min-w-0 flex-1 bg-transparent px-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus-visible:outline-none sm:text-[15px]"
           aria-label="Search"
+          autoComplete="off"
+          spellCheck={false}
           role="combobox"
           aria-autocomplete="list"
           aria-controls="search-suggestions"
           aria-expanded={open && shown.length > 0}
         />
         {q ? (
-          <button type="button" onClick={() => (setQ(""), setItems([]), inputRef.current?.focus())} className="mr-1 flex size-8 items-center justify-center rounded-full hover:bg-bg-subtle" aria-label="Clear search">
+          <button
+            type="button"
+            onClick={() => (setQ(""), setItems([]), inputRef.current?.focus())}
+            className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted hover:bg-bg-subtle hover:text-ink"
+            aria-label="Clear search"
+          >
             <X className="size-4" />
           </button>
-        ) : null}
+        ) : (
+          <kbd className="mr-2 hidden shrink-0 rounded-md bg-surface px-1.5 py-0.5 font-sans text-[11px] font-semibold text-muted ring-1 ring-line lg:inline">⌘K</kbd>
+        )}
       </div>
-      <button type="submit" className="flex h-10 w-16 items-center justify-center rounded-r-full border border-l-0 border-line-strong bg-bg-subtle hover:bg-line" aria-label="Search">
-        <Search className="size-5" />
-      </button>
       {open && shown.length ? (
-        <ul id="search-suggestions" className="absolute left-0 right-16 top-12 z-50 overflow-hidden rounded-xl bg-surface py-3 shadow-lift ring-1 ring-line" role="listbox">
+        <ul
+          id="search-suggestions"
+          className="pop absolute inset-x-0 top-12 z-50 max-h-[70vh] origin-top overflow-y-auto rounded-2xl bg-surface p-1.5 shadow-lift ring-2 ring-line"
+          role="listbox"
+        >
           {shown.map((s, i) => (
             <li key={s.href + i} role="option" aria-selected={i === active}>
               <button
@@ -298,22 +387,22 @@ function SearchBox({ autoFocus }: { autoFocus?: boolean }) {
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => go(s.href, s.kind === "video")}
                 onMouseEnter={() => setActive(i)}
-                className={cn("flex w-full items-center gap-3 px-4 py-1.5 text-left", i === active && "bg-bg-subtle")}
+                className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors", i === active && "bg-bg-subtle")}
               >
                 {s.kind === "video" && s.image ? (
-                  <img src={s.image} alt="" className="aspect-video w-14 shrink-0 rounded object-cover" referrerPolicy="no-referrer" />
+                  <img src={s.image} alt="" className="aspect-video w-14 shrink-0 rounded-md object-cover" referrerPolicy="no-referrer" />
                 ) : s.kind === "channel" ? (
                   <ChannelAvatar title={s.title} src={s.image ?? null} size={24} />
                 ) : (
                   <Search className="size-4 shrink-0 text-muted" />
                 )}
-                <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-ink">{s.title}</span>
+                <span className="min-w-0 flex-1 truncate text-[14.5px] font-medium text-ink">{s.title}</span>
                 <span className="hidden shrink-0 text-xs text-muted sm:block">{s.subtitle}</span>
               </button>
             </li>
           ))}
-          <li>
-            <button type="submit" onMouseDown={(e) => e.preventDefault()} className="mt-1 flex w-full items-center gap-3 border-t border-line px-4 pt-2.5 text-left text-sm text-muted hover:text-ink">
+          <li className="mt-1 border-t border-line pt-1">
+            <button type="submit" onMouseDown={(e) => e.preventDefault()} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-muted hover:bg-bg-subtle hover:text-ink">
               <Search className="size-4" /> See all results for “{q.trim()}”
             </button>
           </li>
@@ -323,9 +412,10 @@ function SearchBox({ autoFocus }: { autoFocus?: boolean }) {
   );
 }
 
+/* ---------------------------------------------------------------- Account menu */
+
 function UserMenu({ data }: { data: ShellData }) {
   const user = data.user!;
-  const isTutor = data.isTutor;
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -337,46 +427,53 @@ function UserMenu({ data }: { data: ShellData }) {
   useEffect(() => {
     if (!open) return;
     const close = (e: MouseEvent) => ref.current && !ref.current.contains(e.target as Node) && setOpen(false);
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", esc);
+    };
   }, [open]);
   const initial = user.name.trim()[0]?.toUpperCase() ?? "?";
   return (
-    <div ref={ref} className="relative ml-1">
+    <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex size-8 items-center justify-center rounded-full bg-accent text-sm font-medium text-white"
+        className="flex size-10 items-center justify-center rounded-full transition-transform duration-150 active:scale-95"
         aria-label="Account menu"
         aria-expanded={open}
       >
-        {initial}
+        <span className="flex size-8 items-center justify-center rounded-full bg-accent text-sm font-semibold text-white ring-2 ring-bg">{initial}</span>
       </button>
       {open ? (
-        <div className="fade absolute right-0 top-11 w-72 overflow-hidden rounded-xl bg-surface py-2 shadow-lift ring-1 ring-line">
-          <div className="flex gap-3 px-4 py-2">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent font-medium text-white">{initial}</span>
+        <div className="pop absolute right-0 top-12 w-72 origin-top-right overflow-hidden rounded-2xl bg-surface p-1.5 shadow-lift ring-2 ring-line">
+          <div className="flex items-center gap-3 px-3 py-2.5">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent font-semibold text-white">{initial}</span>
             <div className="min-w-0">
-              <p className="truncate text-[15px] font-medium text-ink">{user.name}</p>
-              <p className="truncate text-sm text-muted">{user.email}</p>
+              <p className="truncate text-[15px] font-semibold text-ink">{user.name}</p>
+              <p className="truncate text-[13px] text-muted">{user.email}</p>
             </div>
           </div>
-          <div className="my-2 h-px bg-line" />
-          <MenuRow href="/plan" icon={<CalendarCheck className="size-5" />}>Tonight&apos;s plan</MenuRow>
-          <MenuRow href="/progress" icon={<ChartColumn className="size-5" />}>Progress</MenuRow>
-          <MenuRow href="/library" icon={<Clock className="size-5" />}>Your library</MenuRow>
-          <MenuRow href="/bookings" icon={<Users className="size-5" />}>My tutoring sessions</MenuRow>
-          <MenuRow href="/schedule" icon={<CalendarDays className="size-5" />}>My schedule</MenuRow>
-          <MenuRow href="/studio" icon={<NotebookPen className="size-5" />}>{data.isEducator ? "Teacher studio" : "Add lessons (teachers)"}</MenuRow>
-          <MenuRow href={isTutor ? "/tutor" : "/tutors/join"} icon={<GraduationCap className="size-5" />}>
-            {isTutor ? "Tutor dashboard" : "Become a tutor"}
+          <MenuDivider />
+          <MenuRow href="/plan" icon={<CalendarCheck className="size-[18px]" />}>Tonight&apos;s plan</MenuRow>
+          <MenuRow href="/progress" icon={<ChartColumn className="size-[18px]" />}>Progress</MenuRow>
+          <MenuRow href="/library" icon={<LibraryBig className="size-[18px]" />}>Your library</MenuRow>
+          <MenuRow href="/bookings" icon={<Users className="size-[18px]" />}>My tutoring sessions</MenuRow>
+          <MenuRow href="/schedule" icon={<CalendarDays className="size-[18px]" />}>My schedule</MenuRow>
+          <MenuDivider />
+          <MenuRow href="/studio" icon={<NotebookPen className="size-[18px]" />}>{data.isEducator ? "Teacher studio" : "Add lessons (teachers)"}</MenuRow>
+          <MenuRow href={data.isTutor ? "/tutor" : "/tutors/join"} icon={<GraduationCap className="size-[18px]" />}>
+            {data.isTutor ? "Tutor dashboard" : "Become a tutor"}
           </MenuRow>
-          <MenuRow href="/settings/billing" icon={<CreditCard className="size-5" />}>Plan and billing</MenuRow>
-          <MenuRow href="/settings" icon={<Settings className="size-5" />}>Settings</MenuRow>
-          {data.isAdmin ? <MenuRow href="/admin" icon={<Shield className="size-5" />}>Admin</MenuRow> : null}
-          <div className="my-2 h-px bg-line" />
+          <MenuDivider />
+          <MenuRow href="/settings/billing" icon={<CreditCard className="size-[18px]" />}>Plan and billing</MenuRow>
+          <MenuRow href="/settings" icon={<Settings className="size-[18px]" />}>Settings</MenuRow>
+          {data.isAdmin ? <MenuRow href="/admin" icon={<Shield className="size-[18px]" />}>Admin</MenuRow> : null}
+          <MenuDivider />
           <form action={signOut}>
-            <button className="flex w-full items-center gap-4 px-4 py-2 text-left text-sm text-ink hover:bg-bg-subtle">
-              <LogOut className="size-5" /> Sign out
+            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[14px] font-medium text-ink transition-colors hover:bg-bg-subtle">
+              <LogOut className="size-[18px] text-muted" /> Sign out
             </button>
           </form>
         </div>
@@ -385,176 +482,278 @@ function UserMenu({ data }: { data: ShellData }) {
   );
 }
 
+function MenuDivider() {
+  return <div className="mx-2 my-1.5 h-px bg-line" />;
+}
+
 function MenuRow({ href, icon, children }: { href: string; icon: ReactNode; children: ReactNode }) {
   return (
-    <Link href={href} className="flex items-center gap-4 px-4 py-2 text-sm text-ink hover:bg-bg-subtle">
-      {icon}
+    <Link href={href} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] font-medium text-ink transition-colors hover:bg-bg-subtle">
+      <span className="text-muted">{icon}</span>
       {children}
     </Link>
   );
 }
 
-const isActive = (pathname: string, href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
+/* ---------------------------------------------------------------- Sidebar */
 
 function NavRow({ href, icon, label, pathname, trailing }: { href: string; icon: ReactNode; label: string; pathname: string; trailing?: ReactNode }) {
-  const active = isActive(pathname, href.split("?")[0]);
+  // Rows that point at a tab (?tab=…) never claim "current page": the parent page does.
+  const active = !href.includes("?") && isActive(pathname, href);
   return (
     <Link
       href={href}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "flex h-10 items-center gap-5 rounded-lg px-3 text-sm",
-        active ? "bg-bg-subtle font-medium text-ink" : "text-ink hover:bg-bg-subtle",
+        "group flex h-10 items-center gap-3 rounded-xl px-3 text-[14px] transition-colors",
+        active ? "bg-accent-soft font-semibold text-accent-ink" : "font-medium text-ink-2 hover:bg-bg-subtle hover:text-ink",
       )}
     >
-      <span className="flex w-6 shrink-0 justify-center">{icon}</span>
+      <span className={cn("flex w-5 shrink-0 justify-center", active ? "text-accent-ink" : "text-muted group-hover:text-ink")}>{icon}</span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {trailing}
     </Link>
   );
 }
 
-function Section({ title, href, children }: { title?: string; href?: string; children: ReactNode }) {
+function Group({ title, href, children }: { title?: string; href?: string; children: ReactNode }) {
   return (
-    <div className="border-b border-line px-3 py-3 last:border-0">
+    <div className="px-3 py-2">
       {title ? (
         href ? (
-          <Link href={href} className="flex h-10 items-center gap-2 rounded-lg px-3 text-base font-medium text-ink hover:bg-bg-subtle">
-            {title} <ChevronRight className="size-4" />
+          <Link href={href} className="mb-0.5 flex items-center justify-between px-3 pb-1 pt-2 text-[12px] font-semibold text-muted transition-colors hover:text-ink">
+            {title} <span aria-hidden>→</span>
           </Link>
         ) : (
-          <p className="px-3 pb-1 pt-1.5 text-base font-medium text-ink">{title}</p>
+          <p className="mb-0.5 px-3 pb-1 pt-2 text-[12px] font-semibold text-muted">{title}</p>
         )
       ) : null}
-      {children}
+      <div className="space-y-0.5">{children}</div>
     </div>
   );
 }
 
+function PlusTag() {
+  return <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10.5px] font-bold text-accent-ink">Plus</span>;
+}
+
 function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
   const mine = data.courses.filter((c) => data.myCourses.includes(c.slug));
-  const shown = mine.length ? mine : data.courses.slice(0, 7);
+  const shown = (mine.length ? mine : data.courses).slice(0, 6);
   return (
-    <nav aria-label="Main">
-      <Section>
-        <NavRow href="/" icon={<House className="size-5" />} label="Home" pathname={pathname} />
-        <NavRow href="/lessons" icon={<SquarePlay className="size-5" />} label="Lessons" pathname={pathname} />
-        <NavRow href="/shorts" icon={<Clapperboard className="size-5" />} label="Quick lessons" pathname={pathname} />
-        <NavRow href="/courses" icon={<GraduationCap className="size-5" />} label="Courses" pathname={pathname} />
-        <NavRow href="/ask" icon={<Sparkles className="size-5" />} label="Ask Merit AI" pathname={pathname} />
-        <NavRow href="/tutors" icon={<Users className="size-5" />} label="Tutors" pathname={pathname} />
-        <NavRow href="/videos" icon={<MonitorPlay className="size-5" />} label="Merit Tutors' Videos" pathname={pathname} />
-      </Section>
-      <Section title="Study tools">
-        <NavRow href="/plan" icon={<CalendarCheck className="size-5" />} label="Tonight's plan" pathname={pathname} trailing={<PlusTag />} />
-        <NavRow href="/sprint" icon={<Target className="size-5" />} label="Exam Sprint" pathname={pathname} />
-        <NavRow href="/schedule" icon={<CalendarDays className="size-5" />} label="My schedule" pathname={pathname} trailing={<PlusTag />} />
-        <NavRow href="/progress" icon={<ChartColumn className="size-5" />} label="Progress" pathname={pathname} trailing={<PlusTag />} />
-      </Section>
+    <nav aria-label="Main" className="pb-6 pt-2">
+      <Group>
+        <NavRow href="/" icon={<House className="size-[18px]" />} label="Home" pathname={pathname} />
+        <NavRow href="/courses" icon={<GraduationCap className="size-[18px]" />} label="Courses" pathname={pathname} />
+        <NavRow href="/lessons" icon={<SquarePlay className="size-[18px]" />} label="Lessons" pathname={pathname} />
+        <NavRow href="/ask" icon={<Sparkles className="size-[18px]" />} label="Ask Merit AI" pathname={pathname} />
+        <NavRow href="/tutors" icon={<Users className="size-[18px]" />} label="Tutors" pathname={pathname} />
+      </Group>
+      <Group title="Study tools">
+        <NavRow href="/plan" icon={<CalendarCheck className="size-[18px]" />} label="Tonight's plan" pathname={pathname} trailing={<PlusTag />} />
+        <NavRow href="/sprint" icon={<Target className="size-[18px]" />} label="Exam Sprint" pathname={pathname} />
+        <NavRow href="/schedule" icon={<CalendarDays className="size-[18px]" />} label="My schedule" pathname={pathname} trailing={<PlusTag />} />
+        <NavRow href="/progress" icon={<ChartColumn className="size-[18px]" />} label="Progress" pathname={pathname} trailing={<PlusTag />} />
+      </Group>
       <SidebarPromo plus={data.plus} />
       {data.user ? (
-        <Section title="You" href="/library">
-          <NavRow href="/library?tab=history" icon={<History className="size-5" />} label="History" pathname={pathname} />
-          <NavRow href="/library?tab=saved" icon={<Clock className="size-5" />} label="Watch later" pathname={pathname} />
-          <NavRow href="/library?tab=liked" icon={<ThumbsUp className="size-5" />} label="Helpful videos" pathname={pathname} />
-        </Section>
+        <Group title="You" href="/library">
+          <NavRow href="/library?tab=history" icon={<History className="size-[18px]" />} label="History" pathname={pathname} />
+          <NavRow href="/library?tab=saved" icon={<Clock className="size-[18px]" />} label="Watch later" pathname={pathname} />
+          <NavRow href="/library?tab=liked" icon={<ThumbsUp className="size-[18px]" />} label="Helpful videos" pathname={pathname} />
+          <NavRow href="/bookings" icon={<Users className="size-[18px]" />} label="Tutoring sessions" pathname={pathname} />
+        </Group>
       ) : (
-        <Section>
-          <p className="px-3 py-2 text-sm leading-snug text-ink">Sign in to save lessons, track topics, and get a study plan.</p>
-          <Link
-            href="/login"
-            className="mx-3 mb-1 mt-1 inline-flex h-9 items-center gap-1.5 rounded-full border border-line-strong px-3 text-sm font-medium text-accent hover:border-transparent hover:bg-accent-soft"
-          >
-            <UserRound className="size-5" /> Sign in
+        <div className="mx-3 my-2 rounded-2xl bg-bg-subtle p-4">
+          <p className="text-[13.5px] leading-snug text-ink-2">Sign in to save lessons, track topics, and get a study plan.</p>
+          <Link href="/login" className="press font-brand mt-3 inline-flex h-9 items-center rounded-2xl bg-surface px-4 text-[13px] font-extrabold text-ink ring-2 ring-inset ring-line hover:bg-bg [--ledge:var(--line)]">
+            Sign in
           </Link>
-        </Section>
+        </div>
       )}
-      <Section title={mine.length ? "Your courses" : "Popular courses"} href="/courses">
+      <Group title={mine.length ? "Your courses" : "Popular courses"} href="/courses">
         {shown.map((c) => (
-          <NavRow
-            key={c.slug}
-            href={`/courses/${c.slug}`}
-            icon={<CourseIcon id={c.slug} size={24} />}
-            label={c.title}
-            pathname={pathname}
-          />
+          <NavRow key={c.slug} href={`/courses/${c.slug}`} icon={<CourseIcon id={c.slug} size={22} />} label={c.title} pathname={pathname} />
         ))}
-      </Section>
-      {data.channels.length ? (
-        <Section title="Top channels">
-          {data.channels.map((c) => (
-            <NavRow key={c.id} href={`/channel/${c.id}`} icon={<ChannelAvatar title={c.title} src={c.thumbnail} size={24} />} label={c.title} pathname={pathname} />
-          ))}
-        </Section>
-      ) : null}
-      <Section>
-        <NavRow href="/pricing" icon={<CreditCard className="size-5" />} label="Pricing" pathname={pathname} />
-        <NavRow href="/studio" icon={<NotebookPen className="size-5" />} label="For teachers" pathname={pathname} />
-        <NavRow href="/how-ranking-works" icon={<Sigma className="size-5" />} label="How ranking works" pathname={pathname} />
-        <NavRow href="/about" icon={<Info className="size-5" />} label="About Merit" pathname={pathname} />
-      </Section>
-      <div className="px-6 pt-3 text-xs leading-5 text-muted">
-        <p className="flex flex-wrap gap-x-2">
-          <Link href="/about" className="hover:text-ink">About</Link>
-          <Link href="/privacy" className="hover:text-ink">Privacy</Link>
-          <Link href="/terms" className="hover:text-ink">Terms</Link>
+      </Group>
+      <ExploreGroup data={data} pathname={pathname} />
+    </nav>
+  );
+}
+
+/** Less-used destinations, tucked into one disclosure so the sidebar stays calm. */
+function ExploreGroup({ data, pathname }: { data: ShellData; pathname: string }) {
+  return (
+    <details className="group/more px-3 py-2" open={["/shorts", "/videos", "/channel", "/studio", "/pricing", "/how-ranking-works", "/about"].some((p) => pathname.startsWith(p))}>
+      <summary className="flex h-10 cursor-pointer list-none items-center gap-3 rounded-xl px-3 text-[14px] font-medium text-ink-2 hover:bg-bg-subtle hover:text-ink [&::-webkit-details-marker]:hidden">
+        <span className="flex w-5 justify-center text-muted">
+          <ChevronDown className="size-[18px] transition-transform duration-200 group-open/more:rotate-180" />
+        </span>
+        More from Merit
+      </summary>
+      <div className="mt-0.5 space-y-0.5">
+        <NavRow href="/shorts" icon={<Clapperboard className="size-[18px]" />} label="Quick lessons" pathname={pathname} />
+        <NavRow href="/videos" icon={<MonitorPlay className="size-[18px]" />} label="Merit Tutors' Videos" pathname={pathname} />
+        {data.channels.map((c) => (
+          <NavRow key={c.id} href={`/channel/${c.id}`} icon={<ChannelAvatar title={c.title} src={c.thumbnail} size={20} />} label={c.title} pathname={pathname} />
+        ))}
+        <NavRow href="/studio" icon={<NotebookPen className="size-[18px]" />} label="For teachers" pathname={pathname} />
+        <NavRow href="/pricing" icon={<CreditCard className="size-[18px]" />} label="Pricing" pathname={pathname} />
+        <NavRow href="/how-ranking-works" icon={<Sigma className="size-[18px]" />} label="How ranking works" pathname={pathname} />
+        <NavRow href="/about" icon={<Info className="size-[18px]" />} label="About Merit" pathname={pathname} />
+      </div>
+    </details>
+  );
+}
+
+function SidebarPromo({ plus }: { plus: ShellData["plus"] }) {
+  return (
+    <div className="space-y-2 px-3 py-2">
+      <Link href="/sprint" className="group block rounded-2xl bg-sprint-soft p-4 transition-transform duration-200 active:scale-[0.98]">
+        <p className="flex items-center gap-1.5 text-[12px] font-bold text-sprint-ink">
+          <Target className="size-3.5" /> Exam Sprint
         </p>
-        <p className="mt-2 text-faint">Videos play on YouTube. AP® and SAT® are trademarks of the College Board, which is not affiliated with Merit.</p>
-        <p className="mt-2 text-faint">© {new Date().getFullYear()} Merit</p>
+        <p className="mt-1 text-[14px] font-semibold leading-snug text-ink">Your exam, planned day by day.</p>
+        <p className="mt-0.5 text-[12.5px] text-ink-2">
+          Free diagnostic in 10 minutes <span className="inline-block transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+        </p>
+      </Link>
+      {plus === "anonymous" || plus === "expired" ? (
+        <Link href={plus === "anonymous" ? "/signup?next=/plan" : "/pricing"} className="block rounded-2xl bg-accent-soft p-4 text-[13px] leading-snug text-ink-2 transition-transform duration-200 active:scale-[0.98]">
+          <span className="block text-[14px] font-semibold text-ink">Lessons for what you&apos;re learning in class.</span>
+          <span className="mt-0.5 block">
+            {plus === "anonymous" ? "Merit Plus suggests videos for what you're learning in class. Free for your first month." : "Get your plan and class-based suggestions back with Plus."}
+          </span>
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------- Drawer (phones, and signed-out tablets) */
+
+function Drawer({ data, pathname, onClose }: { data: ShellData; pathname: string; onClose: () => void }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", esc);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    panelRef.current?.querySelector<HTMLElement>("a, button")?.focus();
+    return () => {
+      document.removeEventListener("keydown", esc);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-[55]">
+      <div className="fade absolute inset-0 bg-ink/40 backdrop-blur-[2px]" onClick={onClose} />
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu"
+        className="slide-in absolute inset-y-0 left-0 flex w-[min(20rem,86vw)] flex-col overflow-y-auto overscroll-contain bg-bg pb-[env(safe-area-inset-bottom)] shadow-lift"
+      >
+        <div className="flex h-16 shrink-0 items-center gap-2 px-3 pt-[env(safe-area-inset-top)]">
+          <IconButton onClick={onClose} label="Close menu">
+            <X className="size-5" />
+          </IconButton>
+          <Logo href="/" />
+        </div>
+        {!data.user ? (
+          <div className="grid grid-cols-2 gap-2 px-6 pb-2">
+            <Link href="/login" className="flex h-11 items-center justify-center rounded-full text-[14px] font-semibold text-ink ring-1 ring-line-strong">
+              Sign in
+            </Link>
+            <Link href="/signup" className="flex h-11 items-center justify-center rounded-full bg-accent text-[14px] font-semibold text-white">
+              Get started
+            </Link>
+          </div>
+        ) : null}
+        <FullNav data={data} pathname={pathname} />
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------- Bottom tab bar (phones) */
+
+function TabBar({ pathname, onMore }: { pathname: string; onMore: () => void }) {
+  const current = sectionFor(pathname)?.key;
+  const tabs = SECTIONS.filter((s) => s.key !== "tutors");
+  return (
+    <nav
+      aria-label="Tabs"
+      className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden"
+    >
+      <div className="grid h-16 grid-cols-5">
+        {tabs.map((t) => {
+          const on = current === t.key;
+          return (
+            <Link
+              key={t.key}
+              href={t.href}
+              aria-current={on ? "page" : undefined}
+              className="flex flex-col items-center justify-center gap-1 font-brand text-[11.5px] font-extrabold transition-transform active:scale-90"
+            >
+              <span className={cn("flex h-8 w-12 items-center justify-center rounded-xl transition-colors", on ? t.on : t.tint)}>
+                <t.icon className="size-[21px]" strokeWidth={on ? 2.6 : 2.2} />
+              </span>
+              <span className={on ? "text-ink" : "text-muted"}>{t.label}</span>
+            </Link>
+          );
+        })}
+        <button type="button" onClick={onMore} className="flex flex-col items-center justify-center gap-1 font-brand text-[11.5px] font-extrabold text-muted transition-transform active:scale-90" aria-label="More">
+          <span className="flex h-8 w-12 items-center justify-center rounded-xl">
+            <Menu className="size-[21px]" strokeWidth={2.2} />
+          </span>
+          More
+        </button>
       </div>
     </nav>
   );
 }
 
-function MiniNav({ pathname }: { pathname: string }) {
-  const items = [
-    { href: "/", label: "Home", icon: <House className="size-5" /> },
-    { href: "/lessons", label: "Lessons", icon: <SquarePlay className="size-5" /> },
-    { href: "/courses", label: "Courses", icon: <GraduationCap className="size-5" /> },
-    { href: "/ask", label: "Ask AI", icon: <Sparkles className="size-5" /> },
-    { href: "/tutors", label: "Tutors", icon: <Users className="size-5" /> },
-    { href: "/plan", label: "Plan", icon: <CalendarCheck className="size-5" /> },
-    { href: "/sprint", label: "Sprint", icon: <Target className="size-5" /> },
-    { href: "/library", label: "You", icon: <UserRound className="size-5" /> },
+/* ---------------------------------------------------------------- Footer */
+
+function SiteFooter({ signedIn }: { signedIn: boolean }) {
+  const cols: { title: string; links: [string, string][] }[] = [
+    { title: "Learn", links: [["/courses", "Courses"], ["/lessons", "Lessons"], ["/shorts", "Quick lessons"], ["/videos", "Merit Tutors' Videos"], ["/ask", "Merit AI"]] },
+    { title: "Study", links: [["/sprint", "Exam Sprint"], ["/plan", "Tonight's plan"], ["/schedule", "My schedule"], ["/progress", "Progress"]] },
+    { title: "Tutoring", links: [["/tutors", "Find a tutor"], ["/tutors/join", "Become a tutor"], ["/tutors/partners", "Partner with Merit"], ["/studio", "For teachers"]] },
+    { title: "Merit", links: [["/about", "About"], ["/pricing", "Pricing"], ["/pricing/parents", "For parents"], ["/how-ranking-works", "How ranking works"], ["/privacy", "Privacy"], ["/terms", "Terms"]] },
   ];
   return (
-    <nav className="flex flex-col gap-1 px-1 pt-1" aria-label="Main">
-      {items.map((i) => (
-        <Link
-          key={i.href}
-          href={i.href}
-          className={cn(
-            "flex flex-col items-center gap-1.5 rounded-lg py-4 text-[10px] text-ink hover:bg-bg-subtle",
-            isActive(pathname, i.href) && "font-medium",
-          )}
-        >
-          {i.icon}
-          {i.label}
-        </Link>
-      ))}
-    </nav>
-  );
-}
-
-function PlusTag() {
-  return <span className="rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">Plus</span>;
-}
-
-function SidebarPromo({ plus }: { plus: ShellData["plus"] }) {
-  return (
-    <div className="border-b border-line px-3 py-3">
-      <Link href="/sprint" className="block overflow-hidden rounded-xl bg-gradient-to-br from-[#ff8a3d] to-[#c2410c] p-4 text-white hover:brightness-105">
-        <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-white/85">
-          <Target className="size-3.5" /> Exam Sprint
-        </p>
-        <p className="mt-1.5 text-[15px] font-bold leading-snug">Your exam, planned day by day.</p>
-        <p className="mt-1 text-[12px] text-white/85">Free diagnostic in 10 minutes.</p>
-      </Link>
-      {plus === "anonymous" || plus === "expired" ? (
-        <Link href={plus === "anonymous" ? "/signup?next=/plan" : "/pricing"} className="mt-2 block rounded-xl bg-accent-soft p-3 text-[13px] text-ink hover:opacity-90">
-        <span className="font-semibold text-accent">Lessons for what you&apos;re learning in class.</span>{" "}
-        {plus === "anonymous" ? "Merit Plus suggests videos for what you're learning in class. Free for your first month." : "Get your plan and class-based suggestions back with Plus."}
-        </Link>
-      ) : null}
-    </div>
+    <footer className="mt-16 border-t-2 border-line bg-surface" data-noprint>
+      <div className={cn("mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:px-8", !signedIn && "lg:grid-cols-[1.2fr_2fr]")}>
+        {!signedIn ? (
+          <div>
+            <Logo href="/" />
+            <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-muted">Every AP course and the SAT, with the best lessons, Merit AI, and a plan for every test.</p>
+          </div>
+        ) : null}
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+          {cols.map((c) => (
+            <div key={c.title}>
+              <p className="font-brand text-[15px] font-extrabold text-ink">{c.title}</p>
+              <ul className="mt-3 space-y-2">
+                {c.links.map(([href, label]) => (
+                  <li key={href}>
+                    <Link href={href} className="text-[13.5px] text-muted transition-colors hover:text-ink">
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mx-auto max-w-6xl border-t border-line px-4 py-6 text-[12px] leading-relaxed text-muted sm:px-6 lg:px-8">
+        <p>Videos play on YouTube. AP® and SAT® are trademarks of the College Board, which is not affiliated with Merit.</p>
+        <p className="mt-1">© {new Date().getFullYear()} Merit</p>
+      </div>
+    </footer>
   );
 }

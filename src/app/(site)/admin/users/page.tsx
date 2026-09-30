@@ -2,10 +2,11 @@ import { Download, Search } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { cn } from "@/components/ui";
+import { PageHeader, buttonClass, cn } from "@/components/ui";
 import { FILTERS, filterUsers, listAdminUsers, type FilterKey } from "@/lib/admin-users";
 import { env } from "@/lib/env";
 import { getViewer } from "@/lib/viewer";
+import { DeleteUserButton } from "./delete-user-button";
 
 export const metadata: Metadata = { title: "Users", robots: { index: false } };
 
@@ -23,46 +24,54 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
   const qs = (f: FilterKey) => `/admin/users?${new URLSearchParams({ ...(q ? { q } : {}), ...(f !== "all" ? { filter: f } : {}) })}`;
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 pb-20 pt-8 sm:px-6">
-      <Link href="/admin" className="text-sm text-muted hover:text-ink">
-        ← Admin
-      </Link>
-      <div className="mt-1 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-ink">Users</h1>
-          <p className="mt-1 text-sm text-muted">
+    <div className="mx-auto w-full max-w-7xl px-4 pb-24 pt-8 sm:px-6 sm:pt-10 lg:px-8">
+      <PageHeader
+        back={{ href: "/admin", label: "Admin" }}
+        title="Users"
+        lede={
+          <span className="tabular text-sm">
             {all.length.toLocaleString()} {all.length === 1 ? "account" : "accounts"} · newest first
-          </p>
-        </div>
-        <a href={`/admin/users.csv?${new URLSearchParams({ ...(q ? { q } : {}), ...(filter !== "all" ? { filter } : {}) })}`} className="inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold text-ink ring-1 ring-line-strong hover:bg-bg-subtle">
-          <Download className="size-4" /> Download CSV
-        </a>
-      </div>
+          </span>
+        }
+        actions={
+          <a href={`/admin/users.csv?${new URLSearchParams({ ...(q ? { q } : {}), ...(filter !== "all" ? { filter } : {}) })}`} className={buttonClass("outline")}>
+            <Download className="size-4" /> Download CSV
+          </a>
+        }
+      />
 
       <form className="mt-6 flex max-w-xl items-center gap-2" role="search">
         {filter !== "all" ? <input type="hidden" name="filter" value={filter} /> : null}
-        <label className="flex h-11 flex-1 items-center gap-2 rounded-full bg-bg px-4 ring-1 ring-line-strong focus-within:ring-2 focus-within:ring-accent">
-          <Search className="size-4 text-muted" />
+        <label className="press font-brand flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl bg-surface px-4 ring-2 ring-inset ring-line focus-within:ring-2 focus-within:ring-accent font-extrabold [--ledge:var(--line)]">
+          <Search className="size-4 shrink-0 text-muted" />
           <span className="sr-only">Search by email or name</span>
-          <input name="q" defaultValue={q} placeholder="Search by email or name" className="h-full min-w-0 flex-1 bg-transparent text-[15px] outline-none" />
+          <input name="q" defaultValue={q} placeholder="Search by email or name" className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-faint" />
         </label>
-        <button className="h-11 rounded-full bg-ink px-5 text-sm font-semibold text-bg">Search</button>
+        <button className={buttonClass("primary", "md", "h-11 px-5")}>Search</button>
       </form>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <nav aria-label="Filter users" className="scrollbar-none -mx-4 mt-4 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
         {(Object.keys(FILTERS) as FilterKey[]).map((f) => (
-          <Link key={f} href={qs(f)} className={cn("rounded-full px-3 py-1.5 text-[13px] font-medium", f === filter ? "bg-ink text-bg" : "bg-bg-subtle text-ink hover:bg-line")}>
+          <Link
+            key={f}
+            href={qs(f)}
+            aria-current={f === filter ? "page" : undefined}
+            className={cn(
+              "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition-[background-color,color] duration-150 active:scale-[0.97]",
+              f === filter ? "bg-ink text-bg" : "bg-bg-subtle text-ink-2 hover:bg-line hover:text-ink",
+            )}
+          >
             {FILTERS[f].label} <span className="tabular opacity-60">{filterUsers(all, q, f).length}</span>
           </Link>
         ))}
-      </div>
+      </nav>
 
-      <div className="mt-6 overflow-x-auto rounded-2xl ring-1 ring-line">
-        <table className="w-full min-w-[1100px] text-left text-sm">
-          <thead className="bg-bg-subtle text-[12px] text-muted">
+      <div className="mt-6 overflow-x-auto rounded-2xl bg-surface ring-2 ring-line">
+        <table className="w-full min-w-[1100px] text-left text-[13.5px]">
+          <thead className="border-b border-line bg-bg-subtle/60 text-[12px] text-muted">
             <tr>
               {["Email", "Name", "Signed up", "Last sign-in", "Method", "Type", "Courses", "Plan", "Sprint", "Calendar"].map((h) => (
-                <th key={h} className="px-3 py-2.5 font-medium">
+                <th key={h} scope="col" className="whitespace-nowrap px-3 py-2.5 font-semibold first:pl-5 last:pr-5">
                   {h}
                 </th>
               ))}
@@ -70,10 +79,17 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
           </thead>
           <tbody className="divide-y divide-line">
             {shown.map((u) => (
-              <tr key={u.id} className="align-top">
+              <tr key={u.id} className="align-top transition-colors duration-150 hover:bg-bg-subtle/50 [&>td:first-child]:pl-5 [&>td:last-child]:pr-5">
                 <td className="px-3 py-2.5 font-medium text-ink">
                   {u.email}
-                  {!u.onboarded ? <span className="ml-1.5 rounded bg-[#fff1e8] px-1.5 py-px text-[11px] font-semibold text-[#c2410c]">setup unfinished</span> : null}
+                  {!u.onboarded ? <span className="ml-1.5 inline-flex rounded-full bg-warn-soft px-2 py-px text-[11px] font-semibold text-warn">setup unfinished</span> : null}
+                  {u.roles.includes("admin") ? (
+                    <span className="mt-1.5 block text-[11.5px] font-semibold text-muted" title="Admin accounts cannot be removed here">
+                      Protected admin
+                    </span>
+                  ) : (
+                    <DeleteUserButton userId={u.id} email={u.email} roles={u.roles} paid={u.plan === "Plus (paid)"} />
+                  )}
                 </td>
                 <td className="px-3 py-2.5 text-ink-2">{u.name || <span className="text-muted">·</span>}</td>
                 <td className="tabular whitespace-nowrap px-3 py-2.5 text-ink-2">{fmt(u.signedUpAt)}</td>
@@ -82,15 +98,15 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                 <td className="px-3 py-2.5 capitalize text-ink-2">{u.roles.join(", ")}</td>
                 <td className="max-w-[240px] px-3 py-2.5 text-ink-2">{u.courses.length ? u.courses.join(", ") : <span className="text-muted">None</span>}</td>
                 <td className="whitespace-nowrap px-3 py-2.5">
-                  <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-medium", u.plan === "Plus (paid)" ? "bg-positive-soft text-positive" : u.plan === "Plus trial" ? "bg-accent-soft text-accent" : "bg-bg-subtle text-muted")}>{u.plan}</span>
+                  <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-semibold", u.plan === "Plus (paid)" ? "bg-positive-soft text-positive" : u.plan === "Plus trial" ? "bg-accent-soft text-accent-ink" : "bg-bg-subtle text-muted")}>{u.plan}</span>
                 </td>
                 <td className="px-3 py-2.5 text-ink-2">{u.sprint ?? <span className="text-muted">·</span>}</td>
-                <td className="px-3 py-2.5">{u.calendar ? <span className="text-positive">Connected</span> : <span className="text-muted">No</span>}</td>
+                <td className="px-3 py-2.5">{u.calendar ? <span className="font-medium text-positive">Connected</span> : <span className="text-muted">No</span>}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        {!shown.length ? <p className="p-6 text-sm text-muted">{q ? `No accounts match “${q}”.` : "No accounts here yet."}</p> : null}
+        {!shown.length ? <p className="px-5 py-10 text-center text-sm text-muted">{q ? `No accounts match “${q}”.` : "No accounts here yet."}</p> : null}
       </div>
     </div>
   );

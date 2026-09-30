@@ -11,15 +11,27 @@ export const CALENDAR_BENEFITS = [
   { key: "ai", Icon: MessageCircleQuestion, title: "Merit AI knows what's coming", body: "Ask what to study and Merit AI plans around your upcoming tests." },
 ] as const;
 
+/** Tile colors, one per benefit, so the grid reads as a set of bold blocks. */
+const TONES = [
+  "bg-positive-soft text-positive",
+  "bg-accent-soft text-accent-ink",
+  "bg-positive-soft text-positive",
+  "bg-warn-soft text-warn",
+  "bg-sprint-soft text-sprint-ink",
+  "bg-[#fdeef6] text-[#9d174d] dark:bg-[#3a1428] dark:text-[#f9a8d4]",
+];
+
 export function CalendarBenefits({ variant = "grid", className }: { variant?: "grid" | "list"; className?: string }) {
   if (variant === "list") {
     return (
-      <ul className={cn("grid gap-x-6 gap-y-3 sm:grid-cols-2", className)}>
-        {CALENDAR_BENEFITS.map(({ key, Icon, title, body }) => (
-          <li key={key} className="flex gap-3">
-            <Icon className="mt-0.5 size-5 shrink-0 text-accent" />
-            <span>
-              <span className="block text-[14px] font-semibold text-ink">{title}</span>
+      <ul className={cn("grid gap-3 sm:grid-cols-2", className)}>
+        {CALENDAR_BENEFITS.map(({ key, Icon, title, body }, i) => (
+          <li key={key} className="flex gap-3 rounded-2xl bg-surface p-3.5 ring-2 ring-line">
+            <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", TONES[i % TONES.length])}>
+              <Icon className="size-5" />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-brand text-[15px] font-extrabold text-ink">{title}</span>
               <span className="block text-[13px] leading-relaxed text-muted">{body}</span>
             </span>
           </li>
@@ -28,11 +40,13 @@ export function CalendarBenefits({ variant = "grid", className }: { variant?: "g
     );
   }
   return (
-    <div className={cn("grid gap-3 sm:grid-cols-2 lg:grid-cols-3", className)}>
-      {CALENDAR_BENEFITS.map(({ key, Icon, title, body }) => (
-        <div key={key} className="rounded-2xl p-5 ring-1 ring-line">
-          <Icon className="size-6 text-accent" />
-          <p className="mt-3 font-semibold text-ink">{title}</p>
+    <div className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}>
+      {CALENDAR_BENEFITS.map(({ key, Icon, title, body }, i) => (
+        <div key={key} className="rise rounded-3xl bg-surface p-5 ring-2 ring-line" style={{ ["--i" as string]: i }}>
+          <span className={cn("flex size-12 items-center justify-center rounded-2xl", TONES[i % TONES.length])}>
+            <Icon className="size-6" strokeWidth={2.2} />
+          </span>
+          <p className="mt-4 font-brand text-[17px] font-extrabold leading-snug text-ink">{title}</p>
           <p className="mt-1 text-[14px] leading-relaxed text-muted">{body}</p>
         </div>
       ))}

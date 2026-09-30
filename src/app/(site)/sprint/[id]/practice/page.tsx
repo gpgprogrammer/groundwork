@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CourseIcon } from "@/components/course-icon";
 import { SprintRunner } from "@/components/sprint/runner";
@@ -22,11 +21,11 @@ export default async function PracticePage({ params, searchParams }: PageProps<"
   const topicTitles = Object.fromEntries(catalog.topicsForCourse(course.id).map((t) => [t.id, t.title]));
   const label = mode === "checkpoint" ? "Checkpoint" : topics.length ? topics.map((t) => topicTitles[t]).filter(Boolean).join(" · ") : "Practice";
   return (
-    <div className="mx-auto max-w-3xl px-4 pb-20 pt-8 sm:px-6">
-      <Link href={`/sprint/${id}`} className="flex items-center gap-3 text-sm text-muted hover:text-ink">
-        <CourseIcon id={course.id} size={28} /> <span className="truncate">{course.title} · {label}</span>
-      </Link>
-      <div className="mt-8">
+    <div className="mx-auto max-w-3xl px-4 pt-6 sm:px-6">
+      <p className="flex items-center gap-2.5 font-brand text-[14px] font-extrabold text-muted">
+        <CourseIcon id={course.id} size={26} /> <span className="truncate">{course.title} · {label}</span>
+      </p>
+      <div className="mt-5">
         <SprintRunner sprintId={id} mode={mode} topicIds={topics} taskId={task} topicTitles={topicTitles} />
       </div>
     </div>
