@@ -22,7 +22,7 @@ const Chat = dynamic(() => import("./chat").then((m) => m.Chat), {
 
 /** On a topic or course page, suggestions are about what's on screen. */
 function pageTitle() {
-  return /^\/courses\/[^/]+(\/[^/]+)?$/.test(window.location.pathname) ? (document.querySelector("main h1")?.textContent?.trim() ?? null) : null;
+  return /^\/(courses\/[^/]+(\/[^/]+)?|master\/[^/]+\/[^/]+)$/.test(window.location.pathname) ? (document.querySelector("main h1")?.textContent?.trim() ?? null) : null;
 }
 
 const GENERIC = ["Explain the chain rule like I'm new to it", "Quiz me on cellular respiration", "What's on the AP Psychology exam?", "Find a 10-minute video on the Cold War"];

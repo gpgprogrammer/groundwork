@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarCheck, CalendarDays, Check, NotebookPen, Play, Sparkles, Target, Users } from "lucide-react";
+import { ArrowRight, CalendarCheck, CalendarDays, Check, NotebookPen, Play, Sparkles, Target, Users, Zap } from "lucide-react";
 import Link from "next/link";
 import { CourseIcon, courseColors } from "@/components/course-icon";
 import { cn, panel, panelLink } from "@/components/ui";
@@ -21,6 +21,8 @@ export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalo
   const tests = upcomingTests(viewer.state.schedule, 3);
   const teacher = viewer.user.accountType === "teacher";
   const tonightDone = tonight ? tonight.tasks.filter((t) => done[t.id]).length : 0;
+  // A quick session on the next topic in your first course, or the topic picker.
+  const quickTopic = mine[0] ? nextTopicInCourse(catalog, viewer.state, mine[0].id) : undefined;
 
   return (
     <div className="pb-8">
@@ -204,6 +206,21 @@ export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalo
               {viewer.state.schedule ? "My schedule →" : "Connect my calendar →"}
             </Link>
           </section>
+
+          <Link
+            href={quickTopic && mine[0] ? `/master/${mine[0].slug}/${quickTopic.slug}` : "/master"}
+            className={cn(panelLink, "rise flex items-center gap-4 p-5")}
+            style={{ ["--i" as string]: 3 }}
+          >
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
+              <Zap className="size-6" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-brand text-[17px] font-black text-ink">Quick session</span>
+              <span className="block text-[13px] text-muted">{quickTopic ? `Master ${quickTopic.title} in about 15 minutes.` : "Master one topic in about 15 minutes."}</span>
+            </span>
+            <ArrowRight className="size-5 shrink-0 text-muted" />
+          </Link>
 
           <Link href="/sprint" className="press rise flex items-center gap-4 rounded-3xl bg-sprint p-5 text-white [--ledge:var(--sprint-press)]" style={{ ["--i" as string]: 3 }}>
             <Target className="size-7 shrink-0" />

@@ -116,3 +116,22 @@ Also checked: `tsc --noEmit` and `eslint` clean; Impeccable detector (1 finding,
 2. Bring in the 1.0 changes you want to keep (rebase `merit-2.0` onto the new `main`).
 3. Open a PR from `merit-2.0` into `main`; run `npm run build`, `npm run lint`, `npm test`.
 4. Deploy a preview, verify, then promote. Rollback is promoting the previous Vercel deployment; there's no data migration because 2.0 changes no data shapes.
+
+## Update: parity audit and Quick sessions (2026-09-30)
+
+**Parity audit against `main` (d4766f1).** `main`'s three newer commits (admin account removal, subscription cleanup) are merged in. Every route, server action, API route, and data function on `main` exists here with identical logic. A file-by-file comparison of links, imports, form fields, click-tracking keys, and visible text turned up four gaps, now fixed:
+
+- Home (visitors): "Connect my calendar" sign-up button with its `calendar-signup` tracking key (shown in Admin → Analytics), and the "Included with Merit Plus…" note.
+- Home (visitors): the six calendar benefits, and the Ask Merit AI / Find a tutor chips on the example topic.
+- Topic pages: the "Search this course" box.
+- Course pages: the course search box on phones (it was desktop-only).
+
+**Quick sessions (`/master`).** Pick one topic and master it in about 15 minutes:
+
+1. Learn the key ideas (from the topic's summary and key points).
+2. Watch the top-ranked lesson (opened through `/go/`, so it lands in history), or pick another teacher, or skip.
+3. Pass a 4-question exam-style check: 3 of 4 marks the topic mastered. Questions come from the shared, cached question bank (the same one Exam Sprint uses), and answers are graded on the server. A miss offers review-and-retry with new questions, plus Ask Merit AI and Find a tutor. With no AI available and an empty bank for a topic, the check is a key-idea self-check instead.
+
+Entry points: Practice → Quick session, the drawer and footer, a "Master this topic" button on every topic page, an "Up next" tile on the signed-in home page, and a "Next topic" button after each pass. Signing in is required, since mastery is saved to your account. Quick sessions are free; Exam Sprint keeps unlimited practice, checkpoints, cram sheets, and the free-response coach.
+
+Code: `src/lib/quick.ts` (rules), `src/app/actions/quick.ts`, `src/components/quick/session.tsx`, `src/app/(site)/master/`. Tests: `e2e/quick.spec.ts` (rules, full flow with retry, picker, sign-in gate).

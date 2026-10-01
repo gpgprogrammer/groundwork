@@ -1,5 +1,6 @@
 import { ArrowRight, BookOpenCheck, CalendarCheck, CalendarClock, GraduationCap, HeartHandshake, MonitorPlay, Presentation, Sparkles, Target, Users } from "lucide-react";
 import Link from "next/link";
+import { CalendarBenefits } from "@/components/calendar-benefits";
 import { CourseIcon, courseColors } from "@/components/course-icon";
 import { FunnelLink } from "@/components/landing/funnel-link";
 import { Faq } from "@/components/marketing";
@@ -130,6 +131,14 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
                     </li>
                   ))}
                 </ol>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link href="/ask" className="press-sm inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#fdeef6] px-3 font-brand text-[13px] font-extrabold text-[#9d174d] [--ledge:#f5c6dd] dark:bg-[#3a1428] dark:text-[#f9a8d4] dark:[--ledge:#5c1f3d]">
+                    <Sparkles className="size-3.5" /> Ask Merit AI
+                  </Link>
+                  <Link href={`/tutors?course=${course.id}`} className="press-sm inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#f3edff] px-3 font-brand text-[13px] font-extrabold text-[#6d28d9] [--ledge:#ddd0fb] dark:bg-[#2a1f45] dark:text-[#c9b5ff] dark:[--ledge:#3d2d63]">
+                    <Users className="size-3.5" /> Find a tutor
+                  </Link>
+                </div>
                 {sample.tasks[0] ? (
                   <div className="mt-4 flex items-center gap-3 rounded-2xl bg-positive-soft p-3">
                     <CalendarCheck className="size-5 shrink-0 text-positive" />
@@ -257,9 +266,16 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
                 </ul>
               </div>
             ) : null}
-            <Link href="/schedule" className="press relative inline-flex h-11 w-fit items-center gap-2 rounded-2xl bg-white px-5 font-brand text-[15px] font-extrabold text-[#15803d] [--ledge:rgb(0_0_0/0.2)]">
-              How calendar sync works <ArrowRight className="size-4" />
-            </Link>
+            <div className="relative">
+              <FunnelLink
+                href="/signup?as=student&next=%2Fschedule"
+                funnel="calendar-signup"
+                className="press inline-flex h-11 w-fit items-center gap-2 rounded-2xl bg-white px-5 font-brand text-[15px] font-extrabold text-[#15803d] [--ledge:rgb(0_0_0/0.2)]"
+              >
+                Connect my calendar <ArrowRight className="size-4" />
+              </FunnelLink>
+              <p className="mt-3 text-[13px] text-white/85">Included with Merit Plus (free for your first month) or Exam Sprint.</p>
+            </div>
           </article>
 
           <article className="relative flex flex-col justify-between gap-8 overflow-hidden rounded-[28px] bg-sprint p-6 text-white shadow-[0_6px_0_0_var(--sprint-press)] sm:p-8 lg:col-span-7">
@@ -316,6 +332,9 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
             <ArrowRight className="size-5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
+
+        <h3 className="headline mt-14 text-[26px] text-ink">What connecting your calendar does</h3>
+        <CalendarBenefits className="mt-5" />
       </section>
 
       {/* How to start */}

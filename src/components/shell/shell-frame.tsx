@@ -27,6 +27,7 @@ import {
   ThumbsUp,
   Users,
   X,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -62,7 +63,7 @@ const FULL_HEIGHT = /^\/ask$/;
  */
 const SECTIONS = [
   { key: "learn", label: "Learn", href: "/courses", icon: GraduationCap, tint: "text-accent-ink", on: "bg-accent-soft text-accent-ink", owns: ["/courses", "/lessons", "/shorts", "/videos", "/search", "/channel", "/guides", "/educators", "/library"] },
-  { key: "practice", label: "Practice", href: "/sprint", icon: Target, tint: "text-sprint", on: "bg-sprint-soft text-sprint-ink", owns: ["/sprint"] },
+  { key: "practice", label: "Practice", href: "/sprint", icon: Target, tint: "text-sprint", on: "bg-sprint-soft text-sprint-ink", owns: ["/sprint", "/master"] },
   { key: "plan", label: "Plan", href: "/plan", icon: CalendarCheck, tint: "text-positive", on: "bg-positive-soft text-positive", owns: ["/plan", "/schedule", "/progress"] },
   { key: "tutors", label: "Tutors", href: "/tutors", icon: Users, tint: "text-[#7c3aed] dark:text-[#b69cff]", on: "bg-[#f3edff] text-[#6d28d9] dark:bg-[#2a1f45] dark:text-[#c9b5ff]", owns: ["/tutors", "/tutor", "/bookings"] },
   { key: "ask", label: "Ask AI", href: "/ask", icon: Sparkles, tint: "text-[#db2777] dark:text-[#ff8cc6]", on: "bg-[#fdeef6] text-[#be185d] dark:bg-[#3d1830] dark:text-[#ffb3d9]", owns: ["/ask"] },
@@ -78,6 +79,10 @@ const SUBNAV: Record<string, { href: string; label: string }[]> = {
     { href: "/shorts", label: "Quick lessons" },
     { href: "/videos", label: "Merit Tutors' Videos" },
     { href: "/library", label: "Your library" },
+  ],
+  practice: [
+    { href: "/sprint", label: "Exam Sprint" },
+    { href: "/master", label: "Quick session" },
   ],
   plan: [
     { href: "/plan", label: "Tonight" },
@@ -552,6 +557,7 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
       <Group title="Study tools">
         <NavRow href="/plan" icon={<CalendarCheck className="size-[18px]" />} label="Tonight's plan" pathname={pathname} trailing={<PlusTag />} />
         <NavRow href="/sprint" icon={<Target className="size-[18px]" />} label="Exam Sprint" pathname={pathname} />
+        <NavRow href="/master" icon={<Zap className="size-[18px]" />} label="Quick session" pathname={pathname} />
         <NavRow href="/schedule" icon={<CalendarDays className="size-[18px]" />} label="My schedule" pathname={pathname} trailing={<PlusTag />} />
         <NavRow href="/progress" icon={<ChartColumn className="size-[18px]" />} label="Progress" pathname={pathname} trailing={<PlusTag />} />
       </Group>
@@ -720,7 +726,7 @@ function TabBar({ pathname, onMore }: { pathname: string; onMore: () => void }) 
 function SiteFooter({ signedIn }: { signedIn: boolean }) {
   const cols: { title: string; links: [string, string][] }[] = [
     { title: "Learn", links: [["/courses", "Courses"], ["/lessons", "Lessons"], ["/shorts", "Quick lessons"], ["/videos", "Merit Tutors' Videos"], ["/ask", "Merit AI"]] },
-    { title: "Study", links: [["/sprint", "Exam Sprint"], ["/plan", "Tonight's plan"], ["/schedule", "My schedule"], ["/progress", "Progress"]] },
+    { title: "Study", links: [["/sprint", "Exam Sprint"], ["/master", "Quick session"], ["/plan", "Tonight's plan"], ["/schedule", "My schedule"], ["/progress", "Progress"]] },
     { title: "Tutoring", links: [["/tutors", "Find a tutor"], ["/tutors/join", "Become a tutor"], ["/tutors/partners", "Partner with Merit"], ["/studio", "For teachers"]] },
     { title: "Merit", links: [["/about", "About"], ["/pricing", "Pricing"], ["/pricing/parents", "For parents"], ["/how-ranking-works", "How ranking works"], ["/privacy", "Privacy"], ["/terms", "Terms"]] },
   ];

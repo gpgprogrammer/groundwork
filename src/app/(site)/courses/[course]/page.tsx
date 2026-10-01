@@ -142,6 +142,9 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
           <CourseSearch courseId={course.id} courseTitle={course.shortTitle} className="hidden w-full max-w-sm md:block" />
         </div>
       </div>
+      <div className="mx-auto max-w-6xl px-4 pt-5 sm:px-6 md:hidden">
+        <CourseSearch courseId={course.id} courseTitle={course.shortTitle} />
+      </div>
 
       {view === "videos" ? (
         <CourseVideos course={course} catalog={catalog} sp={sp} />

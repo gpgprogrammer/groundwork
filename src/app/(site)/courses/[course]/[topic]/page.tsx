@@ -2,6 +2,7 @@ import { ArrowRight, Check, Play } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CourseSearch } from "@/components/course-search";
 import { FeedGrid, SortControls } from "@/components/feed";
 import { MasteryButton } from "@/components/mastery-button";
 import { cn, EmptyState, panel, panelLink } from "@/components/ui";
@@ -11,13 +12,14 @@ import { pageOf, queryFeed } from "@/lib/feed";
 import { topicStatus } from "@/lib/recommend";
 import { topCreators } from "@/lib/tutoring";
 import { ChannelAvatar } from "@/components/video-card";
-import { FileText, Sparkles, Users } from "lucide-react";
+import { FileText, Sparkles, Users, Zap } from "lucide-react";
 import { guidesForTopic } from "@/lib/educators";
 import { UploadCard } from "@/components/upload-card";
 import { listUploads, toUploadCards } from "@/lib/uploads";
 import { OpenAskButton } from "@/components/ask/quick-ask";
 import { ExamCta } from "@/components/upgrade";
 import { daysUntil, examDateFor } from "@/lib/exams";
+import { sessionMinutes } from "@/lib/quick";
 import { getViewer } from "@/lib/viewer";
 
 export async function generateMetadata({ params }: PageProps<"/courses/[course]/[topic]">): Promise<Metadata> {
@@ -93,8 +95,23 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
             </ul>
           ) : null}
 
+          <Link
+            href={`/master/${course.slug}/${topic.slug}`}
+            className="rise press mt-7 flex items-center gap-3.5 rounded-2xl bg-white p-3 pr-5 text-[#0f1729] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95 sm:w-fit"
+            style={{ ["--i" as string]: 3 }}
+          >
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,var(--c),var(--c2))] text-white">
+              <Zap className="size-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-brand text-[16.5px] font-black leading-tight">{viewer?.state.mastered[topic.id] ? "Practice it again" : "Master this topic"}</span>
+              <span className="block text-[13px] font-semibold text-[#5b6475]">Quick session · about {sessionMinutes(top?.durationSec)} min</span>
+            </span>
+            <ArrowRight className="size-5 shrink-0 text-[#5b6475]" />
+          </Link>
+
           {/* What you can do with this topic */}
-          <div className="rise mt-7 grid grid-cols-2 gap-2.5 lg:grid-cols-4" style={{ ["--i" as string]: 3 }}>
+          <div className="rise mt-3 grid grid-cols-2 gap-2.5 lg:grid-cols-4" style={{ ["--i" as string]: 3 }}>
             {top ? (
               <a
                 href={`/go/${top.id}`}
@@ -130,6 +147,7 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
 
       <div className="mx-auto grid max-w-6xl gap-8 px-4 pt-8 sm:px-6 lg:px-8 xl:grid-cols-[1fr_320px] grid-cols-[minmax(0,1fr)]">
         <div className="min-w-0">
+          <CourseSearch courseId={course.id} courseTitle={course.shortTitle} className="mb-8" />
           {guides.length ? (
             <section className="mb-8">
               <h2 className="headline flex items-center gap-2 text-[20px] text-ink">
