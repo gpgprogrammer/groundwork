@@ -9,7 +9,7 @@ import { getCatalog } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "About Merit",
-  description: "Merit Learning helps high school students master every AP course and the SAT: the best lessons, an AI study partner, a plan for tonight, exam sprints, and real tutors.",
+  description: "Merit Learning helps high school students master every AP course and the SAT: the best lessons, an AI study partner, a learning plan for your classes, exam sprints, and real tutors.",
 };
 
 export default async function AboutPage() {
@@ -34,7 +34,7 @@ export default async function AboutPage() {
             Every student deserves a great teacher and a clear plan.
           </h1>
           <p className="rise mt-5 max-w-2xl text-[17px] leading-relaxed text-white/90 sm:text-[18px]" style={{ ["--i" as string]: 2 }}>
-            Merit brings together the best lessons for every AP and SAT topic, an AI study partner, and real tutors, then tells you exactly what to study tonight. Learning is free. Planning and exam prep tools are affordable. And when you want a person, the best tutors are a click away.
+            Merit brings together the best lessons for every AP and SAT topic, an AI study partner, and real tutors, then picks the right videos for what you&apos;re learning in class. Learning is free. Planning and exam prep tools are affordable. And when you want a person, the best tutors are a click away.
           </p>
           <div className="rise mt-8 flex flex-wrap items-center gap-3" style={{ ["--i" as string]: 3 }}>
             <Link href="/signup" className={bandCta}>
@@ -89,8 +89,8 @@ export default async function AboutPage() {
             <IconTile>
               <CalendarCheck className="size-5" />
             </IconTile>
-            <h2 className="headline mt-5 text-xl text-ink">A plan for tonight</h2>
-            <p className="mt-2 text-[14.5px] leading-relaxed text-muted">Merit Plus turns your class calendar and exam date into a nightly plan, with reminders in the calendar you already use.</p>
+            <h2 className="headline mt-5 text-xl text-ink">A learning plan for your classes</h2>
+            <p className="mt-2 text-[14.5px] leading-relaxed text-muted">Merit Plus follows what you&apos;re covering in class and picks the best videos for it, with every quiz and test on your calendar lined up ahead of time.</p>
           </article>
 
           {/* Exam Sprints */}

@@ -111,7 +111,7 @@ export default async function ProgressPage() {
         </p>
         <div className="rise mt-6 flex flex-wrap gap-2.5" style={{ ["--i" as string]: 3 }}>
           <Link href="/plan" className={heroWhite}>
-            <CalendarCheck className="size-4" /> Open tonight&apos;s plan
+            <CalendarCheck className="size-4" /> Open my learning plan
           </Link>
         </div>
       </PlanHero>
@@ -120,9 +120,9 @@ export default async function ProgressPage() {
         {!stamps.length ? (
           <div className="mb-6">
             <Notice>
-              Your progress fills in as you study: open lessons, mark topics <span className="font-semibold">I understand this</span>, and check off tonight&apos;s plan.{" "}
+              Your progress fills in as you study: open lessons, mark topics <span className="font-semibold">I understand this</span>, and watch the videos in your learning plan.{" "}
               <Link href="/plan" className="font-semibold text-accent-ink hover:underline">
-                Open tonight&apos;s plan
+                Open my learning plan
               </Link>
             </Notice>
           </div>

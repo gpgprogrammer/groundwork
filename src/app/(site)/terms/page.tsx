@@ -21,7 +21,7 @@ export default function TermsPage() {
       <Clause title="Free and paid features">
         <p>Courses, lessons, tutor search, and the AI study partner (up to a daily limit) are free.</p>
         <p>
-          <strong className="text-ink">Merit Plus</strong> ({usd(PLUS.monthly)}/month or {usd(PLUS.annual)}/year) includes the study plan, calendar sync, reminders, and progress tracking. New accounts get Plus free for their first {PLUS.trialDays === 365 ? "year" : `${PLUS.trialDays} days`}, without a card. Paid plans renew automatically until canceled; you can cancel anytime in Settings and keep Plus until the end of the period you paid for.
+          <strong className="text-ink">Merit Plus</strong> ({usd(PLUS.monthly)}/month or {usd(PLUS.annual)}/year) includes the learning plan, calendar sync, and progress tracking. New accounts get Plus free for their first {PLUS.trialDays === 365 ? "year" : `${PLUS.trialDays} days`}, without a card. Paid plans renew automatically until canceled; you can cancel anytime in Settings and keep Plus until the end of the period you paid for.
         </p>
         <p>
           <strong className="text-ink">Exam Sprint</strong> ({usd(SPRINT.price)} one-time) permanently unlocks Exam Sprint for every class, test, and AP or SAT exam on your account, and includes calendar sync. It is not a subscription.

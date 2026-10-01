@@ -4,8 +4,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { hasPlus } from "@/lib/billing/access";
 import type { IndexedCatalog, RankedVideo } from "@/lib/catalog";
-import { buildPlan } from "@/lib/plan";
-import { getPlanPrefs } from "@/lib/plan-store";
+import { learningPlan } from "@/lib/learning-plan";
 import { search } from "@/lib/search";
 import { SERVICES, topCreators } from "@/lib/tutoring";
 import type { Topic } from "@/lib/types";
@@ -123,19 +122,21 @@ export function buildTools(catalog: IndexedCatalog, viewer: Viewer | null) {
       }),
     }),
 
-    tonightsPlan: tool({
-      description: "The student's own study plan for tonight (Merit Plus). Use when they ask what to study, what's next, or how to prepare for an upcoming test.",
+    learningPlan: tool({
+      description: "The student's own learning plan (Merit Plus): the topics they're covering in class and on their calendar, with the best videos for each. Use when they ask what to study, what's next, or how to prepare for an upcoming test.",
       inputSchema: z.object({}),
       execute: async () => {
-        if (!viewer) return { available: false as const, reason: "Not signed in. Signing up gives a free month of Merit Plus, which includes the plan." };
-        if (!hasPlus(viewer.plus)) return { available: false as const, reason: "The study plan is part of Merit Plus." };
-        const prefs = await getPlanPrefs(viewer.user.id);
-        const [today, tomorrow] = buildPlan(catalog, viewer.state, prefs, 2);
-        const fmt = (d: typeof today) => d.tasks.map((t) => ({ topic: t.topic.title, course: t.course.shortTitle, why: t.reason, minutes: t.minutes, href: topicHref(catalog, t.topic) }));
+        if (!viewer) return { available: false as const, reason: "Not signed in. Signing up gives a free month of Merit Plus, which includes the learning plan." };
+        if (!hasPlus(viewer.plus)) return { available: false as const, reason: "The learning plan is part of Merit Plus." };
         return {
           available: true as const,
-          tonight: fmt(today),
-          tomorrow: fmt(tomorrow),
+          topics: learningPlan(catalog, viewer.state).map((g) => ({
+            topic: g.topic.title,
+            course: g.course.shortTitle,
+            why: g.reason,
+            href: topicHref(catalog, g.topic),
+            videos: g.videos.map((v) => ({ title: v.title, channel: v.channelTitle, href: `/go/${v.id}` })),
+          })),
           upcomingTests: visibleEvents(viewer.state.schedule)
             .filter((e) => e.kind === "test" && new Date(e.start).getTime() > Date.now())
             .slice(0, 5)

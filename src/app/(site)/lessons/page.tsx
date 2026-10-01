@@ -12,8 +12,7 @@ import { CHIP_EXTRAS, pageOf, queryFeed, toFeedVideo } from "@/lib/feed";
 import { scheduleShelf } from "@/lib/recommend";
 import { getViewer } from "@/lib/viewer";
 import { hasPlus } from "@/lib/billing/access";
-import { buildPlan } from "@/lib/plan";
-import { getPlanPrefs } from "@/lib/plan-store";
+import { learningPlan } from "@/lib/learning-plan";
 import { dueForCheckIn, listLeads } from "@/lib/leads";
 import { UploadCard } from "@/components/upload-card";
 import { listUploads, toUploadCards } from "@/lib/uploads";
@@ -36,11 +35,9 @@ export default async function Lessons({ searchParams }: PageProps<"/lessons">) {
   const result = queryFeed(catalog, viewer?.state ?? null, { chip, sort: str(sp.sort), length: str(sp.length) });
   const showShelves = (chip === "all" || chip === "foryou") && result.sort === "best";
   const plus = viewer ? hasPlus(viewer.plus) : false;
-  // Plus: tonight's plan leads the page; otherwise, videos for upcoming calendar events.
-  const tonight = viewer && plus && showShelves ? buildPlan(catalog, viewer.state, await getPlanPrefs(viewer.user.id), 1)[0].tasks : [];
-  const upcoming = viewer && showShelves
-    ? [...tonight.flatMap((t) => (t.videos[0] ? [{ video: t.videos[0], reason: `Tonight · ${t.reason}` }] : [])), ...(plus ? [] : scheduleShelf(catalog, viewer.state, 8))].slice(0, 4)
-    : [];
+  // Plus: your learning plan leads the page; otherwise, videos for upcoming calendar events.
+  const fromPlan = viewer && plus && showShelves ? learningPlan(catalog, viewer.state, 8).flatMap((g) => g.videos.slice(0, 1).map((v) => ({ video: v, reason: g.source === "test" ? g.reason : `${g.reason}: ${g.topic.title}` }))) : [];
+  const upcoming = viewer && showShelves ? [...fromPlan, ...(plus ? [] : scheduleShelf(catalog, viewer.state, 8))].slice(0, 4) : [];
   // Don't repeat the calendar shelf in the grid below it.
   if (upcoming.length) {
     const shown = new Set(upcoming.map((r) => r.video.id));
@@ -79,10 +76,10 @@ export default async function Lessons({ searchParams }: PageProps<"/lessons">) {
         <div className="pt-4">
           <Shelf
             icon={<CalendarDays className="size-5 text-accent-ink" />}
-            title={tonight.length ? "Tonight's plan" : "Coming up on your calendar"}
+            title={fromPlan.length ? "Your learning plan" : "Coming up on your calendar"}
             action={
-              <Link href={tonight.length ? "/plan" : "/schedule"} className="rounded-full px-3 py-1.5 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-soft">
-                {tonight.length ? "Open plan" : "See schedule"}
+              <Link href={fromPlan.length ? "/plan" : "/schedule"} className="rounded-full px-3 py-1.5 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-soft">
+                {fromPlan.length ? "Open plan" : "See schedule"}
               </Link>
             }
           >
@@ -97,8 +94,8 @@ export default async function Lessons({ searchParams }: PageProps<"/lessons">) {
         <Link href="/schedule" className="group mt-5 flex items-center gap-4 rounded-2xl bg-accent-soft px-5 py-4 text-sm text-ink transition-transform duration-200 active:scale-[0.99]">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface text-accent-ink"><CalendarDays className="size-5" /></span>
           <span className="min-w-0 flex-1">
-            <span className="font-medium">Know what to study tonight.</span>{" "}
-            <span className="text-ink-2">Connect your class calendar and Merit plans every night around your next quiz or test.</span>
+            <span className="font-medium">Get videos for every quiz and test.</span>{" "}
+            <span className="text-ink-2">Connect your class calendar and Merit lines up the right lessons before each one.</span>
           </span>
           <span className="hidden shrink-0 items-center gap-1 font-semibold text-accent-ink sm:flex">Connect <span className="transition-transform group-hover:translate-x-0.5">→</span></span>
         </Link>

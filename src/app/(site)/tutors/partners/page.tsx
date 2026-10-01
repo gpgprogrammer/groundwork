@@ -31,7 +31,7 @@ export default async function PartnersPage({ searchParams }: PageProps<"/tutors/
           </div>
           <h1 className="display rise mt-4 max-w-3xl text-[36px] sm:text-5xl lg:text-[56px]">Meet students at the moment they need help.</h1>
           <p className="rise mt-4 max-w-2xl text-[16.5px] leading-relaxed text-white/85" style={{ ["--i" as string]: 1 }}>
-            Merit students see tutoring options right where they study: on the topic they&apos;re stuck on, in their study plan, and in their Exam Sprint. Partners are listed on the Tutors page for the subjects they cover.
+            Merit students see tutoring options right where they study: on the topic they&apos;re stuck on, in their learning plan, and in their Exam Sprint. Partners are listed on the Tutors page for the subjects they cover.
           </p>
         </div>
       </header>

@@ -61,7 +61,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
           </>
         ) : (
           <>
-            <p className="mt-3 text-[15px] text-ink">Your free month has ended. Your plan, calendar sync, and reminders are paused until you pick a plan.</p>
+            <p className="mt-3 text-[15px] text-ink">Your free month has ended. Your learning plan and calendar sync are paused until you pick a plan.</p>
             <div className="mt-5 flex flex-wrap gap-2">
               <BuyButton product="plus-month" returnTo="/plan">
                 {usd(PLUS.monthly)}/month

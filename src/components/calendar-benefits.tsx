@@ -1,12 +1,11 @@
-import { BellRing, CalendarCheck, MessageCircleQuestion, Sparkles, SquarePlay, Target } from "lucide-react";
+import { CalendarCheck, MessageCircleQuestion, Sparkles, SquarePlay, Target } from "lucide-react";
 import { cn } from "./ui";
 
 /** What connecting a calendar does. Every item is a real feature that reads the student's calendar. */
 export const CALENDAR_BENEFITS = [
   { key: "feed", Icon: Sparkles, title: "A feed that follows your classes", body: "The topics on your calendar move to the top of For you, so the videos you see match what you're learning this week." },
   { key: "lessons", Icon: SquarePlay, title: "Lessons for every quiz and test", body: "Each quiz and test gets its own set of the best lessons for its topics, days before it's due." },
-  { key: "plan", Icon: CalendarCheck, title: "A plan for tonight", body: "A study plan that fits the time you have and puts whatever's due soonest first." },
-  { key: "reminders", Icon: BellRing, title: "Reminders where you'll see them", body: "Study sessions show up in Google, Apple, or Outlook Calendar, timed before each test." },
+  { key: "plan", Icon: CalendarCheck, title: "A learning plan from your classes", body: "Your learning plan picks the best videos for whatever's coming up in each class, soonest first." },
   { key: "sprint", Icon: Target, title: "An Exam Sprint for any test", body: "Turn a big test into a day-by-day plan in one click, with its units already filled in." },
   { key: "ai", Icon: MessageCircleQuestion, title: "Merit AI knows what's coming", body: "Ask what to study and Merit AI plans around your upcoming tests." },
 ] as const;

@@ -85,7 +85,7 @@ const SUBNAV: Record<string, { href: string; label: string }[]> = {
     { href: "/master", label: "Quick session" },
   ],
   plan: [
-    { href: "/plan", label: "Tonight" },
+    { href: "/plan", label: "Learning plan" },
     { href: "/schedule", label: "My schedule" },
     { href: "/progress", label: "Progress" },
   ],
@@ -223,7 +223,7 @@ function TopBar({ data, section, onMenu }: { data: ShellData; section?: string; 
   );
 }
 
-/** Tabs for the section you're in: Courses / Lessons / Quick lessons, or Tonight / Schedule / Progress. */
+/** Tabs for the section you're in: Courses / Lessons / Quick lessons, or Learning plan / Schedule / Progress. */
 function SubNav({ items, pathname }: { items: { href: string; label: string }[]; pathname: string }) {
   const active = [...items].sort((a, b) => b.href.length - a.href.length).find((l) => isActive(pathname, l.href))?.href;
   return (
@@ -461,7 +461,7 @@ function UserMenu({ data }: { data: ShellData }) {
             </div>
           </div>
           <MenuDivider />
-          <MenuRow href="/plan" icon={<CalendarCheck className="size-[18px]" />}>Tonight&apos;s plan</MenuRow>
+          <MenuRow href="/plan" icon={<CalendarCheck className="size-[18px]" />}>Learning plan</MenuRow>
           <MenuRow href="/progress" icon={<ChartColumn className="size-[18px]" />}>Progress</MenuRow>
           <MenuRow href="/library" icon={<LibraryBig className="size-[18px]" />}>Your library</MenuRow>
           <MenuRow href="/bookings" icon={<Users className="size-[18px]" />}>My tutoring sessions</MenuRow>
@@ -555,7 +555,7 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
         <NavRow href="/tutors" icon={<Users className="size-[18px]" />} label="Tutors" pathname={pathname} />
       </Group>
       <Group title="Study tools">
-        <NavRow href="/plan" icon={<CalendarCheck className="size-[18px]" />} label="Tonight's plan" pathname={pathname} trailing={<PlusTag />} />
+        <NavRow href="/plan" icon={<CalendarCheck className="size-[18px]" />} label="Learning plan" pathname={pathname} trailing={<PlusTag />} />
         <NavRow href="/sprint" icon={<Target className="size-[18px]" />} label="Exam Sprint" pathname={pathname} />
         <NavRow href="/master" icon={<Zap className="size-[18px]" />} label="Quick session" pathname={pathname} />
         <NavRow href="/schedule" icon={<CalendarDays className="size-[18px]" />} label="My schedule" pathname={pathname} trailing={<PlusTag />} />
@@ -571,7 +571,7 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
         </Group>
       ) : (
         <div className="mx-3 my-2 rounded-2xl bg-bg-subtle p-4">
-          <p className="text-[13.5px] leading-snug text-ink-2">Sign in to save lessons, track topics, and get a study plan.</p>
+          <p className="text-[13.5px] leading-snug text-ink-2">Sign in to save lessons, track topics, and get a learning plan.</p>
           <Link href="/login" className="press font-brand mt-3 inline-flex h-9 items-center rounded-2xl bg-surface px-4 text-[13px] font-extrabold text-ink ring-2 ring-inset ring-line hover:bg-bg [--ledge:var(--line)]">
             Sign in
           </Link>
@@ -726,7 +726,7 @@ function TabBar({ pathname, onMore }: { pathname: string; onMore: () => void }) 
 function SiteFooter({ signedIn }: { signedIn: boolean }) {
   const cols: { title: string; links: [string, string][] }[] = [
     { title: "Learn", links: [["/courses", "Courses"], ["/lessons", "Lessons"], ["/shorts", "Quick lessons"], ["/videos", "Merit Tutors' Videos"], ["/ask", "Merit AI"]] },
-    { title: "Study", links: [["/sprint", "Exam Sprint"], ["/master", "Quick session"], ["/plan", "Tonight's plan"], ["/schedule", "My schedule"], ["/progress", "Progress"]] },
+    { title: "Study", links: [["/sprint", "Exam Sprint"], ["/master", "Quick session"], ["/plan", "Learning plan"], ["/schedule", "My schedule"], ["/progress", "Progress"]] },
     { title: "Tutoring", links: [["/tutors", "Find a tutor"], ["/tutors/join", "Become a tutor"], ["/tutors/partners", "Partner with Merit"], ["/studio", "For teachers"]] },
     { title: "Merit", links: [["/about", "About"], ["/pricing", "Pricing"], ["/pricing/parents", "For parents"], ["/how-ranking-works", "How ranking works"], ["/privacy", "Privacy"], ["/terms", "Terms"]] },
   ];

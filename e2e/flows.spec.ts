@@ -110,7 +110,7 @@ test("save to Watch later from the card menu", async ({ page }) => {
 
 test("calendar sync puts the quiz's videos on the home page", async ({ page }) => {
   await signUpAndOnboard(page, { calendar: true });
-  await expect(page.getByRole("heading", { name: "Tonight's plan" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your learning plan" })).toBeVisible();
   await expect(page.getByText(/AP Calc BC quiz: Chain Rule/).first()).toBeVisible();
   await page.goto("/schedule");
   await expect(page.getByText("AP Calc BC quiz: Chain Rule")).toBeVisible();
@@ -231,16 +231,27 @@ test("pricing shows the three offers and a test-mode Sprint purchase unlocks the
   await expect(page.getByText(/Your free month is active/)).toBeVisible();
 });
 
-test("a new account has Plus: tonight's plan, progress, and a reminders feed", async ({ page }) => {
+test("a new account has Plus: a learning plan that follows class topics, and progress", async ({ page }) => {
   await signUpAndOnboard(page);
   await page.goto("/plan");
-  await expect(page.getByRole("heading", { name: "Tonight" })).toBeVisible();
-  const feed = await page.getByLabel("Private calendar link").inputValue();
-  const res = await page.request.get(feed);
-  expect(res.status()).toBe(200);
-  expect(await res.text()).toContain("BEGIN:VCALENDAR");
+  await expect(page.getByRole("heading", { level: 1, name: "Your learning plan" })).toBeVisible();
+  // Tell Merit what's being covered in class; the plan leads with it.
+  const covering = page.locator("#covering");
+  await covering.getByRole("button", { name: "Chain Rule", exact: true }).click();
+  await covering.getByRole("button", { name: /^Save/ }).click();
+  await expect(covering.getByRole("status")).toHaveText(/Saved/);
+  const first = page.locator("main section").filter({ has: page.getByRole("link", { name: "Quick session" }) }).first();
+  await expect(first.getByText("In class now")).toBeVisible();
+  await expect(first.getByRole("link", { name: "Chain Rule", exact: true })).toBeVisible();
+  await expect(first.locator('a[href^="/go/"]').first()).toBeVisible();
   await page.goto("/progress");
   await expect(page.getByRole("heading", { name: "Your progress" })).toBeVisible();
+});
+
+test("without Plus, the learning plan is locked", async ({ page }) => {
+  await page.goto("/plan");
+  await expect(page.getByRole("heading", { name: "Unlock your learning plan with Merit Plus." })).toBeVisible();
+  await expect(page.locator('main a[href^="/go/"]')).toHaveCount(0);
 });
 
 test("signed-out visitors see a sample week on My schedule, then the offer", async ({ page }) => {
@@ -590,26 +601,3 @@ test("connecting a schedule: copy the school calendar page and paste it anywhere
   await expect(page.getByText(/Pasted · \d+ items?/)).toBeVisible();
 });
 
-test("students type exactly how much time they have, and tonight's plan fills it", async ({ page }) => {
-  await signUpAndOnboard(page);
-  await page.goto("/plan");
-  const summary = page.getByText(/things?, about/).first();
-  await expect(summary).toBeVisible();
-  const before = await summary.innerText();
-  // Type 2 hours 15 minutes.
-  await page.getByLabel("Hours").fill("2");
-  await page.getByLabel("Minutes").fill("15");
-  await page.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByText("Saved. Your plan is updated.")).toBeVisible();
-  await page.reload();
-  await expect(page.getByLabel("Hours")).toHaveValue("2");
-  await expect(page.getByLabel("Minutes")).toHaveValue("15");
-  const after = await page.getByText(/things?, about/).first().innerText();
-  expect(after).toMatch(/about \d+ hr/);
-  expect(after).not.toBe(before);
-  // Quick picks fill the boxes; out-of-range amounts are flagged.
-  await page.getByRole("button", { name: "3 hr", exact: true }).click();
-  await expect(page.getByLabel("Hours")).toHaveValue("3");
-  await page.getByLabel("Hours").fill("9");
-  await expect(page.getByText("Up to 8 hours a day")).toBeVisible();
-});

@@ -404,7 +404,7 @@ function SchedulePreview({ catalog, viewer }: { catalog: IndexedCatalog; viewer:
                 <Sparkles className="size-3.5" /> Merit Plus
               </span>
               <p className="relative mt-4 text-[15px] leading-relaxed text-white/90">
-                Calendar sync, a nightly plan, reminders, and progress. {usd(PLUS.monthly)}/month; your first month is free.
+                Calendar sync, a learning plan, and progress. {usd(PLUS.monthly)}/month; your first month is free.
               </p>
               <div className="relative mt-5">
                 {viewer ? (

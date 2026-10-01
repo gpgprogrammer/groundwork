@@ -87,7 +87,7 @@ export function FocusPicker({ courses, initial, onSaved }: { courses: FocusCours
         >
           {pending ? "Saving…" : `Save ${picked.length ? `(${picked.length})` : ""}`}
         </button>
-        {saved ? <span className="fade text-sm font-semibold text-positive" role="status">Saved. Your feed now leads with these topics.</span> : null}
+        {saved ? <span className="fade text-sm font-semibold text-positive" role="status">Saved. Your learning plan and feed now lead with these topics.</span> : null}
       </div>
     </div>
   );

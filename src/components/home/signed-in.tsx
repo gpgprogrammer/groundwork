@@ -1,26 +1,24 @@
-import { ArrowRight, CalendarCheck, CalendarDays, Check, NotebookPen, Play, Sparkles, Target, Users, Zap } from "lucide-react";
+import { ArrowRight, CalendarCheck, CalendarDays, Check, Lock, NotebookPen, Play, Sparkles, Target, Users, Zap } from "lucide-react";
 import Link from "next/link";
 import { CourseIcon, courseColors } from "@/components/course-icon";
 import { cn, panel, panelLink } from "@/components/ui";
 import { hasPlus } from "@/lib/billing/access";
 import type { IndexedCatalog } from "@/lib/catalog";
-import { buildPlan } from "@/lib/plan";
-import { getDoneTasks, getPlanPrefs } from "@/lib/plan-store";
+import { learningPlan } from "@/lib/learning-plan";
 import { courseProgress, nextTopicInCourse, topicStatus, whenLabel } from "@/lib/recommend";
 import { upcomingTests } from "@/lib/schedule-model";
 import type { Viewer } from "@/lib/viewer";
 
-/** Home for a signed-in student: your course worlds, tonight's plan, and what's coming. */
+/** Home for a signed-in student: your course worlds, your learning plan, and what's coming. */
 export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalog: IndexedCatalog }) {
   const first = viewer.user.name.split(" ")[0];
   const plus = hasPlus(viewer.plus);
   const mine = viewer.state.profile.courseIds.map((id) => catalog.course(id)).filter((c) => c !== undefined);
   const courses = mine.length ? mine : [...catalog.courses].sort((a, b) => catalog.videosForCourse(b.id).length - catalog.videosForCourse(a.id).length).slice(0, 4);
-  const [prefs, done] = plus ? await Promise.all([getPlanPrefs(viewer.user.id), getDoneTasks(viewer.user.id)]) : [null, {} as Record<string, string>];
-  const tonight = prefs ? buildPlan(catalog, viewer.state, prefs, 1)[0] : null;
+  // Plus: the first few videos from the learning plan.
+  const planVideos = plus ? learningPlan(catalog, viewer.state, 3).flatMap((g) => g.videos.map((v) => ({ v, topic: `${g.course.shortTitle} · ${g.topic.title}` }))) : [];
   const tests = upcomingTests(viewer.state.schedule, 3);
   const teacher = viewer.user.accountType === "teacher";
-  const tonightDone = tonight ? tonight.tasks.filter((t) => done[t.id]).length : 0;
   // A quick session on the next topic in your first course, or the topic picker.
   const quickTopic = mine[0] ? nextTopicInCourse(catalog, viewer.state, mine[0].id) : undefined;
 
@@ -132,42 +130,36 @@ export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalo
           <section className="rise overflow-hidden rounded-3xl bg-positive text-white shadow-[0_5px_0_0_var(--positive-press)]" style={{ ["--i" as string]: 1 }}>
             <div className="p-5">
               <h2 className="flex items-center gap-2 font-brand text-[18px] font-black">
-                <CalendarCheck className="size-5" /> Tonight
+                {plus ? <CalendarCheck className="size-5" /> : <Lock className="size-5" />} Your learning plan
               </h2>
-              {tonight ? (
-                tonight.tasks.length ? (
-                  <p className="tabular mt-1 font-brand text-[14px] font-bold text-white/85">
-                    {tonight.tasks.length} {tonight.tasks.length === 1 ? "thing" : "things"}, about {tonight.minutes} min · {tonightDone} done
-                  </p>
-                ) : (
-                  <p className="mt-1 text-[14px] text-white/85">{tonight.rest ? "Rest day. You earned it." : "Nothing planned tonight."}</p>
-                )
-              ) : (
-                <p className="mt-1 text-[14px] leading-relaxed text-white/85">Merit Plus turns your calendar and exam date into a plan for tonight.</p>
-              )}
+              <p className="mt-1 text-[14px] leading-relaxed text-white/85">
+                {!plus
+                  ? "Unlock your learning plan with Merit Plus: videos picked for what you're learning in class."
+                  : planVideos.length
+                    ? "Videos for what you're learning in class."
+                    : "Tell us what you're covering in class and your plan fills in."}
+              </p>
             </div>
-            {tonight?.tasks.length ? (
+            {planVideos.length ? (
               <ul className="space-y-2 bg-white/10 p-3">
-                {tonight.tasks.slice(0, 3).map((t) => (
-                  <li key={t.id}>
-                    <Link href={`/courses/${t.course.slug}/${t.topic.slug}`} className="flex items-center gap-3 rounded-2xl bg-white px-3 py-2.5 text-ink transition-transform active:scale-[0.98]">
-                      <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full", done[t.id] ? "bg-positive text-white" : "ring-2 ring-line-strong")}>
-                        {done[t.id] ? <Check className="size-3.5" strokeWidth={3.5} /> : null}
+                {planVideos.map(({ v, topic }) => (
+                  <li key={v.id}>
+                    <a href={`/go/${v.id}`} target="_blank" rel="noopener" className="flex items-center gap-3 rounded-2xl bg-white p-2 text-[#0f1729] transition-transform active:scale-[0.98]">
+                      <span className="relative aspect-video w-20 shrink-0 overflow-hidden rounded-xl bg-[#f2f4f7]">
+                        <img src={v.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" className="absolute inset-0 size-full object-cover" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className={cn("block truncate text-[14px] font-bold", done[t.id] && "text-muted line-through")}>{t.topic.title}</span>
-                        <span className="block text-[12px] text-muted">
-                          {t.course.shortTitle} · {t.minutes} min
-                        </span>
+                        <span className="line-clamp-2 text-[13.5px] font-bold leading-snug">{v.title}</span>
+                        <span className="block truncate text-[12px] text-[#5b6475]">{topic}</span>
                       </span>
-                    </Link>
+                    </a>
                   </li>
                 ))}
               </ul>
             ) : null}
             <div className="p-3 pt-2">
-              <Link href={tonight ? "/plan" : "/pricing"} className="press flex h-11 items-center justify-center gap-2 rounded-2xl bg-white font-brand text-[15px] font-extrabold text-positive [--ledge:rgb(0_0_0/0.2)]">
-                {tonight ? "Open tonight's plan" : "See Merit Plus"} <ArrowRight className="size-4" />
+              <Link href="/plan" className="press flex h-11 items-center justify-center gap-2 rounded-2xl bg-white font-brand text-[15px] font-extrabold text-positive [--ledge:rgb(0_0_0/0.2)]">
+                {plus ? "Open my learning plan" : "Unlock with Merit Plus"} <ArrowRight className="size-4" />
               </Link>
             </div>
           </section>

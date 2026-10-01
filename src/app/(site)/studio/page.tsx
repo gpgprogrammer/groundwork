@@ -290,10 +290,10 @@ function StudioLanding() {
                   <Users className="size-6" />
                 </span>
                 <h3 className="headline mt-5 text-[18px] text-ink">Reach students everywhere</h3>
-                <p className="mt-2 max-w-sm text-[14.5px] leading-relaxed text-muted">Your picks show up in feeds, study plans, and Exam Sprints for every student on that topic.</p>
+                <p className="mt-2 max-w-sm text-[14.5px] leading-relaxed text-muted">Your picks show up in feeds, learning plans, and Exam Sprints for every student on that topic.</p>
               </div>
               <ul aria-hidden className="flex flex-wrap gap-2 sm:max-w-[200px] sm:flex-col sm:items-end">
-                {["Feeds", "Study plans", "Exam Sprints"].map((x) => (
+                {["Feeds", "Learning plans", "Exam Sprints"].map((x) => (
                   <li key={x} className="rounded-full bg-surface px-3.5 py-1.5 font-brand text-[13.5px] font-extrabold text-ink ring-2 ring-line">
                     {x}
                   </li>

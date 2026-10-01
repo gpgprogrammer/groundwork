@@ -6,7 +6,7 @@ import { FunnelLink } from "@/components/landing/funnel-link";
 import { Faq } from "@/components/marketing";
 import { formatDuration } from "@/components/ui";
 import type { IndexedCatalog } from "@/lib/catalog";
-import { buildPlan, DEFAULT_PREFS } from "@/lib/plan";
+import { learningPlan } from "@/lib/learning-plan";
 import { sampleState } from "@/lib/sample";
 import { readiness } from "@/lib/sprint";
 import { CATEGORIES } from "@/lib/types";
@@ -25,8 +25,8 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
   const lessonCount = `${(Math.floor(catalog.videos.length / 1000) * 1000).toLocaleString("en-US")}+`;
   const apCount = catalog.courses.filter((c) => c.exam === "AP").length;
 
-  // Real output of Merit's planner and readiness engine, run on the built-in sample student.
-  const sample = buildPlan(catalog, sampleState(catalog), DEFAULT_PREFS, 1)[0];
+  // Real output of Merit's learning plan and readiness engine, run on the built-in sample student.
+  const sample = learningPlan(catalog, sampleState(catalog), 3);
   const quizCourse = catalog.course(QUIZ.course);
   const quizTopic = quizCourse ? (catalog.topicIn(quizCourse.id, QUIZ.topic) ?? catalog.topicsForCourse(quizCourse.id)[0]) : undefined;
   const quizLessons = quizTopic ? catalog.videosForTopic(quizTopic.id).filter((v) => !v.isShort).slice(0, 2) : [];
@@ -139,11 +139,11 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
                     <Users className="size-3.5" /> Find a tutor
                   </Link>
                 </div>
-                {sample.tasks[0] ? (
+                {sample[0] ? (
                   <div className="mt-4 flex items-center gap-3 rounded-2xl bg-positive-soft p-3">
                     <CalendarCheck className="size-5 shrink-0 text-positive" />
                     <span className="min-w-0 flex-1 text-[13px] text-ink-2">
-                      <span className="font-brand font-extrabold text-ink">Tonight&apos;s plan:</span> {sample.tasks[0].topic.title}, {sample.tasks[0].minutes} min
+                      <span className="font-brand font-extrabold text-ink">In your learning plan:</span> {sample[0].topic.title}, {sample[0].videos.length} {sample[0].videos.length === 1 ? "video" : "videos"}
                     </span>
                     <span className="shrink-0 font-brand text-[11.5px] font-extrabold text-muted">Example</span>
                   </div>
@@ -345,7 +345,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
             {[
               { color: "#2563eb", ledge: "#1a45b5", title: "Pick your courses", body: "Choose what you're taking this year. Merit organizes everything around them." },
               { color: "#15803d", ledge: "#0f5c2b", title: "Connect your calendar", body: "Optional. Paste your school calendar and every quiz and test gets the right lessons." },
-              { color: "#c94b16", ledge: "#93350c", title: "Study tonight's plan", body: "Open Merit after school and see exactly what to watch, sized to the time you have." },
+              { color: "#c94b16", ledge: "#93350c", title: "Watch your learning plan", body: "Open Merit after school and see the best videos for exactly what you're covering in class." },
             ].map((s, i) => (
               <li key={s.title} className="relative">
                 <span className="tabular flex size-14 items-center justify-center rounded-2xl font-brand text-[26px] font-black text-white" style={{ background: s.color, boxShadow: `0 4px 0 0 ${s.ledge}` }}>

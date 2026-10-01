@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { CourseIcon } from "@/components/course-icon";
 
 const VALUE = [
-  { Icon: CalendarCheck, title: "A plan for tonight", body: "Your class calendar and exam date become a nightly plan: the exact lessons to watch, in order." },
+  { Icon: CalendarCheck, title: "A learning plan for your classes", body: "The best videos for what you're covering in class, and for every quiz and test on your calendar." },
   { Icon: Sparkles, title: "An AI study partner", body: "Explanations, practice questions, and the best lesson for any topic, any time." },
   { Icon: Target, title: "Exam Sprints", body: "A day-by-day plan to AP and SAT exam day with a live readiness score." },
   { Icon: Users, title: "Real tutors when you want one", body: "Book top-rated tutors near you or online, right from Merit." },

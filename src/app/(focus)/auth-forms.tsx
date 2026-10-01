@@ -17,7 +17,7 @@ const inputClass =
 /** What Merit actually does. Every line is a real feature. */
 const VALUE = [
   { Icon: ListOrdered, title: "The best lessons, ranked", body: "Every AP course and the SAT, with lessons ranked by how well they teach." },
-  { Icon: CalendarCheck, title: "A plan for tonight", body: "Your class calendar and exam date become a nightly list of the exact lessons to watch." },
+  { Icon: CalendarCheck, title: "A learning plan for your classes", body: "The best videos for what you're covering in class, and for every quiz and test on your calendar." },
   { Icon: Sparkles, title: "Merit AI", body: "Explanations, practice questions, and the right lesson for any topic." },
   { Icon: Target, title: "Exam Sprints", body: "A day-by-day plan to exam day, starting with a free diagnostic." },
   { Icon: Users, title: "Real tutors", body: "Book tutors near you or online, right from Merit." },

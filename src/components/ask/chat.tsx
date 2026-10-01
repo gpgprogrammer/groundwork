@@ -196,7 +196,7 @@ const TOOL_LABEL: Record<string, string> = {
   "tool-topicInfo": "Looking up the topic",
   "tool-courseOutline": "Opening the course outline",
   "tool-findTutors": "Finding tutors",
-  "tool-tonightsPlan": "Checking your plan",
+  "tool-learningPlan": "Checking your learning plan",
   "tool-quiz": "Writing your quiz",
 };
 
@@ -241,10 +241,10 @@ function ToolView({ part, compact, onAsk }: { part: ToolPart; compact: boolean; 
           <Users className="size-3.5" /> Open Tutors
         </Link>
       );
-    case "tool-tonightsPlan":
+    case "tool-learningPlan":
       return out.available ? (
         <Link href="/plan" className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1.5 text-[13px] font-medium text-accent-ink hover:underline">
-          <CalendarCheck className="size-3.5" /> Open tonight&apos;s plan
+          <CalendarCheck className="size-3.5" /> Open my learning plan
         </Link>
       ) : null;
     case "tool-quiz":

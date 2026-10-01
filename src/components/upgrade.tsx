@@ -78,7 +78,7 @@ export function PlusGate({ access, feature, returnTo, children }: { access: Plus
   return <PlusLocked access={access} feature={feature} returnTo={returnTo} />;
 }
 
-export function PlusLocked({ access, feature, returnTo }: { access: PlusAccess; feature: string; returnTo: string }) {
+export function PlusLocked({ access, feature, returnTo, title = "Videos picked for what you're learning in class." }: { access: PlusAccess; feature: string; returnTo: string; title?: string }) {
   return (
     <div className="rise relative overflow-hidden rounded-3xl bg-accent p-7 text-white sm:p-10">
       <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 size-80 rounded-full border-[44px] border-white/10" />
@@ -87,9 +87,9 @@ export function PlusLocked({ access, feature, returnTo }: { access: PlusAccess; 
         <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 font-brand text-[13px] font-extrabold">
           <Lock className="size-3.5" /> {feature} is part of Merit Plus
         </span>
-        <h2 className="display mt-5 text-[34px] sm:text-[44px]">Know exactly what to study tonight.</h2>
+        <h2 className="display mt-5 text-[34px] sm:text-[44px]">{title}</h2>
         <p className="mt-3 text-[16px] leading-relaxed text-white/90">
-          Plus learns what you&apos;re studying in school and suggests the right videos for it, then turns your calendar and exam date into a plan: tonight&apos;s lessons, reminders before every test, and progress you can see.
+          Plus follows what you&apos;re covering in school, from your class calendar or the topics you pick, and gives you a learning plan: the best videos for exactly those topics, plus every upcoming quiz and test lined up with its lessons, and progress you can see.
         </p>
         <ul className="mt-6 grid gap-2 text-[14.5px] sm:grid-cols-2">
           {PLUS.features.map((f) => (
@@ -161,7 +161,7 @@ export function PlusFeedCard() {
         <Sparkles className="size-3.5" /> Merit Plus
       </span>
       <div className="relative">
-        <p className="display text-[30px] leading-[1.05]">Know what to study tonight.</p>
+        <p className="display text-[30px] leading-[1.05]">Your learning plan.</p>
         <p className="mt-2 text-[14px] text-white/85">Merit Plus suggests videos for what you&apos;re learning in class</p>
         <span className="mt-5 inline-flex h-11 items-center gap-2 rounded-2xl bg-white px-5 font-brand text-[15px] font-extrabold text-accent-ink">
           See my plan <CalendarCheck className="size-4" />
