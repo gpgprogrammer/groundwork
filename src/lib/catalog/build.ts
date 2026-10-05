@@ -1,15 +1,46 @@
 import type { Concept, Course, Curriculum, Topic, Unit } from "@/lib/types";
-import { business, cybersecurity } from "./content/ap-career";
-import { csa, csp, precalc, stats } from "./content/ap-math-cs";
-import { afam, apush, compGov, euro, gov, humanGeo, macro, micro, psych, worldExtraUnits } from "./content/ap-history";
-import { art2d, art3d, artHistory, chinese, drawing, french, german, italian, japanese, lang, latin, lit, musicTheory, research, seminar, spanish, spanishLit } from "./content/ap-humanities";
-import { apes, bioExtraUnits, chemExtraUnits, physics1, physics2, physicsCEM, physicsCMech } from "./content/ap-sciences";
-import { bio, chem } from "./content/bio-chem";
-import { calcBC } from "./content/calc-bc";
-import { satMath } from "./content/sat-math";
-import { satRW } from "./content/sat-rw";
+import { cybersecurity } from "./content/ap-career";
+import { art2d, art3d, drawing } from "./content/ap-humanities";
+import { BC_ONLY_TOPICS, BC_ONLY_UNITS, calcBC } from "./content/calc-bc";
+import { chem as chemistry } from "./content/ced/ap-chemistry";
+import { csa } from "./content/ced/ap-computer-science-a";
+import { physics1 } from "./content/ced/ap-physics-1";
+import { physics2 } from "./content/ced/ap-physics-2";
+import { physicsCEM } from "./content/ced/ap-physics-c-electricity-and-magnetism";
+import { physicsCMech } from "./content/ced/ap-physics-c-mechanics";
+import { artHistory } from "./content/ced/ap-art-history";
+import { business } from "./content/ced/ap-business-personal-finance";
+import { chinese } from "./content/ced/ap-chinese-language";
+import { lang } from "./content/ced/ap-english-language";
+import { lit } from "./content/ced/ap-english-literature";
+import { french } from "./content/ced/ap-french-language";
+import { german } from "./content/ced/ap-german-language";
+import { italian } from "./content/ced/ap-italian-language";
+import { japanese } from "./content/ced/ap-japanese-language";
+import { latin } from "./content/ced/ap-latin";
+import { musicTheory } from "./content/ced/ap-music-theory";
+import { research } from "./content/ced/ap-research";
+import { seminar } from "./content/ced/ap-seminar";
+import { spanish } from "./content/ced/ap-spanish-language";
+import { spanishLit } from "./content/ced/ap-spanish-literature";
+import { worldHistory } from "./content/ced/ap-world-history";
+import { satMath } from "./content/ced/sat-math";
+import { satRW } from "./content/ced/sat-reading-writing";
+import { afam } from "./content/ced/ap-african-american-studies";
+import { biology } from "./content/ced/ap-biology";
+import { compGov } from "./content/ced/ap-comparative-government";
+import { csp } from "./content/ced/ap-computer-science-principles";
+import { apes } from "./content/ced/ap-environmental-science";
+import { euro } from "./content/ced/ap-european-history";
+import { humanGeo } from "./content/ced/ap-human-geography";
+import { macro } from "./content/ced/ap-macroeconomics";
+import { micro } from "./content/ced/ap-microeconomics";
+import { precalc } from "./content/ced/ap-precalculus";
+import { psych } from "./content/ced/ap-psychology";
+import { stats } from "./content/ced/ap-statistics";
+import { gov } from "./content/ced/ap-us-government";
+import { apush } from "./content/ced/ap-us-history";
 import type { CourseSpec } from "./content/spec";
-import { world } from "./content/world";
 
 /** Small, stable string hash (FNV-1a). */
 export function hash(input: string): number {
@@ -21,20 +52,8 @@ export function hash(input: string): number {
   return h >>> 0;
 }
 
-// Complete the original courses with the rest of their official units.
-const biology: CourseSpec = {
-  ...bio,
-  units: [...bioExtraUnits.before, bio.units[0], ...bioExtraUnits.afterEnergetics, ...bio.units.slice(1), ...bioExtraUnits.after],
-};
-const chemistry: CourseSpec = {
-  ...chem,
-  units: [...chem.units.slice(0, 2), ...chemExtraUnits.afterBonding, ...chem.units.slice(2), ...chemExtraUnits.after],
-};
-const worldHistory: CourseSpec = { ...world, units: [...world.units, ...worldExtraUnits] };
 
-/** Calc AB is the BC course without the BC-only units and techniques; it shares BC's videos. */
-const BC_ONLY_UNITS = new Set(["parametric-polar-vector", "infinite-series"]);
-const BC_ONLY_TOPICS = new Set(["eulers-method", "logistic-growth", "integration-by-parts", "partial-fractions"]);
+/** Calc AB is the BC course without the BC-only units and topics (units 1–8 of the CED); it shares BC's videos. */
 const calcAB: CourseSpec & { sameAsCourse: string } = {
   sameAsCourse: calcBC.course.slug,
   course: {

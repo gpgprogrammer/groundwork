@@ -18,7 +18,9 @@ export type UnitReadiness = { unit: Unit; weight: number; score: number; answere
 /** Units weighted by how much of the course they cover (topic count). */
 export function unitWeights(catalog: IndexedCatalog, courseId: string, unitIds?: string[]) {
   const all = catalog.unitsForCourse(courseId);
-  const units = unitIds?.length ? all.filter((u) => unitIds.includes(u.id)) : all;
+  const picked = unitIds?.length ? all.filter((u) => unitIds.includes(u.id)) : [];
+  // A test Sprint whose units were renamed when the course was updated falls back to the whole course.
+  const units = picked.length ? picked : all;
   const counts = units.map((u) => catalog.topicsForUnit(u.id).length || 1);
   const total = counts.reduce((a, b) => a + b, 0);
   return units.map((u, i) => ({ unit: u, weight: counts[i] / total }));

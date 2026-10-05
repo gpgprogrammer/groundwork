@@ -42,8 +42,9 @@ const ICS = [
 async function startPlusTrial(page: Page) {
   await page.goto("/plan");
   const start = page.getByRole("button", { name: /Start my \d+-day free trial/ });
-  // Accounts already on Plus (e.g. an older automatic trial) have nothing to start.
-  if (await start.count()) {
+  // Wait for the streamed page; accounts already on Plus (e.g. an older automatic trial) have nothing to start.
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
+  if (await start.isVisible().catch(() => false)) {
     await start.click();
     await page.waitForURL(/trial=started/);
   }
@@ -619,6 +620,7 @@ test("connecting a schedule: copy the school calendar page and paste it anywhere
   await expect(page.getByRole("heading", { name: "Connect your schedule" })).toBeVisible();
   // Google's one-click button only appears once Google is set up.
   await expect(page.getByText("Connect Google Calendar")).toHaveCount(0);
+  await page.getByRole("radio", { name: "Something else" }).click();
   await expect(page.getByText("Select all and copy")).toBeVisible();
   // What ⌘A ⌘C copies from a Blackbaud month view (the real format, from a student's calendar).
   const copied = [
