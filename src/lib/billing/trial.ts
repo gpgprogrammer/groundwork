@@ -6,7 +6,7 @@ import type { Billing, PlusAccess, Profile } from "@/lib/types";
  * Accounts created before trials became opt-in got Plus free for their first month automatically;
  * they keep it. Everyone after starts on the free plan and starts a trial when they want one.
  */
-export const AUTO_TRIAL_CUTOFF = "2026-10-05T14:30:00.000Z";
+export const AUTO_TRIAL_CUTOFF = "2026-10-05T15:39:00.000Z";
 const LEGACY_TRIAL_DAYS = 30;
 
 /** When this account's Plus trial ends (or ended), or null if it has never started one. */
