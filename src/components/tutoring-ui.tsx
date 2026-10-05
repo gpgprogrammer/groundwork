@@ -135,7 +135,8 @@ export function CreatorCard({ c, rank }: { c: CreatorStat; rank: number }) {
         <div aria-hidden className="absolute -right-6 -top-8 size-20 rounded-full border-[10px] border-white/15" />
         <RankMedal rank={rank} className="absolute left-3 top-3" />
       </div>
-      <div className="-mt-9 rounded-full bg-surface p-1 ring-2 ring-line">
+      {/* Above the band: the band is positioned, so without its own layer the avatar would paint underneath it. */}
+      <div className="relative z-10 -mt-9 rounded-full bg-surface p-1 ring-2 ring-line">
         <ChannelAvatar title={c.channel.title} src={c.channel.thumbnail} size={68} />
       </div>
       <p className="mt-2.5 line-clamp-2 min-h-[2.5em] px-3 font-brand text-[15px] font-extrabold leading-tight text-ink">{c.channel.title}</p>

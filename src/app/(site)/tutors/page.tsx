@@ -117,7 +117,7 @@ export default async function TutorsPage({ searchParams }: PageProps<"/tutors">)
           title={`Best free teachers${course ? ` for ${course.shortTitle}` : ""}`}
           sub="The teachers whose lessons rank highest on Merit, from real results: views, likes, and student votes."
         >
-          <ol className="scrollbar-none -mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 pt-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+          <ol className="scrollbar-none -mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 pt-1 after:block after:w-px after:shrink-0 after:content-[''] sm:-mx-6 sm:scroll-px-6 sm:px-6 sm:after:w-2 lg:-mx-8 lg:scroll-px-8 lg:px-8 lg:after:w-4">
             {creators.map((c, i) => (
               <li key={c.channel.id} className="w-[168px] shrink-0 snap-start sm:w-[184px]">
                 <CreatorCard c={c} rank={i + 1} />
