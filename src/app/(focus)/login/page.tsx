@@ -28,7 +28,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     >
       {sp.error ? (
         <p className="mb-6 rounded-2xl bg-warn-soft px-4 py-3 text-sm font-medium text-ink" role="alert">
-          That sign-in link didn&apos;t work. Please try again.
+          That link didn&apos;t sign you in. If you were confirming your email, it&apos;s most likely confirmed now: sign in below with your email and password. Opening the link in the same browser you signed up in also helps.
         </p>
       ) : null}
       <OAuthButtons next={next} />

@@ -8,10 +8,11 @@ import { learningPlan } from "@/lib/learning-plan";
 import { courseProgress, nextTopicInCourse, topicStatus, whenLabel } from "@/lib/recommend";
 import { upcomingTests } from "@/lib/schedule-model";
 import type { Viewer } from "@/lib/viewer";
+import { greetingName } from "@/lib/names";
 
 /** Home for a signed-in student: your course worlds, your learning plan, and what's coming. */
 export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalog: IndexedCatalog }) {
-  const first = viewer.user.name.split(" ")[0];
+  const first = greetingName(viewer.user.name);
   const plus = hasPlus(viewer.plus);
   const mine = viewer.state.profile.courseIds.map((id) => catalog.course(id)).filter((c) => c !== undefined);
   const courses = mine.length ? mine : [...catalog.courses].sort((a, b) => catalog.videosForCourse(b.id).length - catalog.videosForCourse(a.id).length).slice(0, 4);

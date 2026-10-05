@@ -22,13 +22,13 @@ export default async function UploadPage() {
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <div className={cn(panel, "rise mt-8 p-6 sm:p-8")} style={{ ["--i" as string]: 1 }}>
           <p className="font-brand text-[18px] font-extrabold text-ink">First, a profile</p>
-          <p className="mt-2 text-[15.5px] leading-relaxed text-ink-2">Videos on Merit are published under your name, so set up a profile first. Tutors use their tutor listing; teachers use their teacher profile.</p>
+          <p className="mt-2 text-[15.5px] leading-relaxed text-ink-2">Videos on Merit are published under your name, so set up your teacher profile first. It takes about a minute. If you tutor privately, a tutor listing works too.</p>
           <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-            <LinkButton href="/tutors/join" size="lg">
-              Create a tutor listing
+            <LinkButton href="/studio" size="lg">
+              Set up my teacher profile
             </LinkButton>
-            <LinkButton href="/studio" size="lg" variant="outline">
-              Set up a teacher profile
+            <LinkButton href="/tutors/join" size="lg" variant="outline">
+              Create a tutor listing
             </LinkButton>
           </div>
         </div>

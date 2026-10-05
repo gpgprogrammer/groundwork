@@ -50,7 +50,7 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
   } else {
     const { localCreateUser, localFindUserByEmail } = await import("@/lib/data/demo-store");
     if (await localFindUserByEmail(email)) return { error: "An account with that email already exists. Sign in instead.", fields };
-    const user = await localCreateUser(name, email, password);
+    const user = await localCreateUser(name, email, password, accountType);
     await (await getStore()).ensureProfile({ id: user.id, email: user.email, name: user.name });
     await setDemoSession(user.id);
   }
@@ -85,10 +85,11 @@ export async function signInWithProvider(form: FormData) {
   const provider = form.get("provider") === "apple" ? "apple" : "google";
   const { createSessionClient } = await import("@/lib/supabase/server");
   const supabase = await createSessionClient();
-  const next = safeNext(form.get("next"), "/");
+  const teacher = form.get("accountType") === "teacher";
+  const next = safeNext(form.get("next"), teacher ? "/studio?welcome=teacher" : "/");
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
-    options: { redirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}` },
+    options: { redirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}${teacher ? "&as=teacher" : ""}` },
   });
   if (error || !data.url) redirect("/login?error=oauth");
   redirect(data.url);

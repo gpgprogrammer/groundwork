@@ -10,6 +10,7 @@ import { getTutorMeta, saveTutorMeta } from "@/lib/bookings";
 import { createLead } from "@/lib/leads";
 import type { Location, TutoringRequest } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
+import { greetingName } from "@/lib/names";
 
 export type FormState = { ok?: boolean; error?: string };
 
@@ -159,7 +160,7 @@ export async function reviewTutor(_: FormState, form: FormData): Promise<FormSta
   const tutor = (await store.listTutors()).find((t) => t.id === parsed.data.tutorId);
   if (!tutor) return { error: "That tutor isn't available anymore." };
   if (tutor.userId === viewer.user.id) return { error: "You can't review yourself." };
-  await store.saveReview({ ...parsed.data, userId: viewer.user.id, userName: viewer.user.name.split(" ")[0] });
+  await store.saveReview({ ...parsed.data, userId: viewer.user.id, userName: greetingName(viewer.user.name) });
   revalidatePath(`/tutors/${tutor.id}`);
   revalidatePath("/tutors");
   return { ok: true };

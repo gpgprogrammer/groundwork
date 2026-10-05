@@ -155,6 +155,14 @@
 }
 
 @layer base {
+  /* Browser validation scrolls to the first bad field; keep it clear of the sticky top bar. */
+  input,
+  textarea,
+  select,
+  fieldset {
+    scroll-margin-top: calc(var(--nav-h, 4rem) + 1.5rem);
+  }
+
   html {
     background: var(--bg);
     -webkit-text-size-adjust: 100%;

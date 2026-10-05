@@ -13,6 +13,7 @@ import { formatInZone, getBooking, getTutorMeta } from "@/lib/bookings";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { requireViewer } from "@/lib/viewer";
+import { greetingName } from "@/lib/names";
 
 export const metadata: Metadata = { title: "Session" };
 
@@ -40,7 +41,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
   const course = b.courseId ? catalog.course(b.courseId) : null;
   const when = new Date(b.startsAt).toLocaleString("en-US", { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
   const other = isTutor ? b.studentName : (tutor?.name ?? "Tutor");
-  const tutorFirst = tutor?.name.split(" ")[0];
+  const tutorFirst = greetingName(tutor?.name ?? "");
 
   const actions = [
     isTutor && b.status === "requested" ? (

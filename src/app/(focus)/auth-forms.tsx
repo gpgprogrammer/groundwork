@@ -92,7 +92,13 @@ export function SignInForm({ next }: { next?: string }) {
   );
 }
 
-export function SignUpForm({ next, initialType }: { next?: string; initialType?: AccountType }) {
+/** What each account type gets, shown once a type is picked. */
+const TYPE_NOTE: Record<AccountType, string> = {
+  student: "Merit Plus is free for your first month. No card needed.",
+  teacher: "Sharing lessons and study guides on Merit is free. You'll set up your teacher profile next.",
+};
+
+export function SignUpForm({ next, initialType, oauth }: { next?: string; initialType?: AccountType; oauth?: Record<AccountType, ReactNode> }) {
   const [state, action, pending] = useActionState<AuthState, FormData>(signUp, {});
   const [type, setType] = useState<AccountType | null>(initialType ?? null);
   if (state.message) {
@@ -138,7 +144,14 @@ export function SignUpForm({ next, initialType }: { next?: string; initialType?:
             );
           })}
         </div>
+        {type ? (
+          <p key={type} className="fade mt-3 text-[14px] leading-relaxed text-muted" aria-live="polite">
+            {TYPE_NOTE[type]}
+          </p>
+        ) : null}
       </fieldset>
+      {/* Google / Apple sign-up carries the chosen account type, so it only appears once one is picked. */}
+      {type && oauth ? oauth[type] : null}
       <Field label="Your name">
         <input name="name" required autoComplete="name" autoFocus defaultValue={state.fields?.name} className={inputClass} placeholder="Maya Alvarez" />
       </Field>

@@ -11,7 +11,7 @@ import type { Store } from "./store";
  * Production with real users uses the Supabase store instead.
  */
 
-type LocalUser = { id: string; email: string; name: string; salt: string; hash: string };
+type LocalUser = { id: string; email: string; name: string; accountType?: "student" | "teacher"; salt: string; hash: string };
 
 type LocalState = {
   version: number;
@@ -106,10 +106,10 @@ export async function localGetUser(id: string) {
   return (await load()).users[id] ?? null;
 }
 
-export async function localCreateUser(name: string, email: string, password: string) {
+export async function localCreateUser(name: string, email: string, password: string, accountType: "student" | "teacher" = "student") {
   const s = await load();
   const id = `user_${randomUUID()}`;
-  s.users[id] = { id, name: name.trim(), email: email.trim().toLowerCase(), ...hashPassword(password) };
+  s.users[id] = { id, name: name.trim(), email: email.trim().toLowerCase(), accountType, ...hashPassword(password) };
   await persist();
   return s.users[id];
 }

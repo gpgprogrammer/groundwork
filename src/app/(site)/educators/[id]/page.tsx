@@ -12,6 +12,7 @@ import { ReportButton } from "@/components/report-button";
 import { UploadGrid } from "@/components/upload-card";
 import { cn, EmptyState, LinkButton, panelLink, SectionHeading } from "@/components/ui";
 import { listPendingUploads, toUploadCards } from "@/lib/uploads";
+import { greetingName } from "@/lib/names";
 import { getViewer } from "@/lib/viewer";
 
 export async function generateMetadata({ params }: PageProps<"/educators/[id]">): Promise<Metadata> {
@@ -28,7 +29,7 @@ export default async function EducatorPage({ params }: PageProps<"/educators/[id
   const videos = items.flatMap((c) => (c.kind === "video" && catalog.video(c.video!.id) ? [catalog.video(c.video!.id)!] : []));
   const guides = items.filter((c) => c.kind === "guide");
   const uploads = await toUploadCards(items.filter((c) => c.kind === "upload" && c.media));
-  const first = educator.name.split(" ")[0];
+  const first = greetingName(educator.name);
   return (
     <div className="pb-20">
       <header className="relative overflow-hidden bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)] text-white [&_.headline]:text-white [&_.text-ink]:text-white [&_.text-ink-2]:text-white/90 [&_.text-muted]:text-white/80 [&_.text-accent-ink]:text-white">

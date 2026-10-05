@@ -3,6 +3,7 @@ import { visibleEvents } from "@/lib/schedule-model";
 import type { IndexedCatalog } from "@/lib/catalog";
 import { daysUntil, examDateFor } from "@/lib/exams";
 import type { Viewer } from "@/lib/viewer";
+import { greetingName } from "@/lib/names";
 
 /** Where the student is on the site, so "explain this" means the right thing. */
 export function pageContext(catalog: IndexedCatalog, path: string | undefined) {
@@ -23,7 +24,7 @@ export function studentContext(catalog: IndexedCatalog, viewer: Viewer | null) {
   if (!viewer) return "The student is not signed in.";
   const p = viewer.state.profile;
   const courses = p.courseIds.map((id) => catalog.course(id)).filter((c) => c !== undefined);
-  const lines = [`Student's first name: ${p.name.split(" ")[0]}.`];
+  const lines = [`Student's first name: ${greetingName(p.name)}.`];
   if (courses.length) {
     lines.push(
       `Courses: ${courses

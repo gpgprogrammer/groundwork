@@ -4,7 +4,7 @@ import { Check, MapPin, MonitorSmartphone } from "lucide-react";
 import type { ReactNode } from "react";
 import { useActionState } from "react";
 import { removeTutorProfile, saveTutorProfile, type FormState } from "@/app/actions/tutoring";
-import { Field, FormMessage, inputClass } from "@/components/form";
+import { Field, FormMessage, inputClass, keepValuesOnSubmit } from "@/components/form";
 import { violetButton } from "@/components/tutoring-ui";
 import { cn, panel } from "@/components/ui";
 import type { Tutor } from "@/lib/types";
@@ -34,7 +34,7 @@ export function TutorForm({ existing, defaultName, courses, agreed }: Props) {
   const groups = [...new Set(courses.map((c) => c.category))];
   const e = existing;
   return (
-    <form action={action} className="mt-8 space-y-5">
+    <form onSubmit={keepValuesOnSubmit(action)} className="mt-8 space-y-5">
       <Step n={1} title="Profile" sub="What students see on your card and profile." i={1}>
         <div className="space-y-4">
           <Field label="Name">

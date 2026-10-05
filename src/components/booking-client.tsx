@@ -6,6 +6,7 @@ import { createBooking, saveAvailability, type BookingState } from "@/app/action
 import type { DaySlots } from "@/lib/bookings";
 import { FormMessage, inputClass, selectClass } from "./form";
 import { cn, Notice } from "./ui";
+import { greetingName } from "@/lib/names";
 
 const groupLabel = "mb-2 block font-brand text-[13.5px] font-extrabold text-ink";
 const chip = "press-sm font-brand font-extrabold transition-[background-color,color,transform,box-shadow] duration-100 ease-out";
@@ -40,7 +41,7 @@ export function BookingForm({
   const [state, action, pending] = useActionState<BookingState, FormData>(createBooking, {});
   const day = days.find((d) => d.date === date) ?? days[0];
   const price = hourlyRate ? (hourlyRate * Number(minutes)) / 60 : 0;
-  const first = tutorName.split(" ")[0];
+  const first = greetingName(tutorName);
   const local = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
   if (!Object.values(slots).some((d) => d.length)) {

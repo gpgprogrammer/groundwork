@@ -7,6 +7,7 @@ import { requestSession, reviewTutor, setLocation, type FormState } from "@/app/
 import type { Location } from "@/lib/types";
 import { Field, FormMessage, inputClass, selectClass } from "./form";
 import { Button, cn, Notice } from "./ui";
+import { greetingName } from "@/lib/names";
 
 const violetBtn =
   "press inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#7c3aed] px-7 font-brand text-[16.5px] font-extrabold text-white [--ledge:#5b21b6] hover:brightness-110 disabled:pointer-events-none disabled:opacity-50";
@@ -104,7 +105,7 @@ export function RequestSessionForm({
         <span className="check-pop mx-auto flex size-14 items-center justify-center rounded-full bg-positive text-white shadow-[0_4px_0_0_var(--positive-press)]">
           <Check className="size-7" strokeWidth={3} />
         </span>
-        <p className="mt-4 font-brand text-[18px] font-extrabold text-ink">Request sent to {tutorName.split(" ")[0]}</p>
+        <p className="mt-4 font-brand text-[18px] font-extrabold text-ink">Request sent to {greetingName(tutorName)}</p>
         <p className="mt-1 text-sm text-ink-2">They&apos;ll reply to you by email to set up a time.</p>
       </div>
     );

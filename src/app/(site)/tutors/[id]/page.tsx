@@ -9,6 +9,7 @@ import { ago, cn, LinkButton, panel } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { formatPlace, rankTutors } from "@/lib/tutoring";
+import { greetingName } from "@/lib/names";
 import { getViewer } from "@/lib/viewer";
 import { BookingForm } from "@/components/booking-client";
 import { getTutorMeta, listBookings, openSlots } from "@/lib/bookings";
@@ -40,7 +41,7 @@ export default async function TutorPage({ params, searchParams }: PageProps<"/tu
   const slots = Object.fromEntries([30, 60, 90].map((m) => [String(m), openSlots(meta, booked, m)]));
   const uploads = await toUploadCards(await listUploads({ educatorId: tutor.userId }));
   const tzLabel = meta.timezone.replace(/_/g, " ");
-  const first = tutor.name.split(" ")[0];
+  const first = greetingName(tutor.name);
   const place = tutor.inPerson ? formatPlace(tutor) : null;
 
   const pill = "inline-flex h-8 items-center gap-1.5 rounded-full bg-white/15 px-3 font-brand text-[13.5px] font-extrabold ring-1 ring-inset ring-white/25";

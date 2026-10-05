@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { startTransition, type FormEvent, type ReactNode } from "react";
 import { cn } from "./ui";
 
 export const inputClass =
@@ -32,4 +32,18 @@ export function FormMessage({ error, ok }: { error?: string; ok?: string | false
       </p>
     );
   return null;
+}
+
+/**
+ * Submit handler for a form backed by a server action. Passing the action to `action={...}` makes React
+ * clear every field once the action returns, so a failed save would wipe what someone typed. This keeps it.
+ */
+export function keepValuesOnSubmit(formAction: (data: FormData) => void, before?: (form: HTMLFormElement) => boolean) {
+  return (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    if (before && !before(form)) return;
+    const data = new FormData(form, (e.nativeEvent as SubmitEvent).submitter);
+    startTransition(() => formAction(data));
+  };
 }

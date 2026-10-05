@@ -4,7 +4,7 @@ import { Check, Loader2, Search } from "lucide-react";
 import { useActionState, useMemo, useState, useTransition } from "react";
 import { previewVideo, publishGuide, publishVideo, saveEducatorProfile, type StudioState, type VideoPreview } from "@/app/actions/educator";
 import { Markdown } from "./ask/markdown";
-import { FormMessage, inputClass, selectClass } from "./form";
+import { FormMessage, inputClass, keepValuesOnSubmit, selectClass } from "./form";
 import { Button, cn, formatDuration, formatViews } from "./ui";
 
 const labelText = "mb-1.5 block font-brand text-[13.5px] font-extrabold text-ink-2";
@@ -62,8 +62,15 @@ export function TopicPicker({ courses, courseId, setCourseId, topicId, setTopicI
 export function EducatorForm({ courses, initial }: { courses: { id: string; title: string; category: string }[]; initial: { name: string; headline: string; school: string; bio: string; courseIds: string[] } }) {
   const [state, action, pending] = useActionState<StudioState, FormData>(saveEducatorProfile, {});
   const groups = [...new Set(courses.map((c) => c.category))];
+  const [missingCourse, setMissingCourse] = useState(false);
+  const checkCourses = (form: HTMLFormElement) => {
+    const ok = Boolean(form.querySelector('input[name="courseIds"]:checked'));
+    setMissingCourse(!ok);
+    if (!ok) form.querySelector("#courses-you-teach")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return ok;
+  };
   return (
-    <form action={action} className="space-y-6">
+    <form onSubmit={keepValuesOnSubmit(action, checkCourses)} onChange={() => missingCourse && setMissingCourse(false)} className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className={labelText}>Name students will see</span>
@@ -82,12 +89,17 @@ export function EducatorForm({ courses, initial }: { courses: { id: string; titl
         <span className={labelText}>About you{optional}</span>
         <textarea name="bio" defaultValue={initial.bio} rows={3} maxLength={1200} className={textareaClass} />
       </label>
-      <fieldset className="border-t-2 border-line pt-6">
+      <fieldset id="courses-you-teach" className="scroll-mt-28 border-t-2 border-line pt-6" aria-describedby={missingCourse ? "courses-error" : undefined}>
         <legend className="sr-only">Courses you teach</legend>
         <p aria-hidden className="font-brand text-[18px] font-extrabold text-ink">
           Courses you teach
         </p>
         <p className="mt-0.5 text-[13px] text-muted">Pick every course you want to add lessons and guides for.</p>
+        {missingCourse ? (
+          <p id="courses-error" role="alert" className="mt-3 rounded-2xl bg-danger-soft px-4 py-2.5 font-brand text-[14px] font-extrabold text-danger">
+            Pick at least one course you teach.
+          </p>
+        ) : null}
         <div className="mt-4 space-y-4">
           {groups.map((g) => (
             <div key={g}>
@@ -188,7 +200,7 @@ export function AddVideoForm({ courses }: { courses: CourseTopics[] }) {
       ) : null}
 
       {preview ? (
-        <form action={action} className="fade space-y-6">
+        <form onSubmit={keepValuesOnSubmit(action)} className="fade space-y-6">
           <input type="hidden" name="videoId" value={preview.id} />
           <div className="flex gap-3 rounded-2xl bg-surface p-3 ring-2 ring-line sm:gap-4">
             <span className="relative w-32 shrink-0 overflow-hidden rounded-xl bg-bg-subtle sm:w-44">
@@ -249,7 +261,7 @@ export function GuideForm({ courses }: { courses: CourseTopics[] }) {
   const [tab, setTab] = useState<"write" | "preview">("write");
   const [state, action, pending] = useActionState<StudioState, FormData>(publishGuide, {});
   return (
-    <form action={action} className="space-y-6">
+    <form onSubmit={keepValuesOnSubmit(action)} className="space-y-6">
       <TopicPicker courses={courses} courseId={courseId} setCourseId={setCourseId} topicId={topicId} setTopicId={setTopicId} />
       <label className="block">
         <span className={labelText}>Title</span>

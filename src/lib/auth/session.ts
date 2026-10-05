@@ -64,5 +64,5 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   if (!userId) return null;
   const { localGetUser } = await import("@/lib/data/demo-store");
   const u = await localGetUser(userId);
-  return u ? { id: u.id, email: u.email, name: u.name, accountType: "student" } : null;
+  return u ? { id: u.id, email: u.email, name: u.name, accountType: u.accountType === "teacher" ? "teacher" : "student" } : null;
 });

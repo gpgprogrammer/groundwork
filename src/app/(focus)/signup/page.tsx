@@ -16,7 +16,7 @@ export default async function SignUpPage({ searchParams }: PageProps<"/signup">)
   return (
     <AuthShell
       title="Create your free account"
-      subtitle="Merit Plus is free for your first month. No card."
+      subtitle="Free to join, for students and teachers."
       footer={
         <>
           <p className="text-xs leading-relaxed text-muted">
@@ -39,8 +39,11 @@ export default async function SignUpPage({ searchParams }: PageProps<"/signup">)
         </>
       }
     >
-      <OAuthButtons next={next} />
-      <SignUpForm next={next} initialType={initialType} />
+      <SignUpForm
+        next={next}
+        initialType={initialType}
+        oauth={{ student: <OAuthButtons next={next} accountType="student" />, teacher: <OAuthButtons next={next} accountType="teacher" /> }}
+      />
     </AuthShell>
   );
 }
