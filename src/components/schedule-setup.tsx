@@ -11,11 +11,6 @@ import { cn } from "./ui";
 const LMS = /(myschoolapp|blackbaud|instructure|schoology|veracross|brightspace|d2l|moodle)\./i;
 const isLink = (t: string) => /^(webcal|https?):\/\/\S+$/i.test(t.trim());
 const SYSTEM: Record<SchoolPortal["system"], string> = { blackbaud: "Blackbaud", canvas: "Canvas", schoology: "Schoology" };
-const OTHERS = [
-  { name: "Canvas", href: "https://canvas.instructure.com/calendar" },
-  { name: "Schoology", href: "https://app.schoology.com/calendar" },
-  { name: "Google Classroom", href: "https://classroom.google.com/a/not-turned-in/all" },
-];
 /** Where each system keeps its "subscribe" link, for students who want automatic updates. */
 const SYNC_HELP: Record<string, string> = {
   blackbaud: "In your Blackbaud calendar, click the feed icon (it looks like a Wi-Fi symbol), choose your feed, and copy the link.",
@@ -25,6 +20,16 @@ const SYNC_HELP: Record<string, string> = {
 };
 
 type Preview = Extract<PreviewResult, { ok: true }>;
+
+type GuideKey = "blackbaud" | "canvas" | "schoology" | "google" | "other";
+/** Step-by-step directions for the systems schools use most, plus a catch-all. */
+const GUIDES: { key: GuideKey; label: string }[] = [
+  { key: "blackbaud", label: "Blackbaud" },
+  { key: "canvas", label: "Canvas" },
+  { key: "schoology", label: "Schoology" },
+  { key: "google", label: "Google Classroom" },
+  { key: "other", label: "Something else" },
+];
 
 /**
  * Connecting a schedule, as simply as we could make it:
@@ -42,6 +47,7 @@ export function ScheduleSetup({ googleEnabled }: { googleEnabled: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [showSync, setShowSync] = useState(false);
+  const [guide, setGuide] = useState<GuideKey | null>(null);
   const [pending, start] = useTransition();
   const fileInput = useRef<HTMLInputElement>(null);
   const handle = useRef<(data: { text?: string; files?: File[] }) => void>(() => {});
@@ -49,7 +55,11 @@ export function ScheduleSetup({ googleEnabled }: { googleEnabled: boolean }) {
   useEffect(() => {
     let live = true;
     findMySchool()
-      .then((p) => live && setPortal(p))
+      .then((p) => {
+        if (!live) return;
+        setPortal(p);
+        if (p) setGuide((g) => g ?? p.system);
+      })
       .catch(() => live && setPortal(null));
     return () => {
       live = false;
@@ -151,62 +161,141 @@ export function ScheduleSetup({ googleEnabled }: { googleEnabled: boolean }) {
         </>
       ) : null}
 
-      <ol className="grid gap-3 @xl:grid-cols-[1.5fr_1fr_1fr]">
-        <Step n={1} title="Open your calendar">
-          {portal === undefined ? (
-            <Loader2 className="size-4 animate-spin text-muted" />
-          ) : portal ? (
-            <button type="button" onClick={() => open(portal.calendarUrl)} className="press-sm inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#15803d] px-3.5 font-brand text-[13.5px] font-extrabold text-white [--ledge:#0f5c2b] hover:brightness-110">
-              Open my {SYSTEM[portal.system]} calendar <ExternalLink className="size-3.5" />
-            </button>
-          ) : (
-            <div className="space-y-1.5">
-              <form
-                className="flex h-11 items-center gap-1 rounded-xl bg-surface pl-3 pr-1 text-[13px] ring-2 ring-inset ring-line-strong focus-within:ring-positive"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  start(async () => {
-                    const p = await findBlackbaud(prefix);
-                    if (p) {
-                      setPortal(p);
-                      open(p.calendarUrl);
-                    } else setError(`We couldn't find ${prefix}.myschoolapp.com. Check the address you use to sign in to your school portal.`);
-                  });
-                }}
+      <div>
+        <p className="font-brand text-[15px] font-extrabold text-ink">Which does your school use?</p>
+        <div className="mt-2.5 flex flex-wrap gap-2" role="radiogroup" aria-label="Your school's calendar">
+          {GUIDES.map((g) => {
+            const on = guide === g.key;
+            return (
+              <button
+                key={g.key}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => setGuide(g.key)}
+                className={cn(
+                  "press-sm h-11 rounded-2xl px-4 font-brand text-[14.5px] font-extrabold",
+                  on ? "bg-[#15803d] text-white [--ledge:#0f5c2b]" : "bg-surface text-ink ring-2 ring-inset ring-line [--ledge:var(--line)] hover:bg-bg-subtle",
+                )}
               >
-                <input value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="yourschool" aria-label="Your school's Blackbaud address" className="h-8 w-24 min-w-0 flex-1 bg-transparent outline-none" />
-                <span className="shrink-0 text-[12px] text-muted">.myschoolapp.com</span>
-                <button className="ml-1 h-8 rounded-lg bg-[#15803d] px-3 font-brand text-[13px] font-extrabold text-white disabled:opacity-50" disabled={!prefix.trim()}>
-                  Open
+                {g.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {guide ? (
+        <ol key={guide} className="fade space-y-2.5" aria-label={`How to connect ${GUIDES.find((g) => g.key === guide)!.label}`}>
+          {guide === "blackbaud" ? (
+            <>
+              <GuideStep n={1} title="Open your Blackbaud calendar">
+          {portal === undefined ? (
+                <Loader2 className="size-4 animate-spin text-muted" />
+              ) : portal ? (
+                <button type="button" onClick={() => open(portal.calendarUrl)} className="press-sm inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#15803d] px-3.5 font-brand text-[13.5px] font-extrabold text-white [--ledge:#0f5c2b] hover:brightness-110">
+                  Open my {SYSTEM[portal.system]} calendar <ExternalLink className="size-3.5" />
                 </button>
-              </form>
-              <p className="text-[12.5px] text-muted">
-                Not Blackbaud?{" "}
-                {OTHERS.map((o, i) => (
-                  <span key={o.name}>
-                    <button type="button" onClick={() => open(o.href)} className="font-semibold text-positive hover:underline">
-                      {o.name}
+              ) : (
+                <div className="space-y-1.5">
+                  <form
+                    className="flex h-11 items-center gap-1 rounded-xl bg-surface pl-3 pr-1 text-[13px] ring-2 ring-inset ring-line-strong focus-within:ring-positive"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      start(async () => {
+                        const p = await findBlackbaud(prefix);
+                        if (p) {
+                          setPortal(p);
+                          open(p.calendarUrl);
+                        } else setError(`We couldn't find ${prefix}.myschoolapp.com. Check the address you use to sign in to your school portal.`);
+                      });
+                    }}
+                  >
+                    <input value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="yourschool" aria-label="Your school's Blackbaud address" className="h-8 w-24 min-w-0 flex-1 bg-transparent outline-none" />
+                    <span className="shrink-0 text-[12px] text-muted">.myschoolapp.com</span>
+                    <button className="ml-1 h-8 rounded-lg bg-[#15803d] px-3 font-brand text-[13px] font-extrabold text-white disabled:opacity-50" disabled={!prefix.trim()}>
+                      Open
                     </button>
-                    {i < OTHERS.length - 1 ? " · " : ""}
-                  </span>
-                ))}
-              </p>
-            </div>
+                  </form>
+                </div>
+              )}
+              </GuideStep>
+              <GuideStep n={2} title="Show only assignments">
+                Click <b>Show filters</b> (or <b>Filters</b>) and uncheck everything except <b>Assignments</b>, so only your schoolwork comes over.
+              </GuideStep>
+              <GuideStep n={3} title="Click the feed icon in the top right">
+                It looks like a Wi-Fi symbol, in the row of icons above the calendar.
+              </GuideStep>
+              <GuideStep n={4} title="Download it as a PDF">
+                Choose <b>Download as PDF</b> and save the file.
+              </GuideStep>
+              <GuideStep n={5} title="Drop that PDF below">
+                Drag it into the box below, or tap <b>Choose a file</b> and pick it. Merit reads every assignment and test, and you&apos;re done.
+              </GuideStep>
+            </>
+          ) : guide === "canvas" ? (
+            <>
+              <GuideStep n={1} title="Open your Canvas calendar">
+                <OpenLink href="https://canvas.instructure.com/calendar" onOpen={open}>
+                  Open Canvas
+                </OpenLink>
+                <span className="mt-1.5 block">Or sign in to your school&apos;s Canvas and click <b>Calendar</b> in the left menu.</span>
+              </GuideStep>
+              <GuideStep n={2} title="Click “Calendar Feed”">It&apos;s at the bottom of the right-hand column.</GuideStep>
+              <GuideStep n={3} title="Copy the link">Select the link that appears and copy it.</GuideStep>
+              <GuideStep n={4} title="Paste it here">
+                Come back and press <Kbd>⌘V</Kbd> (Ctrl+V on Windows). It stays up to date on its own.
+              </GuideStep>
+            </>
+          ) : guide === "schoology" ? (
+            <>
+              <GuideStep n={1} title="Open your Schoology account settings">
+                Click the arrow next to your name in the top right, then <b>Account Settings</b>.
+              </GuideStep>
+              <GuideStep n={2} title="Find “Share your Schoology Calendar”">Scroll down to it and click <b>Enable</b> if you see that button.</GuideStep>
+              <GuideStep n={3} title="Copy the iCal link">It only appears once there&apos;s at least one item on your Schoology calendar.</GuideStep>
+              <GuideStep n={4} title="Paste it here">
+                Come back and press <Kbd>⌘V</Kbd> (Ctrl+V on Windows). It stays up to date on its own.
+              </GuideStep>
+            </>
+          ) : guide === "google" ? (
+            <>
+              {googleEnabled ? (
+                <GuideStep n={1} title="Easiest: connect in one click">
+                  Use <b>Connect Google Calendar</b> above; Google Classroom classes are included. Or follow the steps below.
+                </GuideStep>
+              ) : null}
+              <GuideStep n={googleEnabled ? 2 : 1} title="Open Google Calendar settings">
+                <OpenLink href="https://calendar.google.com/calendar/r/settings" onOpen={open}>
+                  Open settings
+                </OpenLink>
+                <span className="mt-1.5 block">On a computer: the gear icon in the top right, then <b>Settings</b>.</span>
+              </GuideStep>
+              <GuideStep n={googleEnabled ? 3 : 2} title="Pick your class calendar">
+                Under <b>Settings for my calendars</b>, click the class (Google Classroom makes one calendar per class).
+              </GuideStep>
+              <GuideStep n={googleEnabled ? 4 : 3} title="Copy the “Secret address in iCal format”">
+                It&apos;s under <b>Integrate calendar</b>. If you don&apos;t see it, your school turned it off: use <b>Something else</b> instead.
+              </GuideStep>
+              <GuideStep n={googleEnabled ? 5 : 4} title="Paste it here">
+                Come back and press <Kbd>⌘V</Kbd> (Ctrl+V on Windows). Repeat for each class.
+              </GuideStep>
+            </>
+          ) : (
+            <>
+              <GuideStep n={1} title="Open your school calendar or planner">Any page that lists your assignments and tests with their dates.</GuideStep>
+              <GuideStep n={2} title="Select all and copy">
+                Press <Kbd>⌘A</Kbd> then <Kbd>⌘C</Kbd> (Ctrl+A, Ctrl+C on Windows). A screenshot or a PDF of the page works too.
+              </GuideStep>
+              <GuideStep n={3} title="Paste it here">
+                Come back and press <Kbd>⌘V</Kbd>, or drop the screenshot or PDF in the box below.
+              </GuideStep>
+            </>
           )}
-        </Step>
-        <Step n={2} title="Select all and copy">
-          <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-2">
-            Press <Kbd>⌘A</Kbd> then <Kbd>⌘C</Kbd>
-          </p>
-          <p className="mt-2 text-[12.5px] text-muted">On Windows: Ctrl+A, Ctrl+C</p>
-        </Step>
-        <Step n={3} title="Paste it here">
-          <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-2">
-            Come back and press <Kbd>⌘V</Kbd>
-          </p>
-          <p className="mt-2 text-[12.5px] text-muted">Anywhere on this page</p>
-        </Step>
-      </ol>
+        </ol>
+      ) : (
+        <p className="text-[14px] text-muted">Pick one above for step-by-step directions, or just paste or drop your calendar below.</p>
+      )}
 
       <div
         onDragOver={(e) => {
@@ -349,14 +438,23 @@ export function ScheduleSetup({ googleEnabled }: { googleEnabled: boolean }) {
   );
 }
 
-function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+function GuideStep({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
-    <li className="rounded-3xl bg-surface p-4 ring-2 ring-line">
-      <p className="flex items-center gap-3 font-brand text-[16px] font-extrabold leading-tight text-ink">
-        <span className="press-sm tabular flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#15803d] text-[18px] font-black text-white [--ledge:#0f5c2b]">{n}</span> {title}
-      </p>
-      <div className="mt-3.5">{children}</div>
+    <li className="flex gap-3.5 rounded-2xl bg-surface p-3.5 ring-2 ring-line sm:p-4">
+      <span className="tabular flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#15803d] font-brand text-[16px] font-black text-white">{n}</span>
+      <div className="min-w-0 flex-1 pt-1">
+        <p className="font-brand text-[15.5px] font-extrabold leading-snug text-ink">{title}</p>
+        <div className="mt-1 text-[14px] leading-relaxed text-ink-2 [&_b]:font-bold [&_b]:text-ink">{children}</div>
+      </div>
     </li>
+  );
+}
+
+function OpenLink({ href, onOpen, children }: { href: string; onOpen: (href: string) => void; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={() => onOpen(href)} className="press-sm mt-1 inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#15803d] px-3.5 font-brand text-[13.5px] font-extrabold text-white [--ledge:#0f5c2b] hover:brightness-110">
+      {children} <ExternalLink className="size-3.5" />
+    </button>
   );
 }
 

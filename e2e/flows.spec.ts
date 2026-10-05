@@ -41,8 +41,12 @@ const ICS = [
 /** New accounts start on the free plan; this starts the free Plus trial from a locked Plus feature. */
 async function startPlusTrial(page: Page) {
   await page.goto("/plan");
-  await page.getByRole("button", { name: /Start my \d+-day free trial/ }).click();
-  await page.waitForURL(/trial=started/);
+  const start = page.getByRole("button", { name: /Start my \d+-day free trial/ });
+  // Accounts already on Plus (e.g. an older automatic trial) have nothing to start.
+  if (await start.count()) {
+    await start.click();
+    await page.waitForURL(/trial=started/);
+  }
 }
 
 async function signUpAndOnboard(page: Page, opts: { calendar?: boolean; trial?: boolean } = {}) {
