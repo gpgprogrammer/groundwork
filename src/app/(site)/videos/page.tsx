@@ -5,13 +5,16 @@ import Link from "next/link";
 import { CourseIcon } from "@/components/course-icon";
 import { cn, EmptyState, LinkButton } from "@/components/ui";
 import { UploadGrid } from "@/components/upload-card";
+import { canUploadVideos } from "@/lib/auth/permissions";
 import { getCatalog } from "@/lib/catalog";
 import { listUploads, toUploadCards } from "@/lib/uploads";
+import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Merit Tutors' Videos", description: "Lessons recorded by Merit tutors and teachers, published only on Merit." };
 
 export default async function VideosPage({ searchParams }: PageProps<"/videos">) {
-  const [sp, catalog] = await Promise.all([searchParams, getCatalog()]);
+  const [sp, catalog, viewer] = await Promise.all([searchParams, getCatalog(), getViewer()]);
+  const canUpload = canUploadVideos(viewer);
   const course = typeof sp.course === "string" ? catalog.course(sp.course) : undefined;
   const all = await listUploads();
   const shown = course ? all.filter((c) => c.courseId === course.id) : all;
@@ -21,11 +24,13 @@ export default async function VideosPage({ searchParams }: PageProps<"/videos">)
   return (
     <>
     <WorldBand kicker="Only on Merit" title="Merit Tutors' Videos" lede="Lessons recorded by the tutors and teachers on Merit. Like one? Book a session with them from their profile.">
-      <div className="rise mt-6" style={{ ["--i" as string]: 2 }}>
-        <Link href="/studio/upload" className={bandCta}>
-          <Upload className="size-4" /> Upload a video
-        </Link>
-      </div>
+      {canUpload ? (
+        <div className="rise mt-6" style={{ ["--i" as string]: 2 }}>
+          <Link href="/studio/upload" className={bandCta}>
+            <Upload className="size-4" /> Upload a video
+          </Link>
+        </div>
+      ) : null}
     </WorldBand>
     <div className="mx-auto max-w-[1400px] px-4 pb-20 sm:px-6 lg:px-8">
       {courseIds.length > 1 ? (
@@ -50,11 +55,13 @@ export default async function VideosPage({ searchParams }: PageProps<"/videos">)
           <EmptyState
             icon={<Film className="size-5" />}
             title={`No videos ${course ? `for ${course.shortTitle} ` : ""}yet.`}
-            body="Tutors and teachers: record the lesson you always give, and publish it here."
+            body="Teachers can record the lesson they always give and publish it here."
             action={
-              <LinkButton href="/studio/upload">
-                <Upload className="size-4" /> Upload the first one
-              </LinkButton>
+              canUpload ? (
+                <LinkButton href="/studio/upload">
+                  <Upload className="size-4" /> Upload the first one
+                </LinkButton>
+              ) : undefined
             }
           />
         )}

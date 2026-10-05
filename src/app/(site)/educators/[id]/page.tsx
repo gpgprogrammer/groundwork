@@ -12,6 +12,7 @@ import { ReportButton } from "@/components/report-button";
 import { UploadGrid } from "@/components/upload-card";
 import { cn, EmptyState, LinkButton, panelLink, SectionHeading } from "@/components/ui";
 import { listPendingUploads, toUploadCards } from "@/lib/uploads";
+import { canUploadVideos } from "@/lib/auth/permissions";
 import { greetingName } from "@/lib/names";
 import { getViewer } from "@/lib/viewer";
 
@@ -25,6 +26,7 @@ export default async function EducatorPage({ params }: PageProps<"/educators/[id
   const [educator, catalog, viewer] = await Promise.all([getEducator(id), getCatalog(), getViewer()]);
   if (!educator) notFound();
   const own = viewer?.user.id === educator.id;
+  const canUpload = own && canUploadVideos(viewer);
   const [items, pending] = await Promise.all([contributionsBy(educator.id), own ? listPendingUploads(educator.id) : []]);
   const videos = items.flatMap((c) => (c.kind === "video" && catalog.video(c.video!.id) ? [catalog.video(c.video!.id)!] : []));
   const guides = items.filter((c) => c.kind === "guide");
@@ -65,9 +67,11 @@ export default async function EducatorPage({ params }: PageProps<"/educators/[id
           <div className="mt-4 flex flex-wrap gap-2 sm:justify-end">
             {own ? (
               <>
-                <LinkButton href="/studio/upload">
-                  <Upload className="size-4" /> Upload a video
-                </LinkButton>
+                {canUpload ? (
+                  <LinkButton href="/studio/upload">
+                    <Upload className="size-4" /> Upload a video
+                  </LinkButton>
+                ) : null}
                 <LinkButton href="/studio" variant="outline">
                   Teacher studio
                 </LinkButton>
@@ -80,7 +84,7 @@ export default async function EducatorPage({ params }: PageProps<"/educators/[id
       </header>
 
       <div className="mx-auto max-w-6xl space-y-12 px-4 pt-10 sm:px-6 lg:px-8">
-        {uploads.length || pending.length || own ? (
+        {uploads.length || pending.length || canUpload ? (
           <section className="rise" style={{ ["--i" as string]: 1 }}>
             <SectionHeading title={`Videos by ${first}`} />
             {pending.length ? (
@@ -105,7 +109,7 @@ export default async function EducatorPage({ params }: PageProps<"/educators/[id
                 title="No published videos yet."
                 body={pending.length ? "Approved videos appear here automatically." : "Upload a lesson here or anywhere else on Merit, and it will appear on this profile automatically after review."}
                 action={
-                  own ? (
+                  canUpload ? (
                     <LinkButton href="/studio/upload">
                       <Upload className="size-4" /> Upload a video
                     </LinkButton>

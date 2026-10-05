@@ -60,6 +60,15 @@ async function signUpAndOnboard(page: Page, opts: { calendar?: boolean } = {}) {
   }
 }
 
+async function signUpTeacher(page: Page) {
+  await page.goto("/signup?as=teacher");
+  await page.getByLabel("Your name").fill("Test Teacher");
+  await page.getByLabel("Email").fill(unique());
+  await page.getByLabel("Password").fill("correct-horse-battery");
+  await page.getByRole("button", { name: "Create teacher account" }).click();
+  await page.waitForURL(/\/studio\?welcome=teacher/);
+}
+
 test("anonymous home: chips, sorting, and real YouTube thumbnails", async ({ page }) => {
   await page.goto("/lessons");
   await expect(page.getByRole("link", { name: "Merit Learning home" }).first()).toBeVisible();
@@ -268,9 +277,10 @@ test("Merit AI answers with lessons (fallback mode without a model key)", async 
 });
 
 test("a teacher sets up a studio and publishes a study guide on a topic", async ({ page }) => {
-  await signUpAndOnboard(page);
+  await signUpTeacher(page);
   await page.goto("/studio");
   await page.getByPlaceholder("AP Chemistry teacher, 12 years").fill("AP Calculus teacher, 10 years");
+  await page.getByRole("checkbox", { name: "AP Calculus BC", exact: true }).check({ force: true });
   await page.getByText(/only add accurate, school-appropriate material/).click();
   await page.getByRole("button", { name: "Save and open my studio" }).click();
   await page.waitForURL(/\/studio\?welcome=1/);
@@ -298,6 +308,14 @@ test("Merit Tutors' Videos is available from both Learn and Tutors", async ({ pa
     await page.goto(path);
     await expect(page.getByRole("navigation", { name: "Section" }).getByRole("link", { name: "Merit Tutors' Videos" })).toHaveAttribute("href", "/videos");
   }
+});
+
+test("students cannot access Merit video uploads", async ({ page }) => {
+  await signUpAndOnboard(page);
+  await page.goto("/videos");
+  await expect(page.getByRole("link", { name: /Upload/ })).toHaveCount(0);
+  await page.goto("/studio/upload");
+  await expect(page.getByText("couldn't find that page")).toBeVisible();
 });
 
 test("a student books a tutor's open hour; the tutor confirms and Merit's 10% fee is recorded", async ({ browser }) => {
@@ -382,9 +400,9 @@ test("calendar parsing drops canceled and removed occurrences and keeps only sch
   await expect(page.getByText("Period 3 English")).toHaveCount(0);
 });
 
-test("a tutor uploads a video; it plays on Merit and shows on their profile", async ({ page }) => {
+test("a teacher with a tutor profile uploads a video; it plays on Merit and shows on their profile", async ({ page }) => {
   test.setTimeout(120_000);
-  await signUpAndOnboard(page);
+  await signUpTeacher(page);
   await page.goto("/tutors/join");
   await page.getByRole("textbox", { name: "Name", exact: true }).fill("Dana Okafor");
   await page.getByLabel(/Headline/).fill("AP Chemistry tutor");

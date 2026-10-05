@@ -13,6 +13,7 @@ import { getTutorMeta, ledger, listBookings } from "@/lib/bookings";
 import { listLeads } from "@/lib/leads";
 import { LogSessionForm } from "@/components/lead-ui";
 import { getCatalog } from "@/lib/catalog";
+import { canUploadVideos } from "@/lib/auth/permissions";
 import { getStore } from "@/lib/data/store";
 import { rankTutors } from "@/lib/tutoring";
 import { requireViewer } from "@/lib/viewer";
@@ -56,6 +57,7 @@ export default async function TutorDashboard() {
   const upcoming = upcomingOf(bookings);
   const past = bookings.filter((b) => !upcoming.includes(b)).slice(0, 12);
   const pendingCount = bookings.filter((b) => b.status === "requested").length;
+  const canUpload = canUploadVideos(viewer);
 
   const stats: { label: string; value: string | number; icon: ReactNode; hot?: boolean }[] = [
     { label: "Waiting for you", value: pendingCount, icon: <Hourglass className="size-[18px]" aria-hidden />, hot: pendingCount > 0 },
@@ -90,9 +92,11 @@ export default async function TutorDashboard() {
             <Link href={`/tutors/${t.id}`} className={heroBtnGhost}>
               Public profile
             </Link>
-            <Link href="/studio/upload" className={heroBtnGhost}>
-              <Upload className="size-4" aria-hidden /> Upload
-            </Link>
+            {canUpload ? (
+              <Link href="/studio/upload" className={heroBtnGhost}>
+                <Upload className="size-4" aria-hidden /> Upload
+              </Link>
+            ) : null}
           </div>
         </div>
       </WorldHero>

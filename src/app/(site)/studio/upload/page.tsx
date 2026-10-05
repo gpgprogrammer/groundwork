@@ -1,7 +1,9 @@
 import { Clock, ShieldCheck, Upload } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { UploadForm } from "@/components/upload-form";
+import { canUploadVideos } from "@/lib/auth/permissions";
 import { getCatalog } from "@/lib/catalog";
 import { courseTopics, getEducator } from "@/lib/educators";
 import { getStore } from "@/lib/data/store";
@@ -14,6 +16,7 @@ export const metadata: Metadata = { title: "Upload a video" };
 
 export default async function UploadPage() {
   const viewer = await requireViewer("/studio/upload");
+  if (!canUploadVideos(viewer)) notFound();
   const who = await uploaderIdentity(viewer.user.id);
   if (!who) {
     return (

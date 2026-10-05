@@ -15,6 +15,7 @@ import { BookingForm } from "@/components/booking-client";
 import { getTutorMeta, listBookings, openSlots } from "@/lib/bookings";
 import { ReportButton } from "@/components/report-button";
 import { UploadCard } from "@/components/upload-card";
+import { canUploadVideos } from "@/lib/auth/permissions";
 import { listUploads, toUploadCards } from "@/lib/uploads";
 
 async function load(id: string) {
@@ -37,6 +38,7 @@ export default async function TutorPage({ params, searchParams }: PageProps<"/tu
   if (!tutor) notFound();
   const courses = tutor.courseIds.map((c) => catalog.course(c)).filter((c) => c !== undefined);
   const own = viewer?.user.id === tutor.userId;
+  const canUpload = own && canUploadVideos(viewer);
   const [meta, booked] = await Promise.all([getTutorMeta(tutor.id), listBookings({ tutorId: tutor.id })]);
   const slots = Object.fromEntries([30, 60, 90].map((m) => [String(m), openSlots(meta, booked, m)]));
   const uploads = await toUploadCards(await listUploads({ educatorId: tutor.userId }));
@@ -213,13 +215,13 @@ export default async function TutorPage({ params, searchParams }: PageProps<"/tu
         </aside>
 
         <div className="min-w-0 space-y-6 lg:col-start-1 lg:row-start-2">
-          {uploads.length || own ? (
+          {uploads.length || canUpload ? (
             <section className={cn(panel, "p-5 sm:p-7")}>
               <div className="flex items-center justify-between gap-3">
                 <h2 className={sectionTitle}>
                   Videos <span className="tabular font-bold text-muted">({uploads.length})</span>
                 </h2>
-                {own ? (
+                {canUpload ? (
                   <LinkButton href="/studio/upload" variant="secondary" size="sm">
                     <Upload className="size-3.5" aria-hidden /> Upload a video
                   </LinkButton>

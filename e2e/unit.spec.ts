@@ -3,6 +3,7 @@ import { buildCurriculum } from "../src/lib/catalog/build";
 import { detectCourse, matchTopics } from "../src/lib/catalog/match";
 import { candidatesFromText } from "../src/lib/extract-text";
 import { eventsFromIcs } from "../src/lib/ics";
+import { canUploadVideos } from "../src/lib/auth/permissions";
 import { rankVideo, wilsonLowerBound } from "../src/lib/ranking";
 import type { YtVideo } from "../src/lib/types";
 
@@ -23,6 +24,15 @@ const video = (over: Partial<YtVideo>): YtVideo => ({
   relevance: 1,
   isShort: false,
   ...over,
+});
+
+test.describe("video upload permissions", () => {
+  test("allow teacher accounts and admins, but never regular students", () => {
+    expect(canUploadVideos(null)).toBe(false);
+    expect(canUploadVideos({ user: { accountType: "student" }, isAdmin: false })).toBe(false);
+    expect(canUploadVideos({ user: { accountType: "teacher" }, isAdmin: false })).toBe(true);
+    expect(canUploadVideos({ user: { accountType: "student" }, isAdmin: true })).toBe(true);
+  });
 });
 
 test.describe("ranking", () => {

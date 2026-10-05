@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { canUploadVideos } from "@/lib/auth/permissions";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import type { Contribution } from "@/lib/types";
@@ -18,6 +19,7 @@ export type Ticket = { ok: true; video: { uploadUrl: string; path: string }; pos
 export async function startUpload(input: { type: string; size: number }): Promise<Ticket> {
   const viewer = await getViewer();
   if (!viewer) return { ok: false, error: "Sign in first." };
+  if (!canUploadVideos(viewer)) return { ok: false, error: "Only teacher accounts and Merit admins can upload videos." };
   if (!uploadsEnabled) return { ok: false, error: "Video uploads need the database connected." };
   if (!(await uploaderIdentity(viewer.user.id))) return { ok: false, error: "Set up your teacher profile or tutor listing first." };
   const ext = VIDEO_TYPES[input.type];
@@ -41,6 +43,8 @@ const publishSchema = z.object({
 export async function publishUpload(input: z.infer<typeof publishSchema>): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const viewer = await getViewer();
   if (!viewer) return { ok: false, error: "Sign in first." };
+  if (!canUploadVideos(viewer)) return { ok: false, error: "Only teacher accounts and Merit admins can upload videos." };
+  if (!(await uploaderIdentity(viewer.user.id))) return { ok: false, error: "Set up your teacher profile or tutor listing first." };
   const parsed = publishSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
   const d = parsed.data;

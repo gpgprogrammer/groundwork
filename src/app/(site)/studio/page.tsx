@@ -8,6 +8,7 @@ import { Initials } from "@/components/tutoring-ui";
 import { heroBtn, heroBtnGhost, HeroKicker, WORLD_ON_WHITE, WorldHero } from "@/components/marketing";
 import { Avatar, Badge, cn, EmptyState, formatViews, LinkButton, panel, SectionHeading } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
+import { canUploadVideos } from "@/lib/auth/permissions";
 import { contributionsBy, getEducator } from "@/lib/educators";
 import { getViewer } from "@/lib/viewer";
 
@@ -20,6 +21,7 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
   if (!viewer) return <StudioLanding />;
 
   const educator = await getEducator(viewer.user.id);
+  const canUpload = canUploadVideos(viewer);
   if (!educator || sp.edit === "1") {
     return (
       <div className="pb-20">
@@ -46,7 +48,7 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
               <div className="min-w-0">
                 <p className="font-brand text-[17px] font-extrabold">{sp.welcome === "teacher" ? "Welcome to Merit! Your teacher account is ready." : "Teachers and tutors start here."}</p>
                 <p className="mt-1 text-[14.5px] leading-relaxed text-ink-2">
-                  Set up your profile to add lessons, write study guides, and upload your own videos. Tutoring students privately?{" "}
+                  Set up your profile to add lessons and write study guides{canUpload ? ", including videos you record yourself" : ""}. Tutoring students privately?{" "}
                   <Link href="/tutors/join" className="font-bold text-[#6d28d9] underline decoration-[#6d28d9]/30 underline-offset-2 hover:decoration-[#6d28d9] dark:text-[#c9b5ff]">
                     Create a tutor listing
                   </Link>{" "}
@@ -77,7 +79,7 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
   ];
 
   const actions = [
-    { href: "/studio/upload", label: "Upload a video", sub: "Record once, teach every student.", Icon: Upload, tone: "bg-accent [--ledge:var(--accent-press)]" },
+    ...(canUpload ? [{ href: "/studio/upload", label: "Upload a video", sub: "Record once, teach every student.", Icon: Upload, tone: "bg-accent [--ledge:var(--accent-press)]" }] : []),
     { href: "/studio/video", label: "Add from YouTube", sub: "Paste the lesson you always send.", Icon: Plus, tone: "bg-sprint [--ledge:var(--sprint-press)]" },
     { href: "/studio/guide", label: "Write a guide", sub: "Steps, examples, common mistakes.", Icon: FileText, tone: "bg-positive [--ledge:var(--positive-press)]" },
   ];
@@ -131,7 +133,7 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
       </WorldHero>
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-      <section aria-label="Add content" className="rise mt-8 grid gap-4 sm:grid-cols-3" style={{ ["--i" as string]: 2 }}>
+      <section aria-label="Add content" className={cn("rise mt-8 grid gap-4", canUpload ? "sm:grid-cols-3" : "sm:grid-cols-2")} style={{ ["--i" as string]: 2 }}>
         {actions.map(({ href, label, sub, Icon, tone }) => (
           <Link key={href} href={href} className={cn("press group relative flex items-center gap-4 overflow-hidden rounded-3xl p-5 text-white hover:brightness-110 sm:min-h-[152px] sm:flex-col sm:items-start sm:justify-between", tone)}>
             <span aria-hidden className="pointer-events-none absolute -right-8 -top-8 size-28 rounded-full border-[14px] border-white/10" />
