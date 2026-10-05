@@ -13,6 +13,7 @@ import { pageOf, queryFeed } from "@/lib/feed";
 import { courseProgress, nextTopicInCourse, topicStatus } from "@/lib/recommend";
 import { topCreators } from "@/lib/tutoring";
 import type { Course } from "@/lib/types";
+import { CalendarNudge, wantsCalendar } from "@/components/calendar-nudge";
 import { getViewer, type Viewer } from "@/lib/viewer";
 import { CourseSearch } from "@/components/course-search";
 
@@ -164,6 +165,14 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
                 </div>
                 <p className="mt-3 text-[13px] leading-relaxed text-muted">Mark a topic “I understand this” on its page to fill your path.</p>
               </div>
+            ) : null}
+            {wantsCalendar(viewer) ? (
+              <CalendarNudge
+                variant="card"
+                signedIn={Boolean(viewer)}
+                title={`${course.shortTitle} quiz coming up?`}
+                body={`Connect your class calendar and Merit lines up the right ${course.shortTitle} lessons for every quiz and test, days before it's due.`}
+              />
             ) : null}
             <ExamCta daysLeft={examDate ? daysUntil(examDate) : null} courseId={course.id} courseTitle={course.shortTitle} />
             <TopCreators course={course} catalog={catalog} />

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { setPlusCancel } from "@/app/actions/billing";
 import { CheckoutNotice } from "@/components/checkout-notice";
-import { BuyButton, PlusBadge } from "@/components/upgrade";
+import { BuyButton, PlusBadge, TrialButton } from "@/components/upgrade";
 import { PLUS, SPRINT, usd } from "@/lib/billing/plans";
 import { isStripeEnabled } from "@/lib/env";
 import { requireViewer } from "@/lib/viewer";
@@ -27,9 +27,9 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
         {plus.kind === "trial" ? (
           <>
             <p className="mt-3 text-[15px] text-ink">
-              Your free month is active. <span className="font-semibold">{plus.daysLeft} days left</span>, until {fmt(plus.endsAt)}.
+              Your free trial is active. <span className="font-semibold">{plus.daysLeft} days left</span>, until {fmt(plus.endsAt)}.
             </p>
-            <p className="mt-1 text-sm text-muted">Nothing is charged unless you choose a plan. Lock one in now and billing starts when your free month ends.</p>
+            <p className="mt-1 text-sm text-muted">Nothing is charged unless you choose a plan. Lock one in now and billing starts when your free trial ends.</p>
             <div className="mt-5 flex flex-wrap gap-2">
               <BuyButton product="plus-month" returnTo="/settings/billing">
                 {usd(PLUS.monthly)}/month
@@ -59,9 +59,17 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
               )}
             </div>
           </>
+        ) : plus.kind === "free" ? (
+          <>
+            <p className="mt-3 text-[15px] text-ink">You&apos;re on the free plan: every course, lesson, and tutor, plus Merit AI.</p>
+            <p className="mt-1 text-sm text-muted">Plus adds your learning plan, calendar sync, and progress. Try it free for {PLUS.trialDays} days, no card needed.</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <TrialButton returnTo="/settings/billing" signedIn tone="solid" className="h-11" />
+            </div>
+          </>
         ) : (
           <>
-            <p className="mt-3 text-[15px] text-ink">Your free month has ended. Your learning plan and calendar sync are paused until you pick a plan.</p>
+            <p className="mt-3 text-[15px] text-ink">Your free trial has ended. Your learning plan and calendar sync are paused until you pick a plan.</p>
             <div className="mt-5 flex flex-wrap gap-2">
               <BuyButton product="plus-month" returnTo="/plan">
                 {usd(PLUS.monthly)}/month

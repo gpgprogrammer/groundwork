@@ -1,4 +1,5 @@
 import { Notice } from "./ui";
+import { PLUS } from "@/lib/billing/plans";
 
 const NAMES: Record<string, string> = { "plus-month": "Merit Plus", "plus-year": "Merit Plus", sprint: "Exam Sprint" };
 
@@ -17,7 +18,7 @@ export function CheckoutNotice({ sp }: { sp: Record<string, string | string[] | 
   if (status === "paused") {
     return (
       <Notice tone="info" role="status" className="mb-6">
-        <p>Purchases open soon. Until then, Merit Plus is free for your first month and Exam Sprint has a free 7-day trial.</p>
+        <p>Purchases open soon. Until then, you can try Merit Plus free for {PLUS.trialDays} days and Exam Sprint free for 7 days.</p>
       </Notice>
     );
   }

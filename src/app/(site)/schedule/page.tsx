@@ -11,7 +11,7 @@ import { CourseIcon } from "@/components/course-icon";
 import { HeroPill, PlanHero } from "@/components/plan-ui";
 import { googleCalendarEnabled } from "@/lib/google-calendar";
 import { ago, cn } from "@/components/ui";
-import { BuyButton } from "@/components/upgrade";
+import { BuyButton, TrialButton } from "@/components/upgrade";
 import { LessonMini } from "@/components/video-card";
 import { calendarAccess } from "@/lib/billing/access";
 import { PLUS, SPRINT, usd } from "@/lib/billing/plans";
@@ -375,11 +375,25 @@ function SchedulePreview({ catalog, viewer }: { catalog: IndexedCatalog; viewer:
         <p className="rise mt-3 max-w-2xl text-[17px] leading-relaxed text-white/90" style={{ ["--i" as string]: 2 }}>
           Connect your school calendar and everything on Merit starts following what you&apos;re learning in class.
         </p>
-        <div className="rise mt-6 flex flex-wrap gap-2.5" style={{ ["--i" as string]: 3 }}>
-          <a href="#unlock" className="press flex h-12 items-center gap-2 rounded-2xl bg-white px-5 font-brand text-[15.5px] font-extrabold text-[#12722f] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95">
-            See how to unlock it <ArrowRight className="size-4" />
-          </a>
+        <div className="rise mt-6 flex flex-wrap items-center gap-2.5" style={{ ["--i" as string]: 3 }}>
+          {!viewer || viewer.plus.kind === "free" ? (
+            <>
+              <TrialButton returnTo="/schedule" signedIn={Boolean(viewer)} label="Try it free and connect" tone="green" />
+              <a href="#unlock" className="px-2 font-brand text-[15px] font-extrabold text-white/85 hover:text-white">
+                All the ways to unlock it
+              </a>
+            </>
+          ) : (
+            <a href="#unlock" className="press flex h-12 items-center gap-2 rounded-2xl bg-white px-5 font-brand text-[15.5px] font-extrabold text-[#12722f] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95">
+              See how to unlock it <ArrowRight className="size-4" />
+            </a>
+          )}
         </div>
+        {!viewer || viewer.plus.kind === "free" ? (
+          <p className="rise mt-3 text-[13.5px] text-white/85" style={{ ["--i" as string]: 4 }}>
+            Free for {PLUS.trialDays} days with Merit Plus. No card needed.
+          </p>
+        ) : null}
       </PlanHero>
       <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 lg:px-8">
         <CalendarBenefits />
@@ -404,17 +418,15 @@ function SchedulePreview({ catalog, viewer }: { catalog: IndexedCatalog; viewer:
                 <Sparkles className="size-3.5" /> Merit Plus
               </span>
               <p className="relative mt-4 text-[15px] leading-relaxed text-white/90">
-                Calendar sync, a learning plan, and progress. {usd(PLUS.monthly)}/month; your first month is free.
+                Calendar sync, a learning plan, and progress. Try it free for {PLUS.trialDays} days, no card needed; then {usd(PLUS.monthly)}/month.
               </p>
               <div className="relative mt-5">
-                {viewer ? (
+                {!viewer || viewer.plus.kind === "free" ? (
+                  <TrialButton returnTo="/schedule" signedIn={Boolean(viewer)} />
+                ) : (
                   <BuyButton product="plus-month" returnTo="/schedule" variant="light">
                     Get Plus
                   </BuyButton>
-                ) : (
-                  <Link href="/signup?next=/schedule" className="press inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-5 font-brand text-[15px] font-extrabold text-[#1a45b5] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95">
-                    Start your free month <ArrowRight className="size-4" />
-                  </Link>
                 )}
               </div>
             </div>

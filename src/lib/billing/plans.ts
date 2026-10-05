@@ -4,8 +4,8 @@ export const PLUS = {
   name: "Merit Plus",
   monthly: 4.99,
   annual: 39.99,
-  /** Every new account gets Plus free for this long, no card required. */
-  trialDays: Number(process.env.NEXT_PUBLIC_PLUS_TRIAL_DAYS || 30),
+  /** Length of the free trial a student can start once, from any Plus feature. No card required. */
+  trialDays: Number(process.env.NEXT_PUBLIC_PLUS_TRIAL_DAYS || 14),
   features: [
     { key: "feed", title: "A feed that learns your classes", body: "Merit reads what you're learning in school from your calendar and suggests the videos for it, so For you keeps pace with class." },
     { key: "plan", title: "Learning plan", body: "The best videos for what you're covering in class, picked from your class calendar and the topics you choose." },

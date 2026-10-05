@@ -1,5 +1,6 @@
 import { ArrowRight, CalendarCheck, CalendarDays, Check, Lock, NotebookPen, Play, Sparkles, Target, Users, Zap } from "lucide-react";
 import Link from "next/link";
+import { CalendarNudge, wantsCalendar } from "@/components/calendar-nudge";
 import { CourseIcon, courseColors } from "@/components/course-icon";
 import { cn, panel, panelLink } from "@/components/ui";
 import { hasPlus } from "@/lib/billing/access";
@@ -46,6 +47,12 @@ export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalo
           </div>
         </div>
       </header>
+
+      {wantsCalendar(viewer) ? (
+        <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 lg:px-8">
+          <CalendarNudge variant="banner" signedIn className="rise" />
+        </div>
+      ) : null}
 
       <div className="mx-auto grid max-w-6xl gap-8 px-4 pt-8 sm:px-6 lg:grid-cols-[1fr_340px] lg:px-8 grid-cols-[minmax(0,1fr)]">
         <section className="min-w-0">
@@ -165,6 +172,7 @@ export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalo
             </div>
           </section>
 
+          {!wantsCalendar(viewer) ? (
           <section className={cn(panel, "rise p-5")} style={{ ["--i" as string]: 2 }}>
             <h2 className="flex items-center gap-2 font-brand text-[18px] font-black text-ink">
               <CalendarDays className="size-5 text-sprint" /> Coming up
@@ -199,6 +207,7 @@ export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalo
               {viewer.state.schedule ? "My schedule →" : "Connect my calendar →"}
             </Link>
           </section>
+          ) : null}
 
           <Link
             href={quickTopic && mine[0] ? `/master/${mine[0].slug}/${quickTopic.slug}` : "/master"}

@@ -7,6 +7,7 @@ import { requestPasswordReset, signIn, signUp, updatePassword, type AuthState } 
 import { Field, FormMessage } from "@/components/form";
 import { LogoMark } from "@/components/logo";
 import { cn } from "@/components/ui";
+import { PLUS } from "@/lib/billing/plans";
 
 export type AccountType = "student" | "teacher";
 
@@ -94,7 +95,7 @@ export function SignInForm({ next }: { next?: string }) {
 
 /** What each account type gets, shown once a type is picked. */
 const TYPE_NOTE: Record<AccountType, string> = {
-  student: "Merit Plus is free for your first month. No card needed.",
+  student: `Free to use. Try Merit Plus free for ${PLUS.trialDays} days whenever you want, no card needed.`,
   teacher: "Sharing lessons and study guides on Merit is free. You'll set up your teacher profile next.",
 };
 

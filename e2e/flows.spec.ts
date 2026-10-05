@@ -38,7 +38,14 @@ const ICS = [
   "END:VCALENDAR",
 ].join("\r\n");
 
-async function signUpAndOnboard(page: Page, opts: { calendar?: boolean } = {}) {
+/** New accounts start on the free plan; this starts the free Plus trial from a locked Plus feature. */
+async function startPlusTrial(page: Page) {
+  await page.goto("/plan");
+  await page.getByRole("button", { name: /Start my \d+-day free trial/ }).click();
+  await page.waitForURL(/trial=started/);
+}
+
+async function signUpAndOnboard(page: Page, opts: { calendar?: boolean; trial?: boolean } = {}) {
   await page.goto("/signup");
   await page.getByText("I'm a student").click();
   await page.getByLabel("Your name").fill("Test Student");
@@ -51,6 +58,7 @@ async function signUpAndOnboard(page: Page, opts: { calendar?: boolean } = {}) {
   await page.getByRole("button", { name: /AP exams/ }).click();
   await page.getByRole("button", { name: "Start learning" }).click();
   await page.waitForURL((u) => u.pathname === "/");
+  if (opts.trial || opts.calendar) await startPlusTrial(page);
   if (opts.calendar) {
     await page.goto("/schedule");
     await page.waitForLoadState("networkidle");
@@ -240,10 +248,14 @@ test("pricing shows the three offers and a test-mode Sprint purchase unlocks the
   await expect(page.getByText(/Your free month is active/)).toBeVisible();
 });
 
-test("a new account has Plus: a learning plan that follows class topics, and progress", async ({ page }) => {
+test("a new account starts free; starting the trial unlocks a learning plan that follows class topics", async ({ page }) => {
   await signUpAndOnboard(page);
   await page.goto("/plan");
+  await expect(page.getByRole("heading", { name: "Unlock your learning plan with Merit Plus." })).toBeVisible();
+  await page.getByRole("button", { name: /Start my \d+-day free trial/ }).click();
+  await page.waitForURL(/\/plan\?trial=started/);
   await expect(page.getByRole("heading", { level: 1, name: "Your learning plan" })).toBeVisible();
+  await expect(page.getByText(/Free for 1[34] more days/)).toBeVisible();
   // Tell Merit what's being covered in class; the plan leads with it.
   const covering = page.locator("#covering");
   await covering.getByRole("button", { name: "Chain Rule", exact: true }).click();
@@ -359,7 +371,7 @@ test("a student books a tutor's open hour; the tutor confirms and Merit's 10% fe
 });
 
 test("pasted assignments are reviewed before they're added, and a calendar test gets its own Sprint", async ({ page }) => {
-  await signUpAndOnboard(page);
+  await signUpAndOnboard(page, { trial: true });
   await page.goto("/schedule");
   const soon = new Date(Date.now() + 5 * 86400000);
   const md = `${soon.getMonth() + 1}/${soon.getDate()}`;
@@ -380,7 +392,7 @@ test("pasted assignments are reviewed before they're added, and a calendar test 
 });
 
 test("calendar parsing drops canceled and removed occurrences and keeps only schoolwork", async ({ page }) => {
-  await signUpAndOnboard(page);
+  await signUpAndOnboard(page, { trial: true });
   const d = (n: number) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10).replace(/-/g, "");
   const ics = [
     "BEGIN:VCALENDAR",
@@ -598,7 +610,7 @@ test("Home greets signed-in students and links to their lessons; old /home links
 });
 
 test("connecting a schedule: copy the school calendar page and paste it anywhere", async ({ page }) => {
-  await signUpAndOnboard(page);
+  await signUpAndOnboard(page, { trial: true });
   await page.goto("/schedule");
   await expect(page.getByRole("heading", { name: "Connect your schedule" })).toBeVisible();
   // Google's one-click button only appears once Google is set up.

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LogoMark } from "./logo";
+import { PLUS } from "@/lib/billing/plans";
 
 const KEY = "merit:welcome-dismissed";
 /** After closing it, a visitor sees it again only after this long. */
@@ -62,7 +63,7 @@ export function WelcomePrompt() {
           Welcome to Merit
         </h2>
         <p className="mt-2 text-[15px] leading-relaxed text-muted">
-          Create your free account to get lessons picked for your classes, a learning plan built around your classes, and Merit Plus free for your first month.
+          Create your free account to get lessons picked for your classes, and a free {PLUS.trialDays}-day trial of Merit Plus whenever you want it.
         </p>
         <div className="mt-6 space-y-2.5">
           <Link href={`/signup?as=student${next}`} onClick={close} className="group flex items-center gap-3.5 rounded-2xl bg-accent p-4 text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.14)] transition-[background-color,transform] duration-150 ease-out hover:bg-accent-hover active:scale-[0.98]">

@@ -2,6 +2,7 @@ import { ArrowRight, Check, Play } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CalendarNudge, wantsCalendar } from "@/components/calendar-nudge";
 import { CourseSearch } from "@/components/course-search";
 import { FeedGrid, SortControls } from "@/components/feed";
 import { MasteryButton } from "@/components/mastery-button";
@@ -63,6 +64,7 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
   const { from, to } = courseColors(course.id);
   const top = page.items[0];
   const status = (id: string) => (viewer ? topicStatus(catalog, viewer.state, id) : "new");
+  const calendarNudge = wantsCalendar(viewer);
 
   return (
     <div className="pb-16" style={{ ["--c" as string]: from, ["--c2" as string]: to }}>
@@ -148,6 +150,9 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
       <div className="mx-auto grid max-w-6xl gap-8 px-4 pt-8 sm:px-6 lg:px-8 xl:grid-cols-[1fr_320px] grid-cols-[minmax(0,1fr)]">
         <div className="min-w-0">
           <CourseSearch courseId={course.id} courseTitle={course.shortTitle} className="mb-8" />
+          {calendarNudge ? (
+            <CalendarNudge variant="strip" signedIn={Boolean(viewer)} title="Quiz coming up?" body="Connect your calendar: Merit preps you for every quiz and test." className="-mt-4 mb-8 xl:hidden" />
+          ) : null}
           {guides.length ? (
             <section className="mb-8">
               <h2 className="headline flex items-center gap-2 text-[20px] text-ink">
@@ -204,6 +209,15 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
         </div>
 
         <aside className="space-y-4">
+          {calendarNudge ? (
+            <CalendarNudge
+              variant="card"
+              signedIn={Boolean(viewer)}
+              title={`Quiz on ${topic.title} soon?`}
+              body="Connect your class calendar and Merit lines up the lessons for every quiz and test, days before it's due."
+              className="hidden xl:block"
+            />
+          ) : null}
           <div className={cn(panel, "overflow-hidden")}>
             <p className="flex items-center gap-2 border-b-2 border-line px-4 py-3.5 font-brand text-[15px] font-extrabold text-ink">
               <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--c)] text-[13px] font-black text-white">{unit.order}</span>

@@ -61,7 +61,7 @@ const DEFAULT_FAQS: [string, string][] = [
   ],
   [
     "What's free and what's paid?",
-    `Courses, lessons, tutor search, and the AI study partner are free. Merit Plus (learning plan, calendar sync, progress) is free for your first month, then ${usd(PLUS.monthly)}/month. An Exam Sprint is ${usd(SPRINT.price)} once.`,
+    `Courses, lessons, tutor search, and the AI study partner are free. Merit Plus (learning plan, calendar sync, progress) has a free ${PLUS.trialDays}-day trial, then ${usd(PLUS.monthly)}/month. An Exam Sprint is ${usd(SPRINT.price)} once.`,
   ],
   ["Which courses are covered?", "Every AP course offered to high school students, from Calculus and Biology to Art History and Japanese, plus SAT Math and SAT Reading and Writing."],
 ];

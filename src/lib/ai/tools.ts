@@ -126,8 +126,8 @@ export function buildTools(catalog: IndexedCatalog, viewer: Viewer | null) {
       description: "The student's own learning plan (Merit Plus): the topics they're covering in class and on their calendar, with the best videos for each. Use when they ask what to study, what's next, or how to prepare for an upcoming test.",
       inputSchema: z.object({}),
       execute: async () => {
-        if (!viewer) return { available: false as const, reason: "Not signed in. Signing up gives a free month of Merit Plus, which includes the learning plan." };
-        if (!hasPlus(viewer.plus)) return { available: false as const, reason: "The learning plan is part of Merit Plus." };
+        if (!viewer) return { available: false as const, reason: "Not signed in. Signing up is free, and Merit Plus (which includes the learning plan) has a free 14-day trial." };
+        if (!hasPlus(viewer.plus)) return { available: false as const, reason: "The learning plan is part of Merit Plus, which they can try free for 14 days from the Plan tab." };
         return {
           available: true as const,
           topics: learningPlan(catalog, viewer.state).map((g) => ({

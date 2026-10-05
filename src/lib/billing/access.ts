@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { PLUS } from "@/lib/billing/plans";
 import { getStore } from "@/lib/data/store";
 import type { Billing, Gift, PaymentSource, PlusAccess, Profile } from "@/lib/types";
+import { hasPlus, plusAccess } from "./trial";
 
 export const emptyBilling = (userId: string): Billing => ({
   userId,
@@ -23,24 +24,16 @@ export async function saveBilling(b: Billing) {
   await (await getStore()).putDoc("billing", b.userId, b, b.userId);
 }
 
-export function trialEndsAt(profile: Pick<Profile, "createdAt">) {
-  return new Date(new Date(profile.createdAt).getTime() + PLUS.trialDays * 86400000).toISOString();
-}
+export { AUTO_TRIAL_CUTOFF, hasPlus, plusAccess, trialEndsAt } from "./trial";
 
-export function plusAccess(profile: Profile | null, billing: Billing | null, now = Date.now()): PlusAccess {
-  if (!profile) return { kind: "anonymous" };
-  const p = billing?.plus;
-  const periodOk = p?.currentPeriodEnd ? new Date(p.currentPeriodEnd).getTime() > now : true;
-  if (p && (p.status === "active" || p.status === "past_due") && periodOk) {
-    return { kind: "active", renewsAt: p.currentPeriodEnd, cancelAtPeriodEnd: p.cancelAtPeriodEnd, interval: p.interval };
-  }
-  const ends = trialEndsAt(profile);
-  const left = new Date(ends).getTime() - now;
-  if (left > 0) return { kind: "trial", daysLeft: Math.ceil(left / 86400000), endsAt: ends };
-  return { kind: "expired" };
+/** Starts the one free Plus trial an account gets. Does nothing if Plus is already on or the trial was used. */
+export async function startPlusTrial(userId: string, profile: Profile) {
+  const b = await getBilling(userId);
+  if (plusAccess(profile, b).kind !== "free") return b;
+  const next = { ...b, plusTrialEndsAt: new Date(Date.now() + PLUS.trialDays * 86400000).toISOString() };
+  await saveBilling(next);
+  return next;
 }
-
-export const hasPlus = (a: PlusAccess) => a.kind === "trial" || a.kind === "active";
 
 export const SPRINT_TRIAL_DAYS = 7;
 

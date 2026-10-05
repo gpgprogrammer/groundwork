@@ -45,8 +45,9 @@ export type ShellData = {
   isTutor: boolean;
   isEducator: boolean;
   isAdmin: boolean;
-  plus: "anonymous" | "trial" | "active" | "expired";
+  plus: "anonymous" | "free" | "trial" | "active" | "expired";
   hasSchedule: boolean;
+  isTeacher: boolean;
   courses: { slug: string; title: string; hue: number }[];
   myCourses: string[];
   channels: { id: string; title: string; thumbnail: string | null }[];
@@ -191,11 +192,19 @@ function TopBar({ data, section, onMenu }: { data: ShellData; section?: string; 
               <IconButton onClick={() => setMobileSearch(true)} label="Search" className="md:hidden">
                 <Search className="size-5" />
               </IconButton>
+              {signedIn && !data.hasSchedule && !data.isTeacher ? (
+                <Link
+                  href="/schedule"
+                  className="press hidden h-10 items-center gap-2 rounded-2xl bg-positive-soft px-3.5 font-brand text-[14px] font-extrabold text-positive ring-2 ring-inset ring-positive/25 [--ledge:color-mix(in_oklab,var(--positive)_30%,transparent)] hover:bg-positive hover:text-white lg:flex"
+                >
+                  <CalendarDays className="size-[18px]" /> Connect calendar
+                </Link>
+              ) : null}
               {signedIn ? (
                 <>
                   <Link
                     href="/schedule"
-                    className="relative hidden size-10 items-center justify-center rounded-2xl text-ink transition-colors hover:bg-bg-subtle sm:flex"
+                    className={cn("relative hidden size-10 items-center justify-center rounded-2xl text-ink transition-colors hover:bg-bg-subtle sm:flex", !data.hasSchedule && !data.isTeacher && "lg:hidden")}
                     aria-label="My schedule"
                     title="My schedule"
                   >
@@ -547,6 +556,20 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
   const shown = (mine.length ? mine : data.courses).slice(0, 6);
   return (
     <nav aria-label="Main" className="pb-6 pt-2">
+      {!data.hasSchedule && !data.isTeacher ? (
+        <Link
+          href={data.user ? "/schedule" : "/signup?as=student&next=%2Fschedule"}
+          className="mx-3 mb-3 flex items-center gap-3 rounded-2xl bg-positive p-3 text-white transition-transform active:scale-[0.98]"
+        >
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/20">
+            <CalendarDays className="size-5" />
+          </span>
+          <span className="min-w-0">
+            <span className="block font-brand text-[14.5px] font-extrabold leading-tight">Connect your calendar</span>
+            <span className="block text-[12px] leading-snug text-white/85">Lessons for every quiz and test</span>
+          </span>
+        </Link>
+      ) : null}
       <Group>
         <NavRow href="/" icon={<House className="size-[18px]" />} label="Home" pathname={pathname} />
         <NavRow href="/courses" icon={<GraduationCap className="size-[18px]" />} label="Courses" pathname={pathname} />
@@ -624,11 +647,13 @@ function SidebarPromo({ plus }: { plus: ShellData["plus"] }) {
           Free diagnostic in 10 minutes <span className="inline-block transition-transform duration-200 group-hover:translate-x-0.5">→</span>
         </p>
       </Link>
-      {plus === "anonymous" || plus === "expired" ? (
-        <Link href={plus === "anonymous" ? "/signup?next=/plan" : "/pricing"} className="block rounded-2xl bg-accent-soft p-4 text-[13px] leading-snug text-ink-2 transition-transform duration-200 active:scale-[0.98]">
+      {plus === "anonymous" || plus === "free" || plus === "expired" ? (
+        <Link href={plus === "anonymous" ? "/signup?next=/plan" : plus === "free" ? "/plan" : "/pricing"} className="block rounded-2xl bg-accent-soft p-4 text-[13px] leading-snug text-ink-2 transition-transform duration-200 active:scale-[0.98]">
           <span className="block text-[14px] font-semibold text-ink">Lessons for what you&apos;re learning in class.</span>
           <span className="mt-0.5 block">
-            {plus === "anonymous" ? "Merit Plus suggests videos for what you're learning in class. Free for your first month." : "Get your plan and class-based suggestions back with Plus."}
+            {plus === "expired"
+              ? "Get your learning plan and class-based suggestions back with Plus."
+              : "Merit Plus suggests videos for what you're learning in class. Try it free for 14 days."}
           </span>
         </Link>
       ) : null}

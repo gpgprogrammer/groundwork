@@ -1,4 +1,5 @@
 import { CalendarDays, Clapperboard, MonitorPlay } from "lucide-react";
+import { CalendarNudge, wantsCalendar } from "@/components/calendar-nudge";
 import { LearnBand } from "@/components/learn-band";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -90,15 +91,14 @@ export default async function Lessons({ searchParams }: PageProps<"/lessons">) {
             </div>
           </Shelf>
         </div>
-      ) : viewer && showShelves && !viewer.state.schedule ? (
-        <Link href="/schedule" className="group mt-5 flex items-center gap-4 rounded-2xl bg-accent-soft px-5 py-4 text-sm text-ink transition-transform duration-200 active:scale-[0.99]">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface text-accent-ink"><CalendarDays className="size-5" /></span>
-          <span className="min-w-0 flex-1">
-            <span className="font-medium">Get videos for every quiz and test.</span>{" "}
-            <span className="text-ink-2">Connect your class calendar and Merit lines up the right lessons before each one.</span>
-          </span>
-          <span className="hidden shrink-0 items-center gap-1 font-semibold text-accent-ink sm:flex">Connect <span className="transition-transform group-hover:translate-x-0.5">→</span></span>
-        </Link>
+      ) : showShelves && wantsCalendar(viewer) ? (
+        <CalendarNudge
+          variant="strip"
+          signedIn={Boolean(viewer)}
+          title="Get videos for every quiz and test"
+          body="Connect your class calendar and Merit lines up the right lessons before each one."
+          className="mt-5"
+        />
       ) : null}
 
       {sp.password === "updated" ? (
@@ -121,7 +121,7 @@ export default async function Lessons({ searchParams }: PageProps<"/lessons">) {
           {head.map((v, i) => (
             <Fragment key={v.id}>
               {showShelves && i === 2 ? <SprintFeedCard /> : null}
-              {showShelves && i === 8 && (!viewer || viewer.plus.kind === "expired") ? <PlusFeedCard /> : null}
+              {showShelves && i === 8 && (!viewer || viewer.plus.kind === "free" || viewer.plus.kind === "expired") ? <PlusFeedCard /> : null}
               <VideoCard v={v} />
             </Fragment>
           ))}

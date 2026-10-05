@@ -28,7 +28,7 @@ async function ensureCustomer(viewer: Viewer) {
 
 /**
  * Checkout for Plus (monthly or annual) or an Exam Sprint. If the student is
- * still inside their free month, the subscription starts billing when it ends,
+ * still inside their free trial, the subscription starts billing when it ends,
  * so upgrading early never costs them free time.
  */
 export async function createCheckoutUrl(viewer: Viewer, product: Product, origin: string, returnTo: string) {
@@ -47,7 +47,9 @@ export async function createCheckoutUrl(viewer: Viewer, product: Product, origin
       },
     },
   ];
-  const trialEnd = Math.floor(new Date(trialEndsAt(viewer.state.profile)).getTime() / 1000);
+  // Subscribing during the free trial keeps the rest of it: billing starts when the trial would have ended.
+  const ends = trialEndsAt(viewer.state.profile, viewer.billing);
+  const trialEnd = ends ? Math.floor(new Date(ends).getTime() / 1000) : 0;
   const carryTrial = trialEnd - Date.now() / 1000 > 48 * 3600;
   const session = await stripe.checkout.sessions.create({
     customer,

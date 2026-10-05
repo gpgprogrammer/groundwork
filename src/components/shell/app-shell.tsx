@@ -26,7 +26,8 @@ export async function AppShell({ children }: { children: ReactNode }) {
     isEducator: Boolean(viewer && (await (await getStore()).getDoc("educators", viewer.user.id))),
     isAdmin: viewer?.isAdmin ?? false,
     plus: viewer?.plus.kind ?? "anonymous",
-    hasSchedule: Boolean(viewer?.state.schedule),
+    hasSchedule: Boolean(viewer?.state.schedule?.sources?.length),
+    isTeacher: viewer?.user.accountType === "teacher",
     courses: [...catalog.courses]
       .sort((a, b) => catalog.videosForCourse(b.id).length - catalog.videosForCourse(a.id).length)
       .map((c) => ({ slug: c.slug, title: c.title, hue: c.hue })),

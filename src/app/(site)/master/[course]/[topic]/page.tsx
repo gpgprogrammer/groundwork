@@ -2,6 +2,7 @@ import { Check, Clock, Zap } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { wantsCalendar } from "@/components/calendar-nudge";
 import { CourseIcon, courseColors } from "@/components/course-icon";
 import { QuickSession } from "@/components/quick/session";
 import { getCatalog } from "@/lib/catalog";
@@ -73,6 +74,7 @@ export default async function QuickSessionPage({ params }: PageProps<"/master/[c
           lessons={picks}
           next={nextTopic ? { href: `/master/${course.slug}/${nextTopic.slug}`, title: nextTopic.title } : null}
           alreadyMastered={mastered}
+          calendarNudge={wantsCalendar(viewer)}
         />
       </div>
     </div>

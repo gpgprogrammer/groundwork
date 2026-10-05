@@ -238,6 +238,8 @@ export type Billing = {
   sprintPass: boolean;
   /** One free week of Exam Sprint per account. */
   sprintTrialEndsAt?: string | null;
+  /** When the student's opt-in Merit Plus free trial ends (one per account). */
+  plusTrialEndsAt?: string | null;
   /** Legacy per-sprint credits from before the pass. */
   sprintCredits: number;
   purchases: { id: string; product: "plus-month" | "plus-year" | "sprint"; amount: number; at: string; source: PaymentSource; note?: string }[];
@@ -245,6 +247,8 @@ export type Billing = {
 
 export type PlusAccess =
   | { kind: "anonymous" }
+  /** Signed in, on the free plan, and the free trial hasn't been used yet. */
+  | { kind: "free" }
   | { kind: "trial"; daysLeft: number; endsAt: string }
   | { kind: "active"; renewsAt: string | null; cancelAtPeriodEnd: boolean; interval: "month" | "year" | null }
   | { kind: "expired" };

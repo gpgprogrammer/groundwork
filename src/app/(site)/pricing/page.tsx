@@ -4,7 +4,7 @@ import Link from "next/link";
 import { CheckoutNotice } from "@/components/checkout-notice";
 import { Faq } from "@/components/marketing";
 import { BillingToggle } from "@/components/pricing-client";
-import { BuyButton, PlusBadge, SprintBadge } from "@/components/upgrade";
+import { BuyButton, PlusBadge, SprintBadge, TrialButton } from "@/components/upgrade";
 import { cn } from "@/components/ui";
 import { WorldBand } from "@/components/learn-band";
 import { AI_LIMITS } from "@/lib/ai/limits";
@@ -14,7 +14,7 @@ import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: `Merit is free to learn. Plus is ${usd(PLUS.monthly)}/month after a free first month. Exam Sprint is ${usd(SPRINT.price)} once.`,
+  description: `Merit is free to learn. Try Plus free for ${PLUS.trialDays} days, then ${usd(PLUS.monthly)}/month. Exam Sprint is ${usd(SPRINT.price)} once.`,
 };
 
 export default async function PricingPage({ searchParams }: PageProps<"/pricing">) {
@@ -23,10 +23,11 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
   const trialEnds = plus.kind === "trial" ? new Date(plus.endsAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : null;
 
   const plusCta =
-    plus.kind === "anonymous" ? (
-      <Link href="/signup?next=/plan" className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold text-[#0f172a] hover:bg-white/90">
-        Start your free month <ArrowRight className="size-4" />
-      </Link>
+    plus.kind === "anonymous" || plus.kind === "free" ? (
+      <div className="space-y-2">
+        <TrialButton returnTo="/plan" signedIn={plus.kind === "free"} className="w-full justify-center" />
+        <p className="text-center text-[12px] text-white/70">{PLUS.trialDays} days free, no card needed.</p>
+      </div>
     ) : plus.kind === "active" ? (
       <Link href="/plan" className="flex h-12 w-full items-center justify-center rounded-full bg-white text-[15px] font-semibold text-[#0f172a] hover:bg-white/90">
         You have Plus · open your plan
@@ -46,7 +47,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
             <BuyButton product={period === "year" ? "plus-year" : "plus-month"} returnTo="/plan" variant="light" className="h-12 w-full text-[15px]">
               {plus.kind === "trial" ? `Lock in ${usd(period === "year" ? PLUS.annual : PLUS.monthly)}/${period}` : `Get Plus for ${usd(period === "year" ? PLUS.annual : PLUS.monthly)}/${period}`}
             </BuyButton>
-            {trialEnds ? <p className="text-center text-[12px] text-white/70">Your free month runs until {trialEnds}. You won&apos;t be charged before then.</p> : null}
+            {trialEnds ? <p className="text-center text-[12px] text-white/70">Your free trial runs until {trialEnds}. You won&apos;t be charged before then.</p> : null}
           </div>
         )}
       </div>
@@ -60,7 +61,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
       className="pb-24 text-center lg:pb-28 [&_h1]:mx-auto [&_p]:mx-auto"
       kicker={<span className="mx-auto rounded-full bg-white/15 px-3.5 py-1.5 ring-1 ring-inset ring-white/25">Pricing</span>}
       title="Understand what you're studying tonight."
-      lede="Every course and lesson is free, forever. Plus plans your nights around your real schedule. Exam Sprint gets you ready for one big exam."
+      lede="Every course and lesson is free, forever. Plus picks the best videos for what you're learning in class. Exam Sprint gets you ready for one big exam."
     />
     <div className="mx-auto max-w-[1200px] px-4 pb-20 sm:px-6">
       <div className="pt-6">
@@ -100,7 +101,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
             <h2 className="flex items-center gap-2 font-brand text-[20px] font-black">
               <Sparkles className="size-5" /> {PLUS.name}
             </h2>
-            <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide">First month free</span>
+            <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide">{PLUS.trialDays} days free</span>
           </div>
           <div className="relative mt-4">
             <BillingToggle savings={annualSavings} annual={priceBlock("year")} monthly={priceBlock("month")} />
@@ -202,7 +203,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
         <Faq
           items={[
             ["Is Merit really free?", "Yes. Every course, every lesson, tutor search, and the AI study partner (with a daily limit) are free forever. You only pay for planning and exam prep tools."],
-            ["What does the free month of Plus mean?", `Every new account gets Merit Plus free for ${PLUS.trialDays === 30 ? "a full month" : `${PLUS.trialDays} days`}. No card needed. After that, Plus is ${usd(PLUS.monthly)}/month or ${usd(PLUS.annual)}/year, and everything free stays free.`],
+            ["How does the free trial of Plus work?", `Your account starts on the free plan. Whenever you open a Plus feature, like your learning plan or calendar sync, you can start a ${PLUS.trialDays}-day free trial. No card needed, and it's one trial per account. After that, Plus is ${usd(PLUS.monthly)}/month or ${usd(PLUS.annual)}/year, and everything free stays free.`],
             ["Is Exam Sprint a subscription?", `No. You pay ${usd(SPRINT.price)} once and it unlocks Exam Sprint for every class and test, forever, plus calendar sync. The diagnostic and your readiness report are free, so you can see what you'd get first.`],
             ["Can I cancel Plus?", "Anytime, from Settings → Plan and billing. You keep Plus until the end of the period you paid for."],
             ["Can my parent pay?", "Yes. Parent checkout lets anyone pay with their own card. The purchase unlocks when the student signs in with the email you enter."],
@@ -213,7 +214,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
 
       <p className={cn("mt-12 text-center text-[12px] text-muted", isStripeEnabled && "hidden")}>
         <PlusBadge className="mr-1.5 align-middle" /> <SprintBadge className="mr-1.5 align-middle" />{" "}
-        {paymentsPaused ? "Purchases open soon. Until then, Merit Plus is free for your first month and Exam Sprint has a free 7-day trial." : "Payments are in test mode while Merit connects its payment processor. No card is charged."}
+        {paymentsPaused ? "Purchases open soon. Until then, you can try Merit Plus free for ${PLUS.trialDays} days and Exam Sprint free for 7 days." : "Payments are in test mode while Merit connects its payment processor. No card is charged."}
       </p>
     </div>
     </>

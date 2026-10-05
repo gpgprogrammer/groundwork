@@ -8,6 +8,7 @@ import { finishQuickSession, loadQuickCheck } from "@/app/actions/quick";
 import { CHECK_SIZE, PASS_RATIO } from "@/lib/quick";
 import type { Question } from "@/lib/types";
 import { OpenAskButton } from "../ask/quick-ask";
+import { CalendarNudge } from "../calendar-nudge";
 import { buttonClass, cn, formatDuration } from "../ui";
 
 type Lesson = { id: string; title: string; thumbnail: string; durationSec: number; channelTitle: string };
@@ -18,6 +19,8 @@ type Props = {
   lessons: Lesson[];
   next: { href: string; title: string } | null;
   alreadyMastered: boolean;
+  /** Show the calendar prompt after a pass (students who haven't connected one). */
+  calendarNudge?: boolean;
 };
 type Stage = "learn" | "watch" | "loading" | "check" | "self" | "result";
 type Result = { passed: boolean; correct: number; total: number };
@@ -32,7 +35,7 @@ const STEPS = [
 const bottomBar = "sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 -mx-4 mt-8 border-t-2 px-4 py-4 sm:-mx-6 sm:px-6 md:bottom-0";
 
 /** One topic, start to mastered: key ideas, the top lesson, then a short check. */
-export function QuickSession({ topic, course, topicHref, lessons, next, alreadyMastered }: Props) {
+export function QuickSession({ topic, course, topicHref, lessons, next, alreadyMastered, calendarNudge = false }: Props) {
   const ideas = topic.keyPoints.length ? topic.keyPoints : [topic.summary];
   const [stage, setStage] = useState<Stage>("learn");
   const [attempt, setAttempt] = useState(0);
@@ -326,7 +329,7 @@ export function QuickSession({ topic, course, topicHref, lessons, next, alreadyM
       ) : null}
 
       {stage === "result" && result ? (
-        <Outcome result={result} topic={topic} course={course} topicHref={topicHref} next={next} alreadyMastered={wasMastered} onRetry={retry} />
+        <Outcome result={result} topic={topic} course={course} topicHref={topicHref} next={next} alreadyMastered={wasMastered} onRetry={retry} calendarNudge={calendarNudge} />
       ) : null}
     </div>
   );
@@ -433,6 +436,7 @@ function Outcome({
   next,
   alreadyMastered,
   onRetry,
+  calendarNudge,
 }: {
   result: Result;
   topic: Props["topic"];
@@ -441,6 +445,7 @@ function Outcome({
   next: Props["next"];
   alreadyMastered: boolean;
   onRetry: () => void;
+  calendarNudge: boolean;
 }) {
   if (result.passed) {
     return (
@@ -474,6 +479,15 @@ function Outcome({
             Back to {course.shortTitle}
           </Link>
         </div>
+        {calendarNudge ? (
+          <CalendarNudge
+            variant="strip"
+            signedIn
+            title="Know what's on your next quiz"
+            body={`Connect your class calendar and Merit lines up the ${course.shortTitle} lessons for every quiz and test.`}
+            className="rise mx-auto mt-8 max-w-xl text-left"
+          />
+        ) : null}
       </section>
     );
   }

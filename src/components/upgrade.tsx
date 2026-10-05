@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { PLUS, SPRINT, usd, type Product } from "@/lib/billing/plans";
 import type { PlusAccess } from "@/lib/types";
 import { paymentsPaused } from "@/lib/env";
+import { startTrial } from "@/app/actions/billing";
 import { cn } from "./ui";
 
 export function PlusBadge({ className, onDark }: { className?: string; onDark?: boolean }) {
@@ -72,6 +73,48 @@ export function BuyButton({
   );
 }
 
+/**
+ * Starts the free Merit Plus trial (once per account) and comes back to `returnTo`.
+ * Visitors are sent to create an account first, then back here to start it.
+ */
+export function TrialButton({
+  returnTo,
+  signedIn,
+  className,
+  label,
+  tone = "blue",
+}: {
+  returnTo: string;
+  signedIn: boolean;
+  className?: string;
+  label?: string;
+  /** White button with blue or green text (on colored panels), or a solid blue button (on white). */
+  tone?: "blue" | "green" | "solid";
+}) {
+  const cls = cn(
+    "press font-brand inline-flex h-12 items-center gap-2 rounded-2xl px-6 text-[15.5px] font-extrabold",
+    tone === "solid" ? "bg-accent text-white [--ledge:var(--accent-press)] hover:brightness-110" : "bg-white [--ledge:rgb(0_0_0/0.22)] hover:brightness-95",
+    tone === "green" ? "text-[#12722f]" : tone === "blue" ? "text-[#1d4ed8]" : null,
+    className,
+  );
+  const text = label ?? `Start my ${PLUS.trialDays}-day free trial`;
+  if (!signedIn) {
+    return (
+      <Link href={`/signup?as=student&next=${encodeURIComponent(returnTo)}`} className={cls}>
+        {text} <ArrowRight className="size-4" />
+      </Link>
+    );
+  }
+  return (
+    <form action={startTrial} className="contents">
+      <input type="hidden" name="returnTo" value={returnTo} />
+      <button type="submit" className={cls}>
+        {text} <ArrowRight className="size-4" />
+      </button>
+    </form>
+  );
+}
+
 /** Wraps a Plus feature: shows it when the student has Plus, an upgrade card otherwise. */
 export function PlusGate({ access, feature, returnTo, children }: { access: PlusAccess; feature: string; returnTo: string; children: ReactNode }) {
   if (access.kind === "trial" || access.kind === "active") return <>{children}</>;
@@ -102,13 +145,8 @@ export function PlusLocked({ access, feature, returnTo, title = "Videos picked f
           ))}
         </ul>
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          {access.kind === "anonymous" ? (
-            <Link
-              href={`/signup?next=${encodeURIComponent(returnTo)}`}
-              className="press font-brand inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-6 text-[15.5px] font-extrabold text-[#1d4ed8] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95"
-            >
-              Get your first month free <ArrowRight className="size-4" />
-            </Link>
+          {access.kind === "anonymous" || access.kind === "free" ? (
+            <TrialButton returnTo={returnTo} signedIn={access.kind === "free"} />
           ) : (
             <>
               <BuyButton product="plus-month" returnTo={returnTo} variant="onBlue" className="h-12 px-6">
@@ -123,7 +161,11 @@ export function PlusLocked({ access, feature, returnTo, title = "Videos picked f
             Compare plans
           </Link>
         </div>
-        {access.kind === "anonymous" ? <p className="mt-3 text-[13px] text-white/80">No card needed. Plus is free for your first month.</p> : null}
+        {access.kind === "anonymous" || access.kind === "free" ? (
+          <p className="mt-3 text-[13px] text-white/80">
+            Free for {PLUS.trialDays} days, no card needed. Then {usd(PLUS.monthly)}/month if you want to keep it.
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -166,7 +208,7 @@ export function PlusFeedCard() {
         <span className="mt-5 inline-flex h-11 items-center gap-2 rounded-2xl bg-white px-5 font-brand text-[15px] font-extrabold text-accent-ink">
           See my plan <CalendarCheck className="size-4" />
         </span>
-        <p className="mt-2 text-[12.5px] text-white/75">First month free</p>
+        <p className="mt-2 text-[12.5px] text-white/75">Try it free for {PLUS.trialDays} days</p>
       </div>
     </Link>
   );
