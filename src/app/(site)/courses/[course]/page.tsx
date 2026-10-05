@@ -1,5 +1,5 @@
 import { CourseIcon, courseColors } from "@/components/course-icon";
-import { ArrowRight, Check, ChevronDown, Lock, Play, Target, Users } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, Play, Target, Users } from "lucide-react";
 import { ExamCta } from "@/components/upgrade";
 import { daysUntil, examDateFor } from "@/lib/exams";
 import type { Metadata } from "next";
@@ -96,7 +96,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
           <ol className="scrollbar-none -mx-4 mt-9 flex items-start overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" aria-label="Units">
             {unitState.map(({ u, total, done, state }, i) => (
               <li key={u.id} className="flex shrink-0 items-start">
-                <a href={`#${u.slug}`} className="group flex w-[92px] flex-col items-center text-center sm:w-[108px]" title={u.title}>
+                <a href={`#${u.slug}`} className="group flex w-[92px] flex-col items-center text-center sm:w-[108px] lg:w-[96px]" title={u.title}>
                   <span
                     className={cn(
                       "press-sm flex size-12 items-center justify-center rounded-full font-brand text-[18px] font-black transition-transform group-hover:-translate-y-0.5 sm:size-14",
@@ -114,7 +114,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
                     </span>
                   ) : null}
                 </a>
-                {i < unitState.length - 1 ? <span aria-hidden className={cn("mt-6 h-1 w-6 shrink-0 rounded-full sm:mt-7 sm:w-8", state === "done" ? "bg-white" : "bg-white/25")} /> : null}
+                {i < unitState.length - 1 ? <span aria-hidden className={cn("mt-6 h-1 w-6 shrink-0 rounded-full sm:mt-7 sm:w-8 lg:w-3", state === "done" ? "bg-white" : "bg-white/25")} /> : null}
               </li>
             ))}
           </ol>
@@ -220,13 +220,13 @@ function Outline({ course, catalog, viewer, nextTopicId, openUnit }: { course: C
                           s === "done" ? "bg-[var(--c)] text-white" : upNext ? "bg-surface text-[var(--c)] ring-4 ring-[var(--c)]" : s === "started" ? "bg-surface text-[var(--c)] ring-2 ring-[var(--c)]" : "bg-surface text-muted ring-2 ring-line",
                         )}
                       >
-                        {s === "done" ? <Check className="size-4" strokeWidth={3.5} /> : count ? i + 1 : <Lock className="size-3.5" />}
+                        {s === "done" ? <Check className="size-4" strokeWidth={3.5} /> : i + 1}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-[15.5px] font-bold text-ink">{t.title}</span>
                         {upNext ? <span className="font-brand text-[12.5px] font-extrabold text-[var(--c)]">Up next</span> : null}
                       </span>
-                      <span className="tabular shrink-0 text-[13px] font-semibold text-muted">{count ? `${count} videos` : "Coming soon"}</span>
+                      <span className="tabular shrink-0 text-[13px] font-semibold text-muted">{count ? `${count} videos` : "Lessons from this unit"}</span>
                       <ArrowRight className="size-4 shrink-0 text-faint transition-transform group-hover/row:translate-x-0.5" />
                     </Link>
                   </li>

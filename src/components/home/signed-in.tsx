@@ -6,7 +6,7 @@ import { cn, panel, panelLink } from "@/components/ui";
 import { hasPlus } from "@/lib/billing/access";
 import type { IndexedCatalog } from "@/lib/catalog";
 import { learningPlan } from "@/lib/learning-plan";
-import { courseProgress, nextTopicInCourse, topicStatus, whenLabel } from "@/lib/recommend";
+import { courseProgress, nextTopicInCourse, startedCourse, topicStatus, whenLabel } from "@/lib/recommend";
 import { upcomingTests } from "@/lib/schedule-model";
 import type { Viewer } from "@/lib/viewer";
 import { greetingName } from "@/lib/names";
@@ -117,7 +117,7 @@ export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalo
                         <Play className="size-4 fill-current" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block font-brand text-[12px] font-extrabold text-muted">{p.done ? "Continue" : "Start here"}</span>
+                        <span className="block font-brand text-[12px] font-extrabold text-muted">{startedCourse(catalog, viewer.state, c.id) ? "Continue" : "Where most classes are now"}</span>
                         <span className="block truncate font-brand text-[15.5px] font-extrabold">{next.title}</span>
                       </span>
                       <ArrowRight className="size-4 shrink-0" />

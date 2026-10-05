@@ -66,3 +66,15 @@ test.describe("learning plan", () => {
     expect(new Set(plan.map((g) => g.topic.id)).size).toBe(plan.length);
   });
 });
+
+test.describe("typical class pace", () => {
+  test("starts in late August and finishes new material weeks before the May exam", async () => {
+    const { paceFraction, paceLabel } = await import("../src/lib/pace");
+    expect(paceFraction(Date.parse("2026-08-10T12:00:00"))).toBe(0);
+    expect(paceFraction(Date.parse("2026-10-05T12:00:00"))).toBeGreaterThan(0.15);
+    expect(paceFraction(Date.parse("2026-10-05T12:00:00"))).toBeLessThan(0.25);
+    expect(paceFraction(Date.parse("2027-01-15T12:00:00"))).toBeGreaterThan(0.5);
+    expect(paceFraction(Date.parse("2027-04-25T12:00:00"))).toBe(1);
+    expect(paceLabel(Date.parse("2026-10-05T12:00:00"))).toBe("early October");
+  });
+});

@@ -1,3 +1,4 @@
+import { typicalPaceTopic } from "@/lib/pace";
 import { visibleEvents } from "@/lib/schedule-model";
 import type { IndexedCatalog, RankedVideo } from "@/lib/catalog";
 import type { HistoryEntry, ScheduleEvent, Topic, UserState } from "@/lib/types";
@@ -21,13 +22,27 @@ export function courseProgress(catalog: IndexedCatalog, state: UserState, course
   return { done: topics.filter((t) => state.mastered[t.id]).length, total: topics.length };
 }
 
-/** The next topic to study in a course: after the furthest one you've touched, skipping mastered ones. */
-export function nextTopicInCourse(catalog: IndexedCatalog, state: UserState, courseId: string): Topic | undefined {
+/** Whether a student has done anything in a course yet (opened a lesson or mastered a topic). */
+export function startedCourse(catalog: IndexedCatalog, state: UserState, courseId: string) {
+  return catalog.topicsForCourse(courseId).some((t) => topicStatus(catalog, state, t.id) !== "new");
+}
+
+/**
+ * The next topic to study in a course: after the furthest one you've touched, skipping mastered ones.
+ * Before a student has started a course, that's where a typical class is today (see pace.ts),
+ * not the first topic of the year.
+ */
+export function nextTopicInCourse(catalog: IndexedCatalog, state: UserState, courseId: string, now = Date.now()): Topic | undefined {
   const topics = catalog.topicsForCourse(courseId).filter((t) => catalog.videosForTopic(t.id).length);
   let furthest = -1;
   topics.forEach((t, i) => {
     if (topicStatus(catalog, state, t.id) !== "new") furthest = i;
   });
+  if (furthest === -1) {
+    const pace = typicalPaceTopic(catalog, courseId, now);
+    if (pace) furthest = topics.findIndex((t) => t.order >= pace.order) - 1;
+    if (furthest < -1) furthest = topics.length - 1;
+  }
   return topics.slice(furthest + 1).find((t) => !state.mastered[t.id]) ?? topics.find((t) => !state.mastered[t.id]);
 }
 

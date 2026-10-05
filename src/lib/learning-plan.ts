@@ -1,5 +1,6 @@
 import type { IndexedCatalog, RankedVideo } from "@/lib/catalog";
-import { nextTopicInCourse, upcomingEvents, whenLabel } from "@/lib/recommend";
+import { paceLabel } from "@/lib/pace";
+import { nextTopicInCourse, startedCourse, upcomingEvents, whenLabel } from "@/lib/recommend";
 import type { Course, Topic, UserState } from "@/lib/types";
 
 /**
@@ -51,8 +52,14 @@ export function learningPlan(catalog: IndexedCatalog, state: UserState, limit = 
   for (const id of state.profile.focusTopicIds) add(id, "class", "In class now", 3);
   if (count < limit) {
     for (const courseId of state.profile.courseIds) {
-      const next = nextTopicInCourse(catalog, state, courseId);
-      if (next && !state.mastered[next.id]) add(next.id, "next", `Next in ${catalog.course(courseId)?.shortTitle ?? "your course"}`, 2);
+      const next = nextTopicInCourse(catalog, state, courseId, now);
+      const name = catalog.course(courseId)?.shortTitle ?? "your course";
+      const reason = startedCourse(catalog, state, courseId) ? `Next in ${name}` : `Where most ${name} classes are in ${paceLabel(now)}`;
+      if (!next || state.mastered[next.id]) continue;
+      add(next.id, "next", reason, 2);
+      // And the topic right after it, so the plan looks a little ahead.
+      const after = catalog.topicsForCourse(courseId).find((t) => t.order > next.order && !state.mastered[t.id] && catalog.videosForTopic(t.id).length);
+      if (after) add(after.id, "next", reason, 2);
     }
   }
   return groups;

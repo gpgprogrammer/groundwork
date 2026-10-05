@@ -247,7 +247,7 @@ function GroupHeader({ g, link = false }: { g: PlanGroup; link?: boolean }) {
       <CourseIcon id={g.course.id} size={40} />
       <div className="min-w-0 flex-1">
         <p className="flex flex-wrap items-center gap-2">
-          <span className={cn("rounded-full px-2.5 py-0.5 font-brand text-[12px] font-extrabold", s.cls)}>{g.source === "test" ? g.reason : s.label}</span>
+          <span className={cn("rounded-full px-2.5 py-0.5 font-brand text-[12px] font-extrabold", s.cls)}>{g.source === "class" ? s.label : g.reason}</span>
           <span className="font-brand text-[13px] font-bold text-muted">{g.course.shortTitle}</span>
         </p>
         {link ? (
