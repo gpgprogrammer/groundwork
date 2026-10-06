@@ -56,7 +56,11 @@ test.describe("learning plan", () => {
 
   test("with nothing from class, it starts from the next topic in the course", () => {
     const plan = learningPlan(catalog, state({ mastered: ["limits"] }), 12, NOW);
-    expect(plan.map((g) => [g.source, g.topic.id])).toEqual([["next", "derivatives"]]);
+    // The next topic, plus the one after it so the plan looks a little ahead.
+    expect(plan.map((g) => [g.source, g.topic.id])).toEqual([
+      ["next", "derivatives"],
+      ["next", "chain"],
+    ]);
     expect(fromClasses(plan)).toBe(false);
   });
 
