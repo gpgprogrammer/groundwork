@@ -6,6 +6,8 @@
  *   npm run ingest -- --budget 4000
  *   npm run ingest -- --courses ap-cybersecurity,ap-business-personal-finance
  *                                  # add lessons for new courses only; the rest of the library is kept as is
+ *   npm run ingest -- --missing    # search only topics that have no videos yet (after a curriculum update);
+ *                                  # existing videos are kept exactly as they are. Resumable: rerun daily.
  *
  * Needs YOUTUBE_API_KEY (in .env.local or the environment). Every API response
  * is cached in .cache/youtube, so reruns and resumed runs don't spend quota
@@ -44,6 +46,8 @@ const BUDGET = opt("budget", 9500);
 const PAGES_PER_TOPIC = opt("pages", 1);
 const CHANNELS_TO_CRAWL = opt("channels", 40);
 const UPLOADS_PER_CHANNEL = opt("uploads", 400);
+/** With --missing, how many topics to search per run, leaving quota for video and channel details. */
+const MAX_TOPICS = opt("max-topics", 85);
 
 const OUT = path.join(process.cwd(), "src", "data", "youtube.json");
 const CACHE = path.join(process.cwd(), ".cache", "youtube");
@@ -149,15 +153,21 @@ async function main() {
   const refreshOnly = flag("refresh");
   const ci = args.indexOf("--courses");
   const onlyCourses = ci >= 0 ? args[ci + 1].split(",") : null;
-  // Adding courses keeps every existing video exactly as it is (like a refresh).
-  const keepExisting = refreshOnly || Boolean(onlyCourses);
+  // Only topics with no videos yet (cross-listed Calc AB topics share BC's videos, so they're skipped).
+  const missingOnly = flag("missing");
+  const covered = new Set(existing.videos.map((v) => v.topicId).filter(Boolean));
+  const missingTopics = curriculum.topics.filter((t) => !t.sameAs && !covered.has(t.id));
+  if (missingOnly) console.log(`${missingTopics.length} topics have no videos yet.`);
+  // Adding courses or missing topics keeps every existing video exactly as it is (like a refresh).
+  const keepExisting = refreshOnly || Boolean(onlyCourses) || missingOnly;
   const prevById = new Map(existing.videos.map((v) => [v.id, v]));
   let stoppedEarly = "";
 
   try {
     if (!refreshOnly) {
       // 1. Every topic: "<topic> <course>".
-      for (const topic of curriculum.topics.filter((t) => !onlyCourses || onlyCourses.includes(t.courseId))) {
+      const toSearch = missingOnly ? missingTopics.slice(0, MAX_TOPICS) : curriculum.topics.filter((t) => !onlyCourses || onlyCourses.includes(t.courseId));
+      for (const topic of toSearch) {
         let pageToken = "";
         for (let page = 0; page < PAGES_PER_TOPIC; page++) {
           const q = `${topic.title} ${COURSE_QUERY[topic.courseId] ?? curriculum.courses.find((c) => c.id === topic.courseId)!.query}`;
@@ -176,12 +186,12 @@ async function main() {
           if (!res.nextPageToken) break;
           pageToken = res.nextPageToken;
         }
-        process.stdout.write(`\rtopics searched: ${curriculum.topics.indexOf(topic) + 1}/${curriculum.topics.length} · candidates ${found.size} · units ${spent}   `);
+        process.stdout.write(`\rtopics searched: ${toSearch.indexOf(topic) + 1}/${toSearch.length} · candidates ${found.size} · units ${spent}   `);
       }
       console.log();
 
       // 2. Broad course queries (reviews, FRQs).
-      for (const [courseId, queries] of Object.entries(COURSE_BROAD_QUERIES).filter(([id]) => !onlyCourses || onlyCourses.includes(id))) {
+      for (const [courseId, queries] of Object.entries(COURSE_BROAD_QUERIES).filter(([id]) => !missingOnly && (!onlyCourses || onlyCourses.includes(id)))) {
         for (const q of queries) {
           const res = await yt<{ items: SearchItem[] }>("search", {
             part: "snippet", type: "video", q, maxResults: 50, relevanceLanguage: "en", safeSearch: "strict",
@@ -242,7 +252,7 @@ async function main() {
       for (const c of res.items) channelInfo.set(c.id, c);
     }
 
-    if (!refreshOnly && !onlyCourses) {
+    if (!refreshOnly && !onlyCourses && !missingOnly) {
       const crawled: string[] = [];
       for (const ch of topChannels) {
         const info = channelInfo.get(ch.id);
