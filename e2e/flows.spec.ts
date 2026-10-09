@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import { PAID_PLANS } from "../src/lib/billing/plans";
 
 /** Simulates pressing ⌘V on the page with this text on the clipboard. */
 async function pasteInto(page: Page, text: string) {
@@ -231,6 +232,7 @@ test("courses page lists every AP course, grouped and searchable", async ({ page
 });
 
 test("pricing shows the three offers and a test-mode Sprint purchase unlocks the Sprint", async ({ page }) => {
+  test.skip(!PAID_PLANS, "paid plans are switched off; e2e/free.spec.ts covers the free site");
   await page.goto("/pricing");
   await expect(page.getByRole("heading", { name: "Understand what you're studying tonight." })).toBeVisible();
   await expect(page.getByText("$4.99").first()).toBeAttached();
@@ -254,6 +256,7 @@ test("pricing shows the three offers and a test-mode Sprint purchase unlocks the
 });
 
 test("a new account starts free; starting the trial unlocks a learning plan that follows class topics", async ({ page }) => {
+  test.skip(!PAID_PLANS, "paid plans are switched off; e2e/free.spec.ts covers the free site");
   await signUpAndOnboard(page);
   await page.goto("/plan");
   await expect(page.getByRole("heading", { name: "Unlock your learning plan with Merit Plus." })).toBeVisible();
@@ -275,12 +278,14 @@ test("a new account starts free; starting the trial unlocks a learning plan that
 });
 
 test("without Plus, the learning plan is locked", async ({ page }) => {
+  test.skip(!PAID_PLANS, "paid plans are switched off; e2e/free.spec.ts covers the free site");
   await page.goto("/plan");
   await expect(page.getByRole("heading", { name: "Unlock your learning plan with Merit Plus." })).toBeVisible();
   await expect(page.locator('main a[href^="/go/"]')).toHaveCount(0);
 });
 
 test("signed-out visitors see a sample week on My schedule, then the offer", async ({ page }) => {
+  test.skip(!PAID_PLANS, "paid plans are switched off; e2e/free.spec.ts covers the free site");
   await page.goto("/schedule");
   await expect(page.getByText("Sample week")).toBeVisible();
   await expect(page.getByText(/Calendar sync comes with Merit Plus or Exam Sprint/)).toBeVisible();
@@ -505,7 +510,7 @@ test("signup skips calendar setup; the sync popup appears 5 minutes later, can b
   await expect(popup).toHaveCount(0);
   await page.clock.fastForward("05:05");
   await expect(popup).toBeVisible();
-  await expect(popup.getByText(/Included with Merit Plus or Exam Sprint/)).toBeVisible();
+  await expect(popup.getByText(PAID_PLANS ? /Included with Merit Plus or Exam Sprint/ : /Free with your account/)).toBeVisible();
   // The X appears only after 5 seconds; until then Escape and clicking outside don't close it.
   await expect(popup.getByRole("button", { name: "Close" })).toHaveCount(0);
   await expect(popup.getByRole("timer")).toBeVisible();

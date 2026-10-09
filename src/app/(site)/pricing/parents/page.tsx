@@ -3,15 +3,18 @@ import { WorldBand } from "@/components/learn-band";
 import type { Metadata } from "next";
 import { Field, inputClass } from "@/components/form";
 import { IconTile, LinkButton, Notice, buttonClass } from "@/components/ui";
-import { PLUS, SPRINT, usd } from "@/lib/billing/plans";
+import { PAID_PLANS, PLUS, SPRINT, usd } from "@/lib/billing/plans";
 import { isStripeEnabled, paymentsPaused } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "For parents",
-  description: "Pay for Merit Plus or an Exam Sprint for your student. It unlocks when they sign in.",
+  description: PAID_PLANS
+    ? "Pay for Merit Plus or an Exam Sprint for your student. It unlocks when they sign in."
+    : "Everything on Merit is free for your student: lessons, a learning plan, calendar sync, and Exam Sprint. Find a tutor when they want a person.",
 };
 
 export default async function ParentsPage({ searchParams }: PageProps<"/pricing/parents">) {
+  if (!PAID_PLANS) return <FreeParents />;
   const sp = await searchParams;
   const done = sp.checkout === "success";
   const error = sp.checkout === "invalid" ? "Please fill in every field with a valid email." : sp.checkout === "same" ? "Use your student's own email, not yours." : sp.checkout === "error" ? "Checkout couldn't start. Please try again." : null;
@@ -152,6 +155,53 @@ export default async function ParentsPage({ searchParams }: PageProps<"/pricing/
         </div>
       </div>
     </div>
+    </>
+  );
+}
+
+/** For parents while paid plans are switched off: nothing to buy; tutors are the only paid option. */
+function FreeParents() {
+  const items = [
+    { Icon: CalendarCheck, tone: undefined, title: "A learning plan for their classes", body: "The best videos for what they're covering in class, with every quiz and test on their calendar lined up ahead of time, and progress across all their courses." },
+    { Icon: Target, tone: "sprint" as const, title: SPRINT.name, body: "For any class test, AP exam, or the SAT: a diagnostic, a day-by-day plan to test day, unlimited practice with explanations, and a readiness dashboard." },
+    { Icon: CircleCheck, tone: undefined, title: "Every course and lesson", body: "High school classes, every AP course, and the SAT, with the best lessons for every topic and an AI study partner." },
+  ];
+  return (
+    <>
+      <WorldBand
+        tone="practice"
+        size="lg"
+        kicker="For parents and guardians"
+        title="Everything on Merit is free for your student."
+        lede="No subscription, no trial, no card. They just sign up with their own email."
+      />
+      <div className="mx-auto w-full max-w-4xl px-4 pb-24 pt-10 sm:px-6 lg:px-8">
+        <div className="space-y-3">
+          {items.map(({ Icon, tone, title, body }) => (
+            <article key={title} className="flex gap-4 rounded-2xl bg-surface p-5 ring-2 ring-line">
+              <IconTile tone={tone}>
+                <Icon className="size-5" />
+              </IconTile>
+              <div className="min-w-0">
+                <p className="flex flex-wrap items-baseline justify-between gap-x-3 font-semibold text-ink">
+                  {title}
+                  <span className="tabular text-[14px] font-semibold text-positive">Free</span>
+                </p>
+                <p className="mt-1 text-[14px] leading-relaxed text-muted">{body}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <LinkButton href="/signup?as=student" size="lg">
+            Have them sign up
+          </LinkButton>
+          <LinkButton href="/tutors" variant="outline" size="lg">
+            Find a tutor
+          </LinkButton>
+        </div>
+        <p className="mt-4 text-[14px] text-muted">Tutors are the only paid option on Merit. Each tutor sets their own rate, shown before you book.</p>
+      </div>
     </>
   );
 }

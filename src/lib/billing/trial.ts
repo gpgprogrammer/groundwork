@@ -1,3 +1,4 @@
+import { PAID_PLANS } from "@/lib/billing/plans";
 import type { Billing, PlusAccess, Profile } from "@/lib/types";
 
 /** Who has Merit Plus right now: pure rules, shared by the server and tests. */
@@ -16,7 +17,14 @@ export function trialEndsAt(profile: Pick<Profile, "createdAt">, billing: Pick<B
   return null;
 }
 
+/** Who has Plus right now. While paid plans are off, every signed-in student does. */
 export function plusAccess(profile: Profile | null, billing: Billing | null, now = Date.now()): PlusAccess {
+  if (profile && !PAID_PLANS) return { kind: "included" };
+  return paidPlusAccess(profile, billing, now);
+}
+
+/** The paid-plan rules (subscriptions and trials), used whenever paid plans are on. */
+export function paidPlusAccess(profile: Profile | null, billing: Billing | null, now = Date.now()): PlusAccess {
   if (!profile) return { kind: "anonymous" };
   const p = billing?.plus;
   const periodOk = p?.currentPeriodEnd ? new Date(p.currentPeriodEnd).getTime() > now : true;
@@ -30,4 +38,4 @@ export function plusAccess(profile: Profile | null, billing: Billing | null, now
   return { kind: "expired" };
 }
 
-export const hasPlus = (a: PlusAccess) => a.kind === "trial" || a.kind === "active";
+export const hasPlus = (a: PlusAccess) => a.kind === "trial" || a.kind === "active" || a.kind === "included";

@@ -34,6 +34,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { signOut } from "@/app/actions/auth";
 import type { Suggestion } from "@/app/api/search/route";
+import { PAID_PLANS } from "@/lib/billing/plans";
 import { CourseIcon } from "../course-icon";
 import { QuickAsk } from "../ask/quick-ask";
 import { Logo } from "../logo";
@@ -45,7 +46,7 @@ export type ShellData = {
   isTutor: boolean;
   isEducator: boolean;
   isAdmin: boolean;
-  plus: "anonymous" | "free" | "trial" | "active" | "expired";
+  plus: "anonymous" | "free" | "trial" | "active" | "expired" | "included";
   hasSchedule: boolean;
   isTeacher: boolean;
   courses: { slug: string; title: string; hue: number }[];
@@ -627,7 +628,7 @@ function ExploreGroup({ data, pathname }: { data: ShellData; pathname: string })
           <NavRow key={c.id} href={`/channel/${c.id}`} icon={<ChannelAvatar title={c.title} src={c.thumbnail} size={20} />} label={c.title} pathname={pathname} />
         ))}
         <NavRow href="/studio" icon={<NotebookPen className="size-[18px]" />} label="For teachers" pathname={pathname} />
-        <NavRow href="/pricing" icon={<CreditCard className="size-[18px]" />} label="Pricing" pathname={pathname} />
+        {PAID_PLANS ? <NavRow href="/pricing" icon={<CreditCard className="size-[18px]" />} label="Pricing" pathname={pathname} /> : null}
         <NavRow href="/how-ranking-works" icon={<Sigma className="size-[18px]" />} label="How ranking works" pathname={pathname} />
         <NavRow href="/about" icon={<Info className="size-[18px]" />} label="About Merit" pathname={pathname} />
       </div>
@@ -651,9 +652,11 @@ function SidebarPromo({ plus }: { plus: ShellData["plus"] }) {
         <Link href={plus === "anonymous" ? "/signup?next=/plan" : plus === "free" ? "/plan" : "/pricing"} className="block rounded-2xl bg-accent-soft p-4 text-[13px] leading-snug text-ink-2 transition-transform duration-200 active:scale-[0.98]">
           <span className="block text-[14px] font-semibold text-ink">Lessons for what you&apos;re learning in class.</span>
           <span className="mt-0.5 block">
-            {plus === "expired"
-              ? "Get your learning plan and class-based suggestions back with Plus."
-              : "Merit Plus suggests videos for what you're learning in class. Try it free for 14 days."}
+            {!PAID_PLANS
+              ? "Create a free account and Merit suggests videos for what you're learning in class."
+              : plus === "expired"
+                ? "Get your learning plan and class-based suggestions back with Plus."
+                : "Merit Plus suggests videos for what you're learning in class. Try it free for 14 days."}
           </span>
         </Link>
       ) : null}
@@ -753,7 +756,7 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
     { title: "Learn", links: [["/courses", "Courses"], ["/lessons", "Lessons"], ["/shorts", "Quick lessons"], ["/videos", "Merit Tutors' Videos"], ["/ask", "Merit AI"]] },
     { title: "Study", links: [["/sprint", "Exam Sprint"], ["/master", "Quick session"], ["/plan", "Learning plan"], ["/schedule", "My schedule"], ["/progress", "Progress"]] },
     { title: "Tutoring", links: [["/tutors", "Find a tutor"], ["/tutors/join", "Become a tutor"], ["/tutors/partners", "Partner with Merit"], ["/studio", "For teachers"]] },
-    { title: "Merit", links: [["/about", "About"], ["/pricing", "Pricing"], ["/pricing/parents", "For parents"], ["/how-ranking-works", "How ranking works"], ["/privacy", "Privacy"], ["/terms", "Terms"]] },
+    { title: "Merit", links: [["/about", "About"], ...(PAID_PLANS ? [["/pricing", "Pricing"] as [string, string]] : []), ["/pricing/parents", "For parents"], ["/how-ranking-works", "How ranking works"], ["/privacy", "Privacy"], ["/terms", "Terms"]] },
   ];
   return (
     <footer className="mt-16 border-t-2 border-line bg-surface" data-noprint>

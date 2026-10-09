@@ -251,7 +251,9 @@ export type PlusAccess =
   | { kind: "free" }
   | { kind: "trial"; daysLeft: number; endsAt: string }
   | { kind: "active"; renewsAt: string | null; cancelAtPeriodEnd: boolean; interval: "month" | "year" | null }
-  | { kind: "expired" };
+  | { kind: "expired" }
+  /** Plus and Sprint are free for everyone right now (paid plans are switched off). */
+  | { kind: "included" };
 
 /** Bought by a parent (or anyone) for a student, claimed when that student signs in. */
 export type Gift = {

@@ -3,6 +3,8 @@ import { visibleEvents } from "@/lib/schedule-model";
 import type { IndexedCatalog } from "@/lib/catalog";
 import { daysUntil, examDateFor } from "@/lib/exams";
 import type { Viewer } from "@/lib/viewer";
+import { hasPlus } from "@/lib/billing/trial";
+import { PAID_PLANS } from "@/lib/billing/plans";
 import { greetingName } from "@/lib/names";
 
 /** Where the student is on the site, so "explain this" means the right thing. */
@@ -39,7 +41,7 @@ export function studentContext(catalog: IndexedCatalog, viewer: Viewer | null) {
   if (tests.length) lines.push(`Upcoming tests on their calendar: ${tests.map((e) => `${e.title} on ${e.start.slice(0, 10)}`).join("; ")}.`);
   const mastered = Object.keys(viewer.state.mastered).length;
   if (mastered) lines.push(`They've marked ${mastered} topics as understood.`);
-  lines.push(`Merit Plus: ${viewer.plus.kind === "trial" || viewer.plus.kind === "active" ? "yes" : "no"}.`);
+  if (PAID_PLANS) lines.push(`Merit Plus: ${hasPlus(viewer.plus) ? "yes" : "no"}.`);
   return lines.join(" ");
 }
 
@@ -51,7 +53,7 @@ How to help:
 - Check understanding. When it fits, end with one quick question, or offer a short quiz using the quiz tool.
 - For "find me a video/lesson" or when a video would help, call findLessons. The UI shows the lessons as cards, so don't repeat their titles as a list; say in a sentence why the first one is a good pick.
 - Use topicInfo to ground explanations in the curriculum and link the topic page. Use courseOutline for "what's on the exam" questions.
-- For "what should I study", call learningPlan. If it's unavailable, answer from what you know and mention the learning plan (Merit Plus) in one short line.
+- For "what should I study", call learningPlan. If it's unavailable, answer from what you know and mention the learning plan${PAID_PLANS ? " (Merit Plus)" : " (free with an account)"} in one short line.
 - For tutoring questions, call findTutors and point to the Tutors page.
 - Math: write expressions in plain text or simple Unicode (x², √, ∫, π, ≤). Don't use LaTeX delimiters.
 - Links: use Merit paths returned by tools, as markdown links like [Chain Rule](/courses/ap-calculus-bc/chain-rule). Never invent URLs.

@@ -7,7 +7,7 @@ import { Faq } from "@/components/marketing";
 import { ReadinessBars, Ring } from "@/components/sprint/readiness";
 import { SprintStartForm } from "@/components/sprint/start-form";
 import { cn, panel } from "@/components/ui";
-import { SPRINT, usd } from "@/lib/billing/plans";
+import { PAID_PLANS, SPRINT, sprintFeatures, usd } from "@/lib/billing/plans";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { examDateFor } from "@/lib/exams";
@@ -18,7 +18,7 @@ import { upcomingTests } from "@/lib/schedule-model";
 
 export const metadata: Metadata = {
   title: "Exam Sprint",
-  description: `A day-by-day plan to your AP or SAT exam, unlimited exam-style practice, and a live readiness score. Free diagnostic, then ${usd(SPRINT.price)} once.`,
+  description: `A day-by-day plan to your AP or SAT exam, unlimited exam-style practice, and a live readiness score. ${PAID_PLANS ? `Free diagnostic, then ${usd(SPRINT.price)} once.` : "Free."}`,
 };
 
 const ICONS = [Gift, ClipboardCheck, CalendarPlus, CalendarRange, Zap, GaugeIcon, RefreshCw, NotebookText, PenLine, BookOpenCheck];
@@ -75,7 +75,15 @@ export default async function SprintHome({ searchParams }: PageProps<"/sprint">)
               ))}
             </ol>
             <p className="mt-6 font-brand text-[15px] font-extrabold">
-              7 days free, then {usd(SPRINT.price)} once for every class, forever <span className="font-semibold text-white/75">· not a subscription</span>
+              {PAID_PLANS ? (
+                <>
+                  7 days free, then {usd(SPRINT.price)} once for every class, forever <span className="font-semibold text-white/75">· not a subscription</span>
+                </>
+              ) : (
+                <>
+                  Free for every class and every test <span className="font-semibold text-white/75">· no card, no trial</span>
+                </>
+              )}
             </p>
           </div>
           <div id="start" className="rise scroll-mt-[calc(var(--nav-h)+16px)] rounded-3xl bg-surface p-6 text-ink shadow-[0_6px_0_0_var(--sprint-press)] sm:p-7" style={{ ["--i" as string]: 1 }}>
@@ -204,7 +212,7 @@ export default async function SprintHome({ searchParams }: PageProps<"/sprint">)
         <section className="mt-16">
           <h2 className="headline text-[32px] text-ink sm:text-[40px]">Everything in a Sprint</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {SPRINT.features.map((f, i) => {
+            {sprintFeatures().map((f, i) => {
               const Icon = ICONS[i % ICONS.length];
               const t = TILE[i % TILE.length];
               return (
@@ -224,17 +232,19 @@ export default async function SprintHome({ searchParams }: PageProps<"/sprint">)
           <div className="relative mt-4 flex flex-col gap-6 overflow-hidden rounded-3xl bg-surface p-7 ring-4 ring-sprint sm:flex-row sm:items-center sm:justify-between sm:p-9">
             <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full border-[40px] border-sprint/10" />
             <div className="relative">
-              <p className="tabular display text-[64px] text-sprint-ink sm:text-[80px]">{usd(SPRINT.price)}</p>
-              <p className="mt-1 font-brand text-[17px] font-extrabold text-ink">Once. Every class, every test, forever.</p>
-              <p className="mt-1 max-w-lg text-[14.5px] text-muted">Includes calendar sync. Less than a single hour of tutoring.</p>
+              <p className="tabular display text-[64px] text-sprint-ink sm:text-[80px]">{PAID_PLANS ? usd(SPRINT.price) : "Free"}</p>
+              <p className="mt-1 font-brand text-[17px] font-extrabold text-ink">{PAID_PLANS ? "Once. Every class, every test, forever." : "Every class, every test. Nothing to pay."}</p>
+              <p className="mt-1 max-w-lg text-[14.5px] text-muted">{PAID_PLANS ? "Includes calendar sync. Less than a single hour of tutoring." : "Includes calendar sync."}</p>
             </div>
             <div className="relative flex shrink-0 flex-col gap-2 sm:items-end">
               <a href="#start" className="press font-brand inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-sprint px-6 text-[16px] font-extrabold text-white [--ledge:var(--sprint-press)] hover:brightness-110">
-                Try it free for 7 days <ArrowRight className="size-4" />
+                {PAID_PLANS ? "Try it free for 7 days" : "Start my Sprint"} <ArrowRight className="size-4" />
               </a>
-              <Link href="/pricing/parents" className="px-1 text-center font-brand text-[14px] font-extrabold text-sprint-ink hover:underline">
-                A parent can pay for it →
-              </Link>
+              {PAID_PLANS ? (
+                <Link href="/pricing/parents" className="px-1 text-center font-brand text-[14px] font-extrabold text-sprint-ink hover:underline">
+                  A parent can pay for it →
+                </Link>
+              ) : null}
             </div>
           </div>
         </section>
@@ -243,7 +253,9 @@ export default async function SprintHome({ searchParams }: PageProps<"/sprint">)
           <h2 className="headline mb-4 text-[28px] text-ink">Questions</h2>
           <Faq
             items={[
-              ["What do I get for free?", "The full diagnostic, your readiness by unit, an estimated score, and a preview of your first days. You only pay to unlock the full plan, unlimited practice, checkpoints, cram sheets, and the free-response coach."],
+              PAID_PLANS
+                ? ["What do I get for free?", "The full diagnostic, your readiness by unit, an estimated score, and a preview of your first days. You only pay to unlock the full plan, unlimited practice, checkpoints, cram sheets, and the free-response coach."]
+                : ["What does it cost?", "Nothing. Every part of Exam Sprint is free: the diagnostic, the full day-by-day plan, unlimited practice, checkpoints, cram sheets, and the free-response coach."],
               ["How is the estimated score calculated?", "From your accuracy on exam-style questions in each unit, weighted by how much of the course each unit covers, with your own confidence as a starting point. It's a guide to where you stand, not a guarantee, and it gets sharper the more you practice."],
               ["What if my exam is less than 30 days away?", "The plan compresses to the days you have: the heaviest, weakest units first, then checkpoints and review."],
               ["Which exams are covered?", "Every AP exam and both SAT sections."],

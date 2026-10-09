@@ -9,6 +9,7 @@ import { search } from "@/lib/search";
 import { SERVICES, topCreators } from "@/lib/tutoring";
 import type { Topic } from "@/lib/types";
 import type { Viewer } from "@/lib/viewer";
+import { PAID_PLANS } from "@/lib/billing/plans";
 
 /** What a lesson looks like to the chat UI. */
 export type LessonCard = {
@@ -123,10 +124,10 @@ export function buildTools(catalog: IndexedCatalog, viewer: Viewer | null) {
     }),
 
     learningPlan: tool({
-      description: "The student's own learning plan (Merit Plus): the topics they're covering in class and on their calendar, with the best videos for each. Use when they ask what to study, what's next, or how to prepare for an upcoming test.",
+      description: "The student's own learning plan: the topics they're covering in class and on their calendar, with the best videos for each. Use when they ask what to study, what's next, or how to prepare for an upcoming test.",
       inputSchema: z.object({}),
       execute: async () => {
-        if (!viewer) return { available: false as const, reason: "Not signed in. Signing up is free, and Merit Plus (which includes the learning plan) has a free 14-day trial." };
+        if (!viewer) return { available: false as const, reason: PAID_PLANS ? "Not signed in. Signing up is free, and Merit Plus (which includes the learning plan) has a free 14-day trial." : "Not signed in. Signing up is free, and the learning plan comes with every account." };
         if (!hasPlus(viewer.plus)) return { available: false as const, reason: "The learning plan is part of Merit Plus, which they can try free for 14 days from the Plan tab." };
         return {
           available: true as const,

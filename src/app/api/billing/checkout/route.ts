@@ -1,7 +1,7 @@
 import { originOf } from "@/lib/origin";
 import { NextResponse, type NextRequest } from "next/server";
 import { grant } from "@/lib/billing/access";
-import { PRODUCTS, type Product } from "@/lib/billing/plans";
+import { PAID_PLANS, PRODUCTS, type Product } from "@/lib/billing/plans";
 import { createCheckoutUrl } from "@/lib/billing/stripe";
 import { isStripeEnabled, paymentsPaused } from "@/lib/env";
 import { getViewer } from "@/lib/viewer";
@@ -15,6 +15,8 @@ export async function POST(req: NextRequest) {
   const product = String(form.get("product") ?? "") as Product;
   const returnTo = safePath(form.get("returnTo"));
   if (!(product in PRODUCTS)) return NextResponse.redirect(`${origin}/pricing`, 303);
+  // Nothing is sold while paid plans are off (everyone already has every feature).
+  if (!PAID_PLANS) return NextResponse.redirect(`${origin}${returnTo}`, 303);
 
   const viewer = await getViewer();
   await trackServer("checkout", { u: viewer?.user.id ?? null, x: product });

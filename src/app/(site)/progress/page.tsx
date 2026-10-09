@@ -12,6 +12,7 @@ import { getDoneTasks } from "@/lib/plan-store";
 import { courseProgress, nextTopicInCourse } from "@/lib/recommend";
 import type { Sprint } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
+import { PAID_PLANS } from "@/lib/billing/plans";
 
 export const metadata: Metadata = { title: "Progress" };
 
@@ -45,7 +46,7 @@ export default async function ProgressPage() {
         <PlanHero
           kicker={
             <HeroPill>
-              <Lock className="size-3.5" /> Merit Plus
+              <Lock className="size-3.5" /> {PAID_PLANS ? "Merit Plus" : "Free with an account"}
             </HeroPill>
           }
         >

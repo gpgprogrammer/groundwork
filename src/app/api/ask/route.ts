@@ -6,6 +6,8 @@ import { aiAvailable, spendMessage } from "@/lib/ai/runtime";
 import { buildTools, lessonCard } from "@/lib/ai/tools";
 import { search } from "@/lib/search";
 import { getViewer } from "@/lib/viewer";
+import { PAID_PLANS } from "@/lib/billing/plans";
+import { hasPlus } from "@/lib/billing/trial";
 
 export const maxDuration = 60;
 
@@ -31,7 +33,7 @@ export async function POST(req: Request) {
   const remaining = await spendMessage(viewer, ip);
   if (remaining < 0) {
     return Response.json(
-      { error: viewer ? "You've reached today's AI limit. It resets tomorrow, or get more with Merit Plus." : "Sign up free to keep asking. It takes 20 seconds." },
+      { error: viewer ? PAID_PLANS && !hasPlus(viewer.plus) ? "You've reached today's AI limit. It resets tomorrow, or get more with Merit Plus." : "You've reached today's AI limit. It resets tomorrow." : "Sign up free to keep asking. It takes 20 seconds." },
       { status: 429 },
     );
   }

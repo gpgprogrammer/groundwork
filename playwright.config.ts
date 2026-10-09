@@ -1,12 +1,19 @@
 import { defineConfig } from "@playwright/test";
 
+const BASE_URL = process.env.BASE_URL ?? "http://127.0.0.1:3000";
+
 export default defineConfig({
   testDir: "./e2e",
   timeout: 60_000,
   fullyParallel: false,
   workers: 1,
   // Test browsers start with the first-visit welcome popup already dismissed (one test checks the popup itself).
-  use: { baseURL: process.env.BASE_URL ?? "http://127.0.0.1:3000", trace: "retain-on-failure", storageState: "e2e/storage.json" },
+  // The origin follows BASE_URL, so the popup stays dismissed against any local server.
+  use: {
+    baseURL: BASE_URL,
+    trace: "retain-on-failure",
+    storageState: { cookies: [], origins: [{ origin: new URL(BASE_URL).origin, localStorage: [{ name: "merit:welcome-dismissed", value: "9999999999999" }] }] },
+  },
   webServer: process.env.PW_USE_DEV
     ? {
         command: "npm run dev -- --port 3000",

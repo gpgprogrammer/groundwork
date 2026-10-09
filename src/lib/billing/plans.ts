@@ -1,5 +1,13 @@
 /** Prices and plan copy. Safe to import from client components. */
 
+/**
+ * Whether Merit Plus and Exam Sprint are sold. While this is false, every signed-in student gets
+ * every Plus and Sprint feature free, and nothing on the site asks them to pay: tutor booking fees
+ * are the only paid feature. All of the paid-plan code (trials, checkout, gifts, pricing) stays in
+ * place; set NEXT_PUBLIC_PAID_PLANS=on (or flip the default here) to bring it back.
+ */
+export const PAID_PLANS = process.env.NEXT_PUBLIC_PAID_PLANS === "on";
+
 export const PLUS = {
   name: "Merit Plus",
   monthly: 4.99,
@@ -31,6 +39,20 @@ export const SPRINT = {
     { title: "Calendar sync included", body: "Connect Blackbaud, Canvas, Schoology, Google, or any school calendar so every upcoming test gets a Sprint." },
   ],
 } as const;
+
+/** Exam Sprint's features as the site should describe them right now (no trial or price talk while it's free). */
+export const sprintFeatures = () =>
+  PAID_PLANS
+    ? SPRINT.features
+    : SPRINT.features
+        .filter((f) => f.title !== "7 days free")
+        .map((f) =>
+          f.title === "Free diagnostic"
+            ? { ...f, body: "A quick exam-style check across every unit shows where you stand on day one." }
+            : f.title === "Every test, not just May"
+              ? { ...f, body: "Start a Sprint for any quiz or test on your calendar, or the AP or SAT exam." }
+              : f,
+        );
 
 export const TUTOR_COMMISSION = 0.1;
 

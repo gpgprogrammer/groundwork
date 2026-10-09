@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { AUTO_TRIAL_CUTOFF, hasPlus, plusAccess } from "../src/lib/billing/trial";
+import { AUTO_TRIAL_CUTOFF, hasPlus, paidPlusAccess as plusAccess } from "../src/lib/billing/trial";
 import type { Billing, Profile } from "../src/lib/types";
 
 const DAY = 86400000;

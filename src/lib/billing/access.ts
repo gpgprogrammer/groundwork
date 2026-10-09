@@ -1,6 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { PLUS } from "@/lib/billing/plans";
+import { PAID_PLANS, PLUS } from "@/lib/billing/plans";
 import { getStore } from "@/lib/data/store";
 import type { Billing, Gift, PaymentSource, PlusAccess, Profile } from "@/lib/types";
 import { hasPlus, plusAccess } from "./trial";
@@ -40,7 +40,7 @@ export const SPRINT_TRIAL_DAYS = 7;
 export const sprintTrialActive = (b: Billing, now = Date.now()) => Boolean(b.sprintTrialEndsAt && new Date(b.sprintTrialEndsAt).getTime() > now);
 
 /** Exam Sprint features: bought once, or during the free week. */
-export const sprintAccess = (b: Billing) => b.sprintPass || sprintTrialActive(b);
+export const sprintAccess = (b: Billing) => !PAID_PLANS || b.sprintPass || sprintTrialActive(b);
 
 /** Calendar sync comes with Plus or with Exam Sprint (including its free week). */
 export const calendarAccess = (v: { plus: PlusAccess; billing: Billing }) => hasPlus(v.plus) || sprintAccess(v.billing);
@@ -89,6 +89,6 @@ export async function claimGifts(userId: string, email: string) {
 
 /** Whole days left in the free week of Exam Sprint, or null when it isn't running. */
 export function sprintTrialDaysLeft(b: Billing, now = Date.now()) {
-  if (b.sprintPass || !sprintTrialActive(b, now)) return null;
+  if (!PAID_PLANS || b.sprintPass || !sprintTrialActive(b, now)) return null;
   return Math.ceil((new Date(b.sprintTrialEndsAt!).getTime() - now) / 86400000);
 }

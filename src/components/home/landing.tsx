@@ -12,6 +12,7 @@ import { sampleState } from "@/lib/sample";
 import { readiness } from "@/lib/sprint";
 import { CATEGORIES } from "@/lib/types";
 import { CourseFinder } from "./course-finder";
+import { PAID_PLANS } from "@/lib/billing/plans";
 
 const EXAMPLE = { course: "ap-calculus-bc", topic: "chain-rule" };
 const QUIZ = { course: "ap-biology", topic: "cellular-respiration" };
@@ -197,7 +198,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
                 >
                   Connect my calendar <ArrowRight className="size-5" />
                 </FunnelLink>
-                <p className="max-w-xs text-[13px] leading-relaxed text-muted">Part of Merit Plus (try it free) or Exam Sprint.</p>
+                <p className="max-w-xs text-[13px] leading-relaxed text-muted">{PAID_PLANS ? "Part of Merit Plus (try it free) or Exam Sprint." : "Free with your account."}</p>
               </div>
             </div>
             {quizCourse && quizTopic && quizLessons.length ? (
@@ -417,7 +418,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
           {[
             { key: "student", Icon: GraduationCap, tint: "bg-accent-soft text-accent-ink", title: "Students", body: "The best lessons for every topic, tutors when you need one, Merit AI, and Exam Sprints before big tests.", cta: "Create a free account", href: "/signup?as=student" },
             { key: "teacher", Icon: Presentation, tint: "bg-[#f3edff] text-[#6d28d9] dark:bg-[#2a1f45] dark:text-[#c9b5ff]", title: "Teachers and tutors", body: "Publish your own videos and study guides, and get booked for tutoring by students on Merit.", cta: "Create a teacher account", href: "/signup?as=teacher" },
-            { key: "parent", Icon: HeartHandshake, tint: "bg-sprint-soft text-sprint-ink", title: "Parents", body: "Gift Merit Plus or an Exam Sprint, or find a tutor for any AP course or the SAT.", cta: "Options for parents", href: "/pricing/parents" },
+            { key: "parent", Icon: HeartHandshake, tint: "bg-sprint-soft text-sprint-ink", title: "Parents", body: PAID_PLANS ? "Gift Merit Plus or an Exam Sprint, or find a tutor for any AP course or the SAT." : "Everything on Merit is free for your student. When they want a person, find a tutor for any AP course or the SAT.", cta: "Options for parents", href: "/pricing/parents" },
           ].map((f) => (
             <div key={f.key} className="flex flex-col rounded-[28px] bg-surface p-6 ring-2 ring-line sm:p-7">
               <span className={`flex size-14 items-center justify-center rounded-2xl ${f.tint}`}>

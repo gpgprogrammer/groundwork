@@ -15,6 +15,7 @@ import { focusCourses } from "@/lib/focus";
 import { fromClasses, learningPlan, planVideoCount, type PlanGroup, type PlanSource } from "@/lib/learning-plan";
 import { sampleState } from "@/lib/sample";
 import { getViewer } from "@/lib/viewer";
+import { PAID_PLANS } from "@/lib/billing/plans";
 
 export const metadata: Metadata = { title: "Learning plan", description: "Videos picked for what you're learning in class: every quiz and test on your calendar, and the topics you're covering now." };
 
@@ -24,7 +25,7 @@ const SOURCE: Record<PlanSource, { label: string; cls: string }> = {
   next: { label: "Up next", cls: "bg-positive-soft text-positive" },
 };
 
-/** The learning plan: videos for what you're covering in class. Merit Plus. */
+/** The learning plan: videos for what you're covering in class. Merit Plus (free for everyone while paid plans are off). */
 export default async function PlanPage() {
   const [viewer, catalog] = await Promise.all([getViewer(), getCatalog()]);
 
@@ -35,7 +36,7 @@ export default async function PlanPage() {
         <PlanHero
           kicker={
             <HeroPill>
-              <Lock className="size-3.5" /> Merit Plus
+              <Lock className="size-3.5" /> {PAID_PLANS ? "Merit Plus" : "Free with an account"}
             </HeroPill>
           }
           aside={
@@ -70,7 +71,7 @@ export default async function PlanPage() {
           </p>
         </PlanHero>
         <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 lg:px-8">
-          <PlusLocked access={viewer?.plus ?? { kind: "anonymous" }} feature="Your learning plan" returnTo="/plan" title="Unlock your learning plan with Merit Plus." />
+          <PlusLocked access={viewer?.plus ?? { kind: "anonymous" }} feature="Your learning plan" returnTo="/plan" title={PAID_PLANS ? "Unlock your learning plan with Merit Plus." : "Sign up free to get your learning plan."} />
           {sample.length ? (
             <section className="mt-12" aria-label="Example learning plan">
               <div className="flex flex-wrap items-center gap-3">
@@ -99,7 +100,7 @@ export default async function PlanPage() {
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 font-brand text-[14px] font-extrabold text-bg shadow-lg">
-                    <Lock className="size-4" /> Unlock with Merit Plus
+                    <Lock className="size-4" /> {PAID_PLANS ? "Unlock with Merit Plus" : "Free with an account"}
                   </span>
                 </div>
               </div>

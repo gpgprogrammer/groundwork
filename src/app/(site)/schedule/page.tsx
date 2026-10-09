@@ -14,7 +14,7 @@ import { ago, cn } from "@/components/ui";
 import { BuyButton, TrialButton } from "@/components/upgrade";
 import { LessonMini } from "@/components/video-card";
 import { calendarAccess } from "@/lib/billing/access";
-import { PLUS, SPRINT, usd } from "@/lib/billing/plans";
+import { PAID_PLANS, PLUS, SPRINT, usd } from "@/lib/billing/plans";
 import { getCatalog, type IndexedCatalog } from "@/lib/catalog";
 import { focusCourses } from "@/lib/focus";
 import { futureEvents, whenLabel } from "@/lib/recommend";
@@ -365,7 +365,7 @@ function SchedulePreview({ catalog, viewer }: { catalog: IndexedCatalog; viewer:
       <PlanHero
         kicker={
           <HeroPill>
-            <Lock className="size-3.5" /> Plus or Exam Sprint
+            <Lock className="size-3.5" /> {PAID_PLANS ? "Plus or Exam Sprint" : "Free with an account"}
           </HeroPill>
         }
       >
@@ -379,9 +379,11 @@ function SchedulePreview({ catalog, viewer }: { catalog: IndexedCatalog; viewer:
           {!viewer || viewer.plus.kind === "free" ? (
             <>
               <TrialButton returnTo="/schedule" signedIn={Boolean(viewer)} label="Try it free and connect" tone="green" />
-              <a href="#unlock" className="px-2 font-brand text-[15px] font-extrabold text-white/85 hover:text-white">
-                All the ways to unlock it
-              </a>
+              {PAID_PLANS ? (
+                <a href="#unlock" className="px-2 font-brand text-[15px] font-extrabold text-white/85 hover:text-white">
+                  All the ways to unlock it
+                </a>
+              ) : null}
             </>
           ) : (
             <a href="#unlock" className="press flex h-12 items-center gap-2 rounded-2xl bg-white px-5 font-brand text-[15.5px] font-extrabold text-[#12722f] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95">
@@ -391,7 +393,7 @@ function SchedulePreview({ catalog, viewer }: { catalog: IndexedCatalog; viewer:
         </div>
         {!viewer || viewer.plus.kind === "free" ? (
           <p className="rise mt-3 text-[13.5px] text-white/85" style={{ ["--i" as string]: 4 }}>
-            Free for {PLUS.trialDays} days with Merit Plus. No card needed.
+            {PAID_PLANS ? `Free for ${PLUS.trialDays} days with Merit Plus. No card needed.` : "Free. No card, no trial."}
           </p>
         ) : null}
       </PlanHero>
@@ -406,6 +408,7 @@ function SchedulePreview({ catalog, viewer }: { catalog: IndexedCatalog; viewer:
           <Timeline days={byDay(events)} catalog={catalog} interactive={false} />
         </div>
 
+        {PAID_PLANS ? (
         <section id="unlock" className="mt-12 scroll-mt-[calc(var(--nav-h)+16px)]">
           <p className="flex items-center gap-2 font-brand text-[15px] font-extrabold text-ink">
             <Lock className="size-4 text-positive" /> Calendar sync comes with Merit Plus or Exam Sprint
@@ -456,6 +459,7 @@ function SchedulePreview({ catalog, viewer }: { catalog: IndexedCatalog; viewer:
             </div>
           </div>
         </section>
+        ) : null}
       </div>
     </div>
   );

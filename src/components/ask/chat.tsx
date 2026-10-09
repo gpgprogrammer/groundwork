@@ -6,6 +6,7 @@ import { ArrowUp, Sparkles, BookOpen, CalendarCheck, Check, ListTree, Loader2, R
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { LessonCard, QuizCard } from "@/lib/ai/tools";
+import { PAID_PLANS } from "@/lib/billing/plans";
 import { LogoMark } from "../logo";
 import { cn, formatViews } from "../ui";
 import { Markdown } from "./markdown";
@@ -96,7 +97,7 @@ export function Chat({ compact = false, suggestions, placeholder = "Ask anything
             {error ? (
               <div className="fade rounded-2xl bg-warn-soft px-4 py-3 text-sm text-ink" role="alert">
                 {errorText(error)}
-                {/limit|Sign up/.test(errorText(error)) ? (
+                {/Sign up/.test(errorText(error)) || (PAID_PLANS && /limit/.test(errorText(error))) ? (
                   <Link href={/Sign up/.test(errorText(error)) ? "/signup?next=/ask" : "/pricing"} className="ml-2 font-semibold text-accent-ink hover:underline">
                     {/Sign up/.test(errorText(error)) ? "Sign up free" : "See Plus"}
                   </Link>

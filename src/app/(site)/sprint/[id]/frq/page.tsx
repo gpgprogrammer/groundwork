@@ -7,7 +7,7 @@ import { CourseIcon } from "@/components/course-icon";
 import { FrqCoach } from "@/components/sprint/frq-coach";
 import { getCatalog } from "@/lib/catalog";
 import { readiness } from "@/lib/sprint";
-import { getSprint } from "@/lib/sprint-store";
+import { consumeCredit, getSprint } from "@/lib/sprint-store";
 import { requireViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Free-response coach" };
@@ -16,8 +16,9 @@ export const maxDuration = 60;
 export default async function FrqPage({ params, searchParams }: PageProps<"/sprint/[id]/frq">) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const viewer = await requireViewer(`/sprint/${id}/frq`);
-  const sprint = await getSprint(id);
-  if (!sprint || sprint.userId !== viewer.user.id) notFound();
+  const stored = await getSprint(id);
+  if (!stored || stored.userId !== viewer.user.id) notFound();
+  const sprint = await consumeCredit(stored);
   const catalog = await getCatalog();
   const course = catalog.course(sprint.courseId)!;
   const units = catalog.unitsForCourse(course.id).map((u) => ({ id: u.id, label: `Unit ${u.order}: ${u.title}` }));

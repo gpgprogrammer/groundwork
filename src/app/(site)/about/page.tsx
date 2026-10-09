@@ -6,6 +6,7 @@ import { LogoMark, Wordmark } from "@/components/logo";
 import { Faq } from "@/components/marketing";
 import { IconTile } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
+import { PAID_PLANS } from "@/lib/billing/plans";
 
 export const metadata: Metadata = {
   title: "About Merit",
@@ -90,7 +91,7 @@ export default async function AboutPage() {
               <CalendarCheck className="size-5" />
             </IconTile>
             <h2 className="headline mt-5 text-xl text-ink">A learning plan for your classes</h2>
-            <p className="mt-2 text-[14.5px] leading-relaxed text-muted">Merit Plus follows what you&apos;re covering in class and picks the best videos for it, with every quiz and test on your calendar lined up ahead of time.</p>
+            <p className="mt-2 text-[14.5px] leading-relaxed text-muted">{PAID_PLANS ? "Merit Plus follows" : "Your learning plan follows"} what you&apos;re covering in class and picks the best videos for it, with every quiz and test on your calendar lined up ahead of time.</p>
           </article>
 
           {/* Exam Sprints */}

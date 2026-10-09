@@ -8,17 +8,20 @@ import { BuyButton, PlusBadge, SprintBadge, TrialButton } from "@/components/upg
 import { cn } from "@/components/ui";
 import { WorldBand } from "@/components/learn-band";
 import { AI_LIMITS } from "@/lib/ai/limits";
-import { annualSavings, PLUS, SPRINT, usd } from "@/lib/billing/plans";
+import { annualSavings, PAID_PLANS, PLUS, SPRINT, sprintFeatures, usd } from "@/lib/billing/plans";
 import { isStripeEnabled, paymentsPaused } from "@/lib/env";
 import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: `Merit is free to learn. Try Plus free for ${PLUS.trialDays} days, then ${usd(PLUS.monthly)}/month. Exam Sprint is ${usd(SPRINT.price)} once.`,
+  description: PAID_PLANS
+    ? `Merit is free to learn. Try Plus free for ${PLUS.trialDays} days, then ${usd(PLUS.monthly)}/month. Exam Sprint is ${usd(SPRINT.price)} once.`
+    : "Everything on Merit is free: every course and lesson, Merit AI, the learning plan, calendar sync, and Exam Sprint. You only pay a tutor if you book one.",
 };
 
 export default async function PricingPage({ searchParams }: PageProps<"/pricing">) {
   const [viewer, sp] = await Promise.all([getViewer(), searchParams]);
+  if (!PAID_PLANS) return <FreePricing signedIn={Boolean(viewer)} />;
   const plus = viewer?.plus ?? { kind: "anonymous" as const };
   const trialEnds = plus.kind === "trial" ? new Date(plus.endsAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : null;
 
@@ -217,6 +220,81 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
         {paymentsPaused ? "Purchases open soon. Until then, you can try Merit Plus free for ${PLUS.trialDays} days and Exam Sprint free for 7 days." : "Payments are in test mode while Merit connects its payment processor. No card is charged."}
       </p>
     </div>
+    </>
+  );
+}
+
+/** Pricing while paid plans are switched off: everything is free; tutors are the only thing you pay for. */
+function FreePricing({ signedIn }: { signedIn: boolean }) {
+  const groups = [
+    {
+      Icon: GraduationCap,
+      tint: "text-accent-ink",
+      title: "Learn",
+      items: ["Every course, unit by unit", "The best lessons for every topic, ranked", "Lessons added by real teachers", "Mark topics understood and track progress"],
+    },
+    {
+      Icon: Sparkles,
+      tint: "text-accent-ink",
+      title: "Your learning plan",
+      items: [...PLUS.features.map((f) => f.title), `Merit AI study partner (${AI_LIMITS.plus} questions a day)`],
+    },
+    {
+      Icon: Target,
+      tint: "text-sprint",
+      title: SPRINT.name,
+      items: sprintFeatures().map((f) => f.title),
+    },
+  ];
+  return (
+    <>
+      <WorldBand
+        size="lg"
+        className="pb-24 text-center lg:pb-28 [&_h1]:mx-auto [&_p]:mx-auto"
+        kicker={<span className="mx-auto rounded-full bg-white/15 px-3.5 py-1.5 ring-1 ring-inset ring-white/25">Pricing</span>}
+        title="Everything on Merit is free."
+        lede="Every course and lesson, Merit AI, your learning plan, calendar sync, and Exam Sprint. No trial, no card, nothing to unlock."
+      />
+      <div className="mx-auto max-w-[1200px] px-4 pb-20 sm:px-6">
+        <div className="relative -mt-24 grid gap-5 lg:-mt-28 lg:grid-cols-3">
+          {groups.map(({ Icon, tint, title, items }) => (
+            <section key={title} className="flex flex-col rounded-[28px] bg-surface p-7 shadow-[0_6px_0_0_var(--line)] ring-2 ring-line">
+              <h2 className="flex items-center gap-2 font-brand text-[20px] font-black text-ink">
+                <Icon className={cn("size-5", tint)} /> {title}
+              </h2>
+              <p className="mt-4 font-brand text-5xl font-black tracking-tight text-ink">$0</p>
+              <ul className="mt-6 flex-1 space-y-3 text-[14.5px] text-ink-2">
+                {items.map((f) => (
+                  <li key={f} className="flex gap-2.5">
+                    <Check className="mt-0.5 size-4 shrink-0 text-positive" /> {f}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+        <div className="mt-8 flex justify-center">
+          <Link href={signedIn ? "/plan" : "/signup?as=student"} className="press font-brand inline-flex h-12 items-center gap-2 rounded-2xl bg-accent px-6 text-[16px] font-extrabold text-white [--ledge:var(--accent-press)] hover:brightness-110">
+            {signedIn ? "Open my learning plan" : "Create a free account"} <ArrowRight className="size-4" />
+          </Link>
+        </div>
+
+        <section className="relative mt-14 overflow-hidden rounded-[28px] bg-surface p-7 ring-2 ring-line sm:p-9">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="max-w-2xl">
+              <h2 className="flex items-center gap-2 font-brand text-[22px] font-black text-ink">
+                <HeartHandshake className="size-5 text-accent-ink" /> Want a person? Book a tutor.
+              </h2>
+              <p className="mt-2 text-[15px] leading-relaxed text-ink-2">
+                The only thing you ever pay for on Merit is a tutor you choose to book. Each tutor sets their own rate, and you see it before you book. Merit also lists great free teachers and tutoring services.
+              </p>
+            </div>
+            <Link href="/tutors" className="press font-brand inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-surface px-6 text-[15px] font-extrabold text-ink ring-2 ring-inset ring-line [--ledge:var(--line)] hover:bg-bg-subtle">
+              Find a tutor <ArrowRight className="size-4" />
+            </Link>
+          </div>
+        </section>
+      </div>
     </>
   );
 }

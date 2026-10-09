@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createGiftCheckoutUrl, recordGift } from "@/lib/billing/stripe";
 import { isStripeEnabled, paymentsPaused } from "@/lib/env";
+import { PAID_PLANS } from "@/lib/billing/plans";
 
 const schema = z.object({
   product: z.enum(["plus-year", "sprint"]),
@@ -13,6 +14,7 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
   const origin = originOf(req);
+  if (!PAID_PLANS) return NextResponse.redirect(`${origin}/pricing/parents`, 303);
   const parsed = schema.safeParse(Object.fromEntries(await req.formData()));
   if (!parsed.success) return NextResponse.redirect(`${origin}/pricing/parents?checkout=invalid`, 303);
   const g = parsed.data;

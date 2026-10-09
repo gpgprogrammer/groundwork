@@ -6,7 +6,7 @@ import { Markdown } from "@/components/ask/markdown";
 import { CourseIcon } from "@/components/course-icon";
 import { cramSheet } from "@/lib/ai/content";
 import { getCatalog } from "@/lib/catalog";
-import { getSprint } from "@/lib/sprint-store";
+import { consumeCredit, getSprint } from "@/lib/sprint-store";
 import { requireViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Cram sheet" };
@@ -16,8 +16,9 @@ export default async function CramPage({ params }: PageProps<"/sprint/[id]/cram/
   const { id, unit: rawUnit } = await params;
   const unitId = decodeURIComponent(rawUnit);
   const viewer = await requireViewer(`/sprint/${id}`);
-  const sprint = await getSprint(id);
-  if (!sprint || sprint.userId !== viewer.user.id) notFound();
+  const stored = await getSprint(id);
+  if (!stored || stored.userId !== viewer.user.id) notFound();
+  const sprint = await consumeCredit(stored);
   const catalog = await getCatalog();
   const unit = catalog.unit(unitId);
   if (!unit || unit.courseId !== sprint.courseId) notFound();

@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { dismissSchedulePromo } from "@/app/actions/prompts";
 import { buttonClass } from "./ui";
-import { PLUS } from "@/lib/billing/plans";
+import { PAID_PLANS, PLUS } from "@/lib/billing/plans";
 
 /** Seconds before the popup can be closed, so it gets read first. */
 const LOCK_SECONDS = 5;
@@ -116,6 +116,7 @@ export function SchedulePromo({ showAt, trialDaysLeft }: { showAt: string; trial
               </li>
             ))}
           </ul>
+          {PAID_PLANS ? (
           <p className="mt-5 rounded-2xl bg-bg-subtle px-4 py-3 text-[13.5px] leading-relaxed text-ink-2">
             Included with <span className="font-semibold text-ink">Merit Plus</span> or <span className="font-semibold text-ink">Exam Sprint</span>.{" "}
             {trialDaysLeft != null ? (
@@ -126,6 +127,9 @@ export function SchedulePromo({ showAt, trialDaysLeft }: { showAt: string; trial
               <>You can try Merit Plus free for {PLUS.trialDays} days, no card needed.</>
             )}
           </p>
+          ) : (
+            <p className="mt-5 rounded-2xl bg-bg-subtle px-4 py-3 text-[13.5px] leading-relaxed text-ink-2">Free with your account. It takes about a minute.</p>
+          )}
           <Link ref={cta} href="/schedule" onClick={dismiss} className={buttonClass("primary", "lg", "mt-5 w-full")}>
             Sync my schedule <ArrowRight className="size-4" />
           </Link>

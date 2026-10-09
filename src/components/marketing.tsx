@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { PLUS, SPRINT, usd } from "@/lib/billing/plans";
+import { PLUS, SPRINT, usd, PAID_PLANS } from "@/lib/billing/plans";
 import { cn } from "./ui";
 
 /*
@@ -61,7 +61,9 @@ const DEFAULT_FAQS: [string, string][] = [
   ],
   [
     "What's free and what's paid?",
-    `Courses, lessons, tutor search, and the AI study partner are free. Merit Plus (learning plan, calendar sync, progress) has a free ${PLUS.trialDays}-day trial, then ${usd(PLUS.monthly)}/month. An Exam Sprint is ${usd(SPRINT.price)} once.`,
+    PAID_PLANS
+      ? `Courses, lessons, tutor search, and the AI study partner are free. Merit Plus (learning plan, calendar sync, progress) has a free ${PLUS.trialDays}-day trial, then ${usd(PLUS.monthly)}/month. An Exam Sprint is ${usd(SPRINT.price)} once.`
+      : "Everything on Merit is free: courses, lessons, Merit AI, your learning plan, calendar sync, progress, and Exam Sprint. The only thing you pay for is a tutor, if you choose to book one.",
   ],
   ["Which courses are covered?", "Every AP course offered to high school students, from Calculus and Biology to Art History and Japanese, plus SAT Math and SAT Reading and Writing."],
 ];

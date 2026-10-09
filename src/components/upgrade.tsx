@@ -1,13 +1,14 @@
 import { ArrowRight, CalendarCheck, Check, Lock, Sparkles, Target, Timer } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { PLUS, SPRINT, usd, type Product } from "@/lib/billing/plans";
+import { PAID_PLANS, PLUS, SPRINT, usd, type Product } from "@/lib/billing/plans";
 import type { PlusAccess } from "@/lib/types";
 import { paymentsPaused } from "@/lib/env";
 import { startTrial } from "@/app/actions/billing";
 import { cn } from "./ui";
 
 export function PlusBadge({ className, onDark }: { className?: string; onDark?: boolean }) {
+  if (!PAID_PLANS) return null;
   return (
     <span className={cn("inline-flex h-7 items-center gap-1 rounded-full px-3 font-brand text-[12.5px] font-extrabold", onDark ? "bg-white/20 text-white" : "bg-accent text-white", className)}>
       <Sparkles className="size-3.5" /> Plus
@@ -16,6 +17,7 @@ export function PlusBadge({ className, onDark }: { className?: string; onDark?: 
 }
 
 export function SprintBadge({ className, onDark }: { className?: string; onDark?: boolean }) {
+  if (!PAID_PLANS) return null;
   return (
     <span className={cn("inline-flex h-7 items-center gap-1 rounded-full px-3 font-brand text-[12.5px] font-extrabold", onDark ? "bg-white/20 text-white" : "bg-sprint text-white", className)}>
       <Target className="size-3.5" /> Sprint
@@ -38,6 +40,8 @@ export function BuyButton({
   /** light: white on a dark tile. onBlue / onSprint: white with the world color's text, for solid colored tiles. */
   variant?: "primary" | "sprint" | "light" | "outline" | "glass" | "onBlue" | "onSprint";
 }) {
+  // Nothing is for sale while paid plans are off.
+  if (!PAID_PLANS) return null;
   if (paymentsPaused) {
     return (
       <span
@@ -98,6 +102,15 @@ export function TrialButton({
     className,
   );
   const text = label ?? `Start my ${PLUS.trialDays}-day free trial`;
+  if (!PAID_PLANS) {
+    // Everything is free: visitors just need an account, and signed-in students already have it all.
+    if (signedIn) return null;
+    return (
+      <Link href={`/signup?as=student&next=${encodeURIComponent(returnTo)}`} className={cls}>
+        Create a free account <ArrowRight className="size-4" />
+      </Link>
+    );
+  }
   if (!signedIn) {
     return (
       <Link href={`/signup?as=student&next=${encodeURIComponent(returnTo)}`} className={cls}>
@@ -117,7 +130,7 @@ export function TrialButton({
 
 /** Wraps a Plus feature: shows it when the student has Plus, an upgrade card otherwise. */
 export function PlusGate({ access, feature, returnTo, children }: { access: PlusAccess; feature: string; returnTo: string; children: ReactNode }) {
-  if (access.kind === "trial" || access.kind === "active") return <>{children}</>;
+  if (access.kind === "trial" || access.kind === "active" || access.kind === "included") return <>{children}</>;
   return <PlusLocked access={access} feature={feature} returnTo={returnTo} />;
 }
 
@@ -128,11 +141,11 @@ export function PlusLocked({ access, feature, returnTo, title = "Videos picked f
       <div aria-hidden className="pointer-events-none absolute -bottom-24 right-40 size-56 rounded-full border-[32px] border-white/[0.07]" />
       <div className="relative max-w-2xl">
         <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 font-brand text-[13px] font-extrabold">
-          <Lock className="size-3.5" /> {feature} is part of Merit Plus
+          <Lock className="size-3.5" /> {PAID_PLANS ? `${feature} is part of Merit Plus` : `${feature} comes with a free account`}
         </span>
         <h2 className="display mt-5 text-[34px] sm:text-[44px]">{title}</h2>
         <p className="mt-3 text-[16px] leading-relaxed text-white/90">
-          Plus follows what you&apos;re covering in school, from your class calendar or the topics you pick, and gives you a learning plan: the best videos for exactly those topics, plus every upcoming quiz and test lined up with its lessons, and progress you can see.
+          {PAID_PLANS ? "Plus" : "Merit"} follows what you&apos;re covering in school, from your class calendar or the topics you pick, and gives you a learning plan: the best videos for exactly those topics, plus every upcoming quiz and test lined up with its lessons, and progress you can see.
         </p>
         <ul className="mt-6 grid gap-2 text-[14.5px] sm:grid-cols-2">
           {PLUS.features.map((f) => (
@@ -145,7 +158,7 @@ export function PlusLocked({ access, feature, returnTo, title = "Videos picked f
           ))}
         </ul>
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          {access.kind === "anonymous" || access.kind === "free" ? (
+          {!PAID_PLANS || access.kind === "anonymous" || access.kind === "free" ? (
             <TrialButton returnTo={returnTo} signedIn={access.kind === "free"} />
           ) : (
             <>
@@ -157,11 +170,15 @@ export function PlusLocked({ access, feature, returnTo, title = "Videos picked f
               </BuyButton>
             </>
           )}
-          <Link href="/pricing" className="px-2 font-brand text-[14.5px] font-extrabold text-white/85 transition-colors hover:text-white">
-            Compare plans
-          </Link>
+          {PAID_PLANS ? (
+            <Link href="/pricing" className="px-2 font-brand text-[14.5px] font-extrabold text-white/85 transition-colors hover:text-white">
+              Compare plans
+            </Link>
+          ) : null}
         </div>
-        {access.kind === "anonymous" || access.kind === "free" ? (
+        {!PAID_PLANS ? (
+          <p className="mt-3 text-[13px] text-white/80">Free. No card, no trial, nothing to pay.</p>
+        ) : access.kind === "anonymous" || access.kind === "free" ? (
           <p className="mt-3 text-[13px] text-white/80">
             Free for {PLUS.trialDays} days, no card needed. Then {usd(PLUS.monthly)}/month if you want to keep it.
           </p>
@@ -189,7 +206,7 @@ export function SprintFeedCard({ courseTitle, courseId }: { courseTitle?: string
         <span className="mt-5 inline-flex h-11 items-center gap-2 rounded-2xl bg-white px-5 font-brand text-[15px] font-extrabold text-sprint-ink">
           Start an Exam Sprint <Timer className="size-4" />
         </span>
-        <p className="mt-2 text-[12.5px] text-white/75">{usd(SPRINT.price)} once, diagnostic free</p>
+        <p className="mt-2 text-[12.5px] text-white/75">{PAID_PLANS ? `${usd(SPRINT.price)} once, diagnostic free` : "Free"}</p>
       </div>
     </Link>
   );
@@ -200,15 +217,15 @@ export function PlusFeedCard() {
     <Link href="/plan" className="press group relative flex min-h-[320px] flex-col justify-between overflow-hidden rounded-3xl bg-accent p-6 text-white [--ledge:var(--accent-press)]">
       <div aria-hidden className="pointer-events-none absolute -right-14 -top-14 size-56 rounded-full border-[32px] border-white/10" />
       <span className="relative inline-flex w-fit items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 font-brand text-[12.5px] font-extrabold">
-        <Sparkles className="size-3.5" /> Merit Plus
+        <Sparkles className="size-3.5" /> {PAID_PLANS ? "Merit Plus" : "Learning plan"}
       </span>
       <div className="relative">
         <p className="display text-[30px] leading-[1.05]">Your learning plan.</p>
-        <p className="mt-2 text-[14px] text-white/85">Merit Plus suggests videos for what you&apos;re learning in class</p>
+        <p className="mt-2 text-[14px] text-white/85">{PAID_PLANS ? "Merit Plus suggests" : "Merit suggests"} videos for what you&apos;re learning in class</p>
         <span className="mt-5 inline-flex h-11 items-center gap-2 rounded-2xl bg-white px-5 font-brand text-[15px] font-extrabold text-accent-ink">
           See my plan <CalendarCheck className="size-4" />
         </span>
-        <p className="mt-2 text-[12.5px] text-white/75">Try it free for {PLUS.trialDays} days</p>
+        <p className="mt-2 text-[12.5px] text-white/75">{PAID_PLANS ? `Try it free for ${PLUS.trialDays} days` : "Free with your account"}</p>
       </div>
     </Link>
   );
