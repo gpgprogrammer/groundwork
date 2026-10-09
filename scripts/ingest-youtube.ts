@@ -60,6 +60,18 @@ const COST: Record<string, number> = { search: 100, videos: 1, channels: 1, play
 
 class QuotaError extends Error {}
 
+/** fetch, retried a few times on dropped connections (ECONNRESET, ETIMEDOUT) so one blip doesn't end a long run. */
+async function fetchWithRetry(url: string, tries = 4): Promise<Response> {
+  for (let i = 1; ; i++) {
+    try {
+      return await fetch(url);
+    } catch (err) {
+      if (i >= tries) throw err;
+      await new Promise((r) => setTimeout(r, 2000 * i));
+    }
+  }
+}
+
 async function yt<T>(endpoint: string, params: Record<string, string | number>, { cache = true } = {}): Promise<T> {
   const qs = new URLSearchParams({ ...Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)])) });
   const cacheKey = createHash("sha1").update(`${endpoint}?${qs}`).digest("hex");
@@ -69,7 +81,7 @@ async function yt<T>(endpoint: string, params: Record<string, string | number>, 
   const cost = COST[endpoint] ?? 1;
   if (spent + cost > BUDGET) throw new QuotaError(`Budget of ${BUDGET} units reached`);
   qs.set("key", KEY!);
-  const res = await fetch(`https://www.googleapis.com/youtube/v3/${endpoint}?${qs}`);
+  const res = await fetchWithRetry(`https://www.googleapis.com/youtube/v3/${endpoint}?${qs}`);
   spent += cost;
   if (!res.ok) {
     const body = await res.text();
