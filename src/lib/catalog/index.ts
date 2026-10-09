@@ -59,7 +59,10 @@ function group<T, K>(items: T[], key: (t: T) => K) {
 
 export function indexCatalog(lib: Library, stats: Record<string, SiteStats>): IndexedCatalog {
   const { courses, units, concepts, topics } = curriculum;
+  const live = new Set(courses.map((c) => c.id));
   const videos: RankedVideo[] = lib.videos
+    // Videos imported for high school classes that haven't launched yet stay out of the site.
+    .filter((v) => live.has(v.courseId))
     .map((v) => {
       const site = stats[v.id] ?? EMPTY_SITE_STATS;
       return { ...v, site, rank: rankVideo(v, site) };

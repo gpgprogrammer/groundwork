@@ -107,14 +107,28 @@ export const courseSpecs: (CourseSpec & { sameAsCourse?: string; ownTopics?: Set
   satMath, satRW,
 ];
 
-/** Flattens the authored course specs into courses, units, concepts, and topics. */
-export function buildCurriculum(): Curriculum {
+/**
+ * High school classes that are live on the site. A class launches once the video import has covered
+ * its topics; until then it exists only for the importer and local previews (MERIT_ALL_CLASSES=1).
+ * An honors class launches with its regular class.
+ */
+export const LAUNCHED_CLASSES = new Set<string>([]);
+
+const isLaunched = (spec: CourseSpec & { sameAsCourse?: string }) =>
+  spec.course.exam !== "Class" || LAUNCHED_CLASSES.has(spec.course.slug) || Boolean(spec.course.honorsOf && LAUNCHED_CLASSES.has(spec.course.honorsOf));
+
+/**
+ * Flattens the authored course specs into courses, units, concepts, and topics. Unlaunched high school
+ * classes are left out unless `allClasses` is set (or MERIT_ALL_CLASSES=1, for local previews).
+ */
+export function buildCurriculum({ allClasses = process.env.MERIT_ALL_CLASSES === "1" }: { allClasses?: boolean } = {}): Curriculum {
   const courses: Course[] = [];
   const units: Unit[] = [];
   const concepts: Concept[] = [];
   const topics: Topic[] = [];
 
   for (const spec of courseSpecs) {
+    if (!allClasses && !isLaunched(spec)) continue;
     const course: Course = { ...spec.course, id: spec.course.slug };
     courses.push(course);
     let topicOrder = 0;

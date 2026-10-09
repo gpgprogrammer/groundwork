@@ -152,7 +152,8 @@ const COURSE_BROAD_QUERIES: Record<string, string[]> = {
 
 // ── pipeline ──────────────────────────────────────────────────────────────────
 async function main() {
-  const curriculum = buildCurriculum();
+  // Every class, launched or not: the import fills in classes before they go live.
+  const curriculum = buildCurriculum({ allClasses: true });
   const matcher: TopicMatcher = { courses: curriculum.courses, topics: curriculum.topics };
   const existing: { videos: YtVideo[]; channels: Channel[] } = existsSync(OUT)
     ? JSON.parse(readFileSync(OUT, "utf8"))

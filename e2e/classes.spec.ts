@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { buildCurriculum } from "../src/lib/catalog/build";
+import { buildCurriculum, LAUNCHED_CLASSES } from "../src/lib/catalog/build";
 import { examDateFor } from "../src/lib/exams";
 import { paceFraction } from "../src/lib/pace";
 
-const cur = buildCurriculum();
+const cur = buildCurriculum({ allClasses: true });
 const topicsOf = (id: string) => cur.topics.filter((t) => t.courseId === id);
 
 test.describe("high school classes", () => {
@@ -37,7 +37,15 @@ test.describe("high school classes", () => {
     expect(paceFraction(Date.parse("2027-05-25T12:00:00"), "Class")).toBe(1);
   });
 
+  test("only launched classes are on the site", () => {
+    const live = buildCurriculum({ allClasses: false });
+    for (const c of live.courses.filter((x) => x.exam === "Class")) expect(LAUNCHED_CLASSES.has(c.honorsOf ?? c.id), c.id).toBe(true);
+    expect(live.courses.filter((x) => x.exam !== "Class").length).toBe(cur.courses.filter((x) => x.exam !== "Class").length);
+  });
+
   test("class pages show the grade level and a class-test Sprint", async ({ page }) => {
+    // Needs a preview server with every class (MERIT_ALL_CLASSES=1) or with Geometry launched.
+    test.skip(process.env.MERIT_ALL_CLASSES !== "1" && !LAUNCHED_CLASSES.has("geometry"), "Geometry isn't launched");
     await page.goto("/courses/honors-geometry");
     await expect(page.getByRole("heading", { level: 1, name: "Honors Geometry" })).toBeVisible();
     await expect(page.getByText(/Grade 9 or 10/)).toBeVisible();

@@ -92,7 +92,8 @@ test.describe("topic matching", () => {
     expect(detectCourse(c, "Calc quiz Friday", ["ap-calculus-ab"])).toBe("ap-calculus-ab");
     expect(detectCourse(c, "Calc quiz Friday", ["ap-calculus-bc"])).toBe("ap-calculus-bc");
     expect(detectCourse(c, "APWH DBQ practice")).toBe("ap-world-history");
-    expect(detectCourse(c, "Chem lab report due")).toBe("ap-chemistry");
+    // "Chem" alone fits regular and AP Chemistry; the student's own courses decide.
+    expect(detectCourse(c, "Chem lab report due", ["ap-chemistry"])).toBe("ap-chemistry");
     expect(detectCourse(c, "APUSH period 3 test")).toBe("ap-us-history");
     expect(detectCourse(c, "AP Psych unit 2 quiz")).toBe("ap-psychology");
     expect(detectCourse(c, "Physics C E&M exam")).toBe("ap-physics-c-electricity-and-magnetism");
