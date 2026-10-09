@@ -46,7 +46,7 @@ const BUDGET = opt("budget", 9500);
 const PAGES_PER_TOPIC = opt("pages", 1);
 const CHANNELS_TO_CRAWL = opt("channels", 40);
 const UPLOADS_PER_CHANNEL = opt("uploads", 400);
-/** With --missing, how many topics to search per run, leaving quota for video and channel details. */
+/** With --missing, how many new (uncached) topic searches to run; cached searches are free and don't count. */
 const MAX_TOPICS = opt("max-topics", 85);
 
 const OUT = path.join(process.cwd(), "src", "data", "youtube.json");
@@ -179,8 +179,15 @@ async function main() {
   try {
     if (!refreshOnly) {
       // 1. Every topic: "<topic> <course>".
-      const toSearch = missingOnly ? missingTopics.slice(0, MAX_TOPICS) : curriculum.topics.filter((t) => !onlyCourses || onlyCourses.includes(t.courseId));
+      // With --missing, every missing topic is tried in order: searches already in the cache are free, so only
+      // fresh searches count toward --max-topics, and searching stops while there's still quota left to fetch
+      // details for every candidate (1 unit per 50 videos, plus their channels).
+      const toSearch = missingOnly ? missingTopics : curriculum.topics.filter((t) => !onlyCourses || onlyCourses.includes(t.courseId));
+      const detailReserve = () => Math.ceil((found.size / 50) * 1.3) + 50;
+      let fresh = 0;
       for (const topic of toSearch) {
+        if (missingOnly && (fresh >= MAX_TOPICS || spent + 100 + detailReserve() > BUDGET)) break;
+        const spentBefore = spent;
         let pageToken = "";
         for (let page = 0; page < PAGES_PER_TOPIC; page++) {
           const q = `${topic.title} ${COURSE_QUERY[topic.courseId] ?? curriculum.courses.find((c) => c.id === topic.courseId)!.query}`;
@@ -199,7 +206,8 @@ async function main() {
           if (!res.nextPageToken) break;
           pageToken = res.nextPageToken;
         }
-        process.stdout.write(`\rtopics searched: ${toSearch.indexOf(topic) + 1}/${toSearch.length} · candidates ${found.size} · units ${spent}   `);
+        if (spent > spentBefore) fresh++;
+        process.stdout.write(`\rtopics searched: ${toSearch.indexOf(topic) + 1}/${toSearch.length} (${fresh} new) · candidates ${found.size} · units ${spent}   `);
       }
       console.log();
 
