@@ -40,6 +40,19 @@ import { psych } from "./content/ced/ap-psychology";
 import { stats } from "./content/ced/ap-statistics";
 import { gov } from "./content/ced/ap-us-government";
 import { apush } from "./content/ced/ap-us-history";
+import { algebra1, honorsAlgebra1 } from "./content/hs/algebra-1";
+import { algebra2, honorsAlgebra2 } from "./content/hs/algebra-2";
+import { anatomyPhysiology } from "./content/hs/anatomy-physiology";
+import { biology as hsBiology, honorsBiology } from "./content/hs/biology";
+import { chemistry as hsChemistry, honorsChemistry } from "./content/hs/chemistry";
+import { earthScience } from "./content/hs/earth-science";
+import { environmentalScience } from "./content/hs/environmental-science";
+import { geometry, honorsGeometry } from "./content/hs/geometry";
+import { marineScience } from "./content/hs/marine-science";
+import { physicalScience } from "./content/hs/physical-science";
+import { honorsPhysics, physics } from "./content/hs/physics";
+import { honorsPrecalculus, precalculus } from "./content/hs/precalculus";
+import { statistics } from "./content/hs/statistics";
 import type { CourseSpec } from "./content/spec";
 
 /** Small, stable string hash (FNV-1a). */
@@ -71,10 +84,12 @@ const calcAB: CourseSpec & { sameAsCourse: string } = {
     .map((u) => ({ ...u, concepts: u.concepts.map((c) => ({ ...c, topics: c.topics.filter((t) => !BC_ONLY_TOPICS.has(t.slug)) })).filter((c) => c.topics.length) })),
 };
 
-export const courseSpecs: (CourseSpec & { sameAsCourse?: string })[] = [
-  // Math & Computer Science
+export const courseSpecs: (CourseSpec & { sameAsCourse?: string; ownTopics?: Set<string> })[] = [
+  // Math & Computer Science: high school classes in the order students take them, then AP
+  algebra1, honorsAlgebra1, geometry, honorsGeometry, algebra2, honorsAlgebra2, precalculus, honorsPrecalculus, statistics,
   calcAB, calcBC, precalc, stats, csa, csp,
-  // Sciences
+  // Sciences: high school classes, then AP
+  physicalScience, earthScience, hsBiology, honorsBiology, hsChemistry, honorsChemistry, physics, honorsPhysics, environmentalScience, anatomyPhysiology, marineScience,
   biology, chemistry, apes, physics1, physics2, physicsCMech, physicsCEM,
   // History & Social Sciences
   apush, worldHistory, euro, gov, compGov, humanGeo, macro, micro, psych, afam,
@@ -128,7 +143,8 @@ export function buildCurriculum(): Curriculum {
             keyPoints: t.points ? [...t.points] : [],
             aliases: t.aliases ?? [],
             order: ++topicOrder,
-            ...(spec.sameAsCourse ? { sameAs: `${spec.sameAsCourse}/${t.slug}` } : {}),
+            // Cross-listed courses (Calc AB, honors classes) share their twin's topics, except the ones they own.
+            ...(spec.sameAsCourse && !spec.ownTopics?.has(t.slug) ? { sameAs: `${spec.sameAsCourse}/${t.slug}` } : {}),
           });
         }
       });

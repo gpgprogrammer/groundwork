@@ -5,7 +5,7 @@ import { CourseIcon } from "@/components/course-icon";
 const VALUE = [
   { Icon: CalendarCheck, title: "A learning plan for your classes", body: "The best videos for what you're covering in class, and for every quiz and test on your calendar." },
   { Icon: Sparkles, title: "An AI study partner", body: "Explanations, practice questions, and the best lesson for any topic, any time." },
-  { Icon: Target, title: "Exam Sprints", body: "A day-by-day plan to AP and SAT exam day with a live readiness score." },
+  { Icon: Target, title: "Exam Sprints", body: "A day-by-day plan to test day, for class tests, AP exams, and the SAT, with a live readiness score." },
   { Icon: Users, title: "Real tutors when you want one", body: "Book top-rated tutors near you or online, right from Merit." },
 ];
 const ICONS = ["ap-calculus-bc", "ap-biology", "ap-us-history", "sat-math", "ap-chemistry", "ap-psychology"];

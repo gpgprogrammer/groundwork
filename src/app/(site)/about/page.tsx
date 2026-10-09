@@ -10,7 +10,7 @@ import { PAID_PLANS } from "@/lib/billing/plans";
 
 export const metadata: Metadata = {
   title: "About Merit",
-  description: "Merit Learning helps high school students master every AP course and the SAT: the best lessons, an AI study partner, a learning plan for your classes, exam sprints, and real tutors.",
+  description: "Merit Learning helps high school students master their classes, every AP course, and the SAT: the best lessons, an AI study partner, a learning plan for your classes, exam sprints, and real tutors.",
 };
 
 export default async function AboutPage() {
@@ -35,7 +35,7 @@ export default async function AboutPage() {
             Every student deserves a great teacher and a clear plan.
           </h1>
           <p className="rise mt-5 max-w-2xl text-[17px] leading-relaxed text-white/90 sm:text-[18px]" style={{ ["--i" as string]: 2 }}>
-            Merit brings together the best lessons for every AP and SAT topic, an AI study partner, and real tutors, then picks the right videos for what you&apos;re learning in class. Learning is free. Planning and exam prep tools are affordable. And when you want a person, the best tutors are a click away.
+            Merit brings together the best lessons for every topic in high school classes, AP courses, and the SAT, an AI study partner, and real tutors, then picks the right videos for what you&apos;re learning in class. Learning is free. Planning and exam prep tools are affordable. And when you want a person, the best tutors are a click away.
           </p>
           <div className="rise mt-8 flex flex-wrap items-center gap-3" style={{ ["--i" as string]: 3 }}>
             <Link href="/signup" className={bandCta}>
@@ -59,7 +59,7 @@ export default async function AboutPage() {
               </IconTile>
               <h2 className="headline mt-5 text-2xl text-ink">{catalog.courses.length} courses, every topic</h2>
               <p className="mt-2 max-w-md text-[15px] leading-relaxed text-muted">
-                Every AP course and the SAT, organized the way the exam is: {catalog.units.length} units and {catalog.topics.length} topics, each with the lessons that teach it best.
+                High school and honors classes, every AP course, and the SAT, organized the way they&apos;re taught: {catalog.units.length} units and {catalog.topics.length} topics, each with the lessons that teach it best.
               </p>
             </div>
             <dl className="grid grid-cols-3 divide-x divide-line rounded-2xl bg-bg-subtle py-4">

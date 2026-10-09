@@ -261,7 +261,7 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
               </span>
             </Link>
           ) : null}
-          <ExamCta daysLeft={examDate ? daysUntil(examDate) : null} courseId={course.id} courseTitle={course.shortTitle} />
+          <ExamCta isClass={course.exam === "Class"} daysLeft={examDate ? daysUntil(examDate) : null} courseId={course.id} courseTitle={course.shortTitle} />
           <TopicCreators catalog={catalog} topicId={topic.id} courseId={course.id} courseShort={course.shortTitle} />
           <Link href="/studio/video" className="block px-1 text-[13px] text-muted hover:text-ink">
             Teacher? <span className="font-bold text-accent-ink">Add a lesson or guide for this topic</span>

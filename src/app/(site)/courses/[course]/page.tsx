@@ -65,7 +65,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
             <div className="min-w-0">
               <h1 className="display text-[34px] sm:text-5xl lg:text-[56px]">{course.title}</h1>
               <p className="tabular mt-1 font-brand text-[14px] font-bold text-white/80">
-                {units.length} units · {topics.length} topics · {videoCount.toLocaleString()} videos · Exam: {course.examMonth}
+                {units.length} units · {topics.length} topics · {videoCount.toLocaleString()} videos · {course.exam === "Class" ? (course.grades ?? "High school") : `Exam: ${course.examMonth}`}
               </p>
             </div>
           </div>
@@ -174,7 +174,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
                 body={`Connect your class calendar and Merit lines up the right ${course.shortTitle} lessons for every quiz and test, days before it's due.`}
               />
             ) : null}
-            <ExamCta daysLeft={examDate ? daysUntil(examDate) : null} courseId={course.id} courseTitle={course.shortTitle} />
+            <ExamCta isClass={course.exam === "Class"} daysLeft={examDate ? daysUntil(examDate) : null} courseId={course.id} courseTitle={course.shortTitle} />
             <TopCreators course={course} catalog={catalog} />
           </aside>
         </div>

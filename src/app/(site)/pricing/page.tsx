@@ -80,7 +80,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
           <p className="mt-1 text-[13px] text-muted">Forever. No card.</p>
           <ul className="mt-6 flex-1 space-y-3 text-[14.5px] text-ink-2">
             {[
-              "Every AP course and the SAT, unit by unit",
+              "High school classes, every AP course, and the SAT, unit by unit",
               "The best lessons for every topic, ranked",
               `Merit AI study partner (${AI_LIMITS.free} questions a day)`,
               "Mark topics understood",

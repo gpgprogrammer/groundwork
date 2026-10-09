@@ -131,7 +131,7 @@ export function OnboardingFlow({ firstName, initial, courses, next }: Props) {
 
           {step === 1 ? (
             <>
-              <h1 className="display text-[34px] text-ink sm:text-[44px]">When is your exam?</h1>
+              <h1 className="display text-[34px] text-ink sm:text-[44px]">{hasAP || hasSAT ? "When is your exam?" : "When is your next big test?"}</h1>
               <p className="mt-2 text-[15px] text-muted">We&apos;ll prioritize what you need to cover before then.</p>
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
                 {hasAP ? <DateChoice active={examDate === dates.ap} onClick={() => setExamDate(dates.ap)} title="AP exams" note={`Week of ${pretty(dates.ap)}`} /> : null}

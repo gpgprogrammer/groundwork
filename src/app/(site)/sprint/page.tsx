@@ -42,7 +42,7 @@ export default async function SprintHome({ searchParams }: PageProps<"/sprint">)
   const sprints = viewer ? (await (await getStore()).listDocs<Sprint>("sprints", { owner: viewer.user.id })).sort((a, b) => b.createdAt.localeCompare(a.createdAt)) : [];
   const tests = viewer ? upcomingTests(viewer.state.schedule) : [];
   const initial = typeof sp.course === "string" && catalog.course(sp.course) ? sp.course : (viewer?.state.profile.courseIds[0] ?? null);
-  const options = catalog.courses.map((c) => ({ id: c.id, title: c.title, category: c.category, defaultDate: examDateFor(c, null) }));
+  const options = catalog.courses.map((c) => ({ id: c.id, title: c.title, category: c.category, defaultDate: examDateFor(c, null), isClass: c.exam === "Class" }));
   const example = catalog.course("ap-biology")
     ? readiness(catalog, { id: "x", userId: "x", courseId: "ap-biology", examDate: "2099-01-01", minutesPerDay: 45, createdAt: "", unlocked: true, answers: [], done: {}, frq: [], confidence: Object.fromEntries(catalog.unitsForCourse("ap-biology").map((u, i) => [u.id, [4, 3, 2, 4, 1, 3, 2, 5][i % 8]])) })
     : [];
@@ -258,7 +258,7 @@ export default async function SprintHome({ searchParams }: PageProps<"/sprint">)
                 : ["What does it cost?", "Nothing. Every part of Exam Sprint is free: the diagnostic, the full day-by-day plan, unlimited practice, checkpoints, cram sheets, and the free-response coach."],
               ["How is the estimated score calculated?", "From your accuracy on exam-style questions in each unit, weighted by how much of the course each unit covers, with your own confidence as a starting point. It's a guide to where you stand, not a guarantee, and it gets sharper the more you practice."],
               ["What if my exam is less than 30 days away?", "The plan compresses to the days you have: the heaviest, weakest units first, then checkpoints and review."],
-              ["Which exams are covered?", "Every AP exam and both SAT sections."],
+              ["Which exams are covered?", "Every AP exam, both SAT sections, and tests in every high school class on Merit, from Algebra 1 to Chemistry."],
               ["Where do the questions come from?", "Merit writes exam-style questions for every topic, each with an explanation for every answer choice, and pairs them with the best-ranked lessons in our library."],
             ]}
           />

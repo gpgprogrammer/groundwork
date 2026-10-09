@@ -12,7 +12,7 @@ import { canUploadVideos } from "@/lib/auth/permissions";
 import { contributionsBy, getEducator } from "@/lib/educators";
 import { getViewer } from "@/lib/viewer";
 
-export const metadata: Metadata = { title: "Teacher studio", description: "Teachers: add the lessons you trust and write study guides for every AP and SAT topic." };
+export const metadata: Metadata = { title: "Teacher studio", description: "Teachers: add the lessons you trust and write study guides for every topic on Merit." };
 
 export default async function StudioPage({ searchParams }: PageProps<"/studio">) {
   const [viewer, catalog, sp] = await Promise.all([getViewer(), getCatalog(), searchParams]);

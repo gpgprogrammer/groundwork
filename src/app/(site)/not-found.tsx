@@ -4,7 +4,7 @@ import { LogoMark } from "@/components/logo";
 import { Container, LinkButton } from "@/components/ui";
 
 const LINKS = [
-  { href: "/courses", Icon: BookOpen, title: "Courses", body: "Every AP course and the SAT" },
+  { href: "/courses", Icon: BookOpen, title: "Courses", body: "High school classes, AP, and the SAT" },
   { href: "/search", Icon: Search, title: "Search", body: "Find a topic or lesson" },
   { href: "/ask", Icon: Sparkles, title: "Merit AI", body: "Ask what you're looking for" },
 ];

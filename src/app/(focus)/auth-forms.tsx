@@ -17,7 +17,7 @@ const inputClass =
 
 /** What Merit actually does. Every line is a real feature. */
 const VALUE = [
-  { Icon: ListOrdered, title: "The best lessons, ranked", body: "Every AP course and the SAT, with lessons ranked by how well they teach." },
+  { Icon: ListOrdered, title: "The best lessons, ranked", body: "High school classes, every AP course, and the SAT, with lessons ranked by how well they teach." },
   { Icon: CalendarCheck, title: "A learning plan for your classes", body: "The best videos for what you're covering in class, and for every quiz and test on your calendar." },
   { Icon: Sparkles, title: "Merit AI", body: "Explanations, practice questions, and the right lesson for any topic." },
   { Icon: Target, title: "Exam Sprints", body: "A day-by-day plan to exam day, starting with a free diagnostic." },
@@ -65,7 +65,7 @@ const submitClass =
   "press flex h-[52px] w-full items-center justify-center rounded-2xl bg-accent font-brand text-[16.5px] font-extrabold text-white [--ledge:var(--accent-press)] hover:brightness-110 disabled:pointer-events-none disabled:opacity-50";
 
 const TYPES: { key: AccountType; title: string; note: string; Icon: typeof GraduationCap }[] = [
-  { key: "student", title: "I'm a student", note: "Study for AP and SAT exams", Icon: GraduationCap },
+  { key: "student", title: "I'm a student", note: "Study for my classes, AP, and the SAT", Icon: GraduationCap },
   { key: "teacher", title: "I'm a teacher or tutor", note: "Share lessons, videos, and tutoring", Icon: Presentation },
 ];
 

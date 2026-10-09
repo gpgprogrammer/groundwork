@@ -81,6 +81,11 @@ export function estimatedScore(course: Course, r: UnitReadiness[]) {
     const v = Math.round((200 + 600 * Math.min(1, Math.max(0, (x - 0.15) / 0.8))) / 10) * 10;
     return { label: `${v}`, scale: "out of 800", confidence: answered >= 30 ? "good" : answered >= 10 ? "rough" : "early" };
   }
+  if (course.exam === "Class") {
+    // Class tests are graded in percent; readiness maps onto a typical 50–100% range.
+    const pct = Math.round(50 + 50 * Math.min(1, Math.max(0, (x - 0.1) / 0.8)));
+    return { label: `${pct}%`, scale: "on a class test", confidence: answered >= 30 ? "good" : answered >= 10 ? "rough" : "early" };
+  }
   const ap = x < 0.3 ? 1 : x < 0.45 ? 2 : x < 0.6 ? 3 : x < 0.75 ? 4 : 5;
   return { label: `${ap}`, scale: "AP score", confidence: answered >= 30 ? "good" : answered >= 10 ? "rough" : "early" };
 }

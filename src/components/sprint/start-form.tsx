@@ -10,7 +10,7 @@ import { buttonClass } from "../ui";
 /** The shared field style, made chunkier for the Sprint start tile. */
 const chunky = (base: string) => base.replace("h-11", "h-12").replace("rounded-xl", "rounded-2xl").replace("ring-1 ring-inset", "ring-2 ring-inset").replace("text-[15px]", "text-[16px] font-semibold").replace("focus:ring-accent", "focus:ring-sprint");
 
-type Opt = { id: string; title: string; category: string; defaultDate: string | null };
+type Opt = { id: string; title: string; category: string; defaultDate: string | null; isClass?: boolean };
 
 export function SprintStartForm({ courses, initialCourse, signedIn }: { courses: Opt[]; initialCourse: string | null; signedIn: boolean }) {
   const [state, action, pending] = useActionState<CreateState, FormData>(createSprint, {});
@@ -21,9 +21,9 @@ export function SprintStartForm({ courses, initialCourse, signedIn }: { courses:
     return (
       <div className="space-y-4">
         <label className="block">
-          <span className="mb-1.5 block font-brand text-[14px] font-extrabold text-ink">Exam</span>
+          <span className="mb-1.5 block font-brand text-[14px] font-extrabold text-ink">Course or exam</span>
           <select value={courseId} onChange={(e) => setCourseId(e.target.value)} className={chunky(selectClass)}>
-            <option value="">Choose your exam</option>
+            <option value="">Choose a course</option>
             {groups.map((g) => (
               <optgroup key={g} label={g}>
                 {courses.filter((c) => c.category === g).map((c) => (
@@ -43,10 +43,10 @@ export function SprintStartForm({ courses, initialCourse, signedIn }: { courses:
   return (
     <form action={action} className="space-y-4">
       <label className="block">
-        <span className="mb-1.5 block font-brand text-[14px] font-extrabold text-ink">Exam</span>
+        <span className="mb-1.5 block font-brand text-[14px] font-extrabold text-ink">Course or exam</span>
         <select name="courseId" required value={courseId} onChange={(e) => setCourseId(e.target.value)} className={chunky(selectClass)}>
           <option value="" disabled>
-            Choose your exam
+            Choose a course
           </option>
           {groups.map((g) => (
             <optgroup key={g} label={g}>
@@ -63,7 +63,7 @@ export function SprintStartForm({ courses, initialCourse, signedIn }: { courses:
       </label>
       <div>
         <label className="block">
-          <span className="mb-1.5 block font-brand text-[14px] font-extrabold text-ink">Exam date</span>
+          <span className="mb-1.5 block font-brand text-[14px] font-extrabold text-ink">{course?.isClass ? "Test date" : "Exam date"}</span>
           <input key={courseId} type="date" name="examDate" required defaultValue={course?.defaultDate ?? ""} className={chunky(inputClass)} />
         </label>
       </div>

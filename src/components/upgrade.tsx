@@ -232,7 +232,20 @@ export function PlusFeedCard() {
 }
 
 /** Contextual prompt for topic and course pages: "Exam in 18 days? Build my plan." */
-export function ExamCta({ daysLeft, courseId, courseTitle, className }: { daysLeft: number | null; courseId: string; courseTitle: string; className?: string }) {
+export function ExamCta({
+  daysLeft,
+  courseId,
+  courseTitle,
+  isClass = false,
+  className,
+}: {
+  daysLeft: number | null;
+  courseId: string;
+  courseTitle: string;
+  /** A high school class: the Sprint works toward the next test instead of an AP or SAT exam. */
+  isClass?: boolean;
+  className?: string;
+}) {
   const soon = daysLeft !== null && daysLeft <= 45;
   return (
     <Link
@@ -251,8 +264,8 @@ export function ExamCta({ daysLeft, courseId, courseTitle, className }: { daysLe
         )}
       </span>
       <span className="relative min-w-0 flex-1">
-        <span className="block font-brand text-[16px] font-extrabold leading-snug">{soon ? `Exam in ${daysLeft} days? Build my plan.` : `Get the ${courseTitle} score you want.`}</span>
-        <span className="mt-0.5 block text-[13px] text-white/85">Free diagnostic, then a day-by-day Exam Sprint to exam day.</span>
+        <span className="block font-brand text-[16px] font-extrabold leading-snug">{isClass ? `Big ${courseTitle} test coming up? Build my plan.` : soon ? `Exam in ${daysLeft} days? Build my plan.` : `Get the ${courseTitle} score you want.`}</span>
+        <span className="mt-0.5 block text-[13px] text-white/85">{isClass ? "Free diagnostic, then a day-by-day Sprint to test day." : "Free diagnostic, then a day-by-day Exam Sprint to exam day."}</span>
       </span>
       <ArrowRight className="relative size-5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
     </Link>

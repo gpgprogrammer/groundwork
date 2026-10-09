@@ -110,7 +110,7 @@ export default async function MasterPage({ searchParams }: PageProps<"/master">)
                 <CourseChips courses={mine} />
               </>
             ) : null}
-            <p className="mt-6 font-brand text-[14px] font-extrabold text-muted">{mine.length ? "Every other course" : "Every AP course and the SAT"}</p>
+            <p className="mt-6 font-brand text-[14px] font-extrabold text-muted">{mine.length ? "Every other course" : "Every course on Merit"}</p>
             <CourseChips courses={others} />
           </section>
         )}

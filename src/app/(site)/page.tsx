@@ -8,7 +8,7 @@ import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
   title: { absolute: "Merit Learning: understand what you're studying tonight" },
-  description: "The best videos and tutors in the world for every AP course and the SAT, in one place, with Merit AI and a plan for every test. Free to start.",
+  description: "The best videos and tutors in the world for high school classes, every AP course, and the SAT, in one place, with Merit AI and a plan for every test. Free to start.",
 };
 
 /** Home: the front page for visitors, a personal starting point for students. */

@@ -47,7 +47,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
 
   return (
     <>
-    <LearnBand title={q ? `Results for “${q}”` : "Search"} lede={q ? undefined : "Every AP and SAT topic, lesson, channel, tutor, and study guide on Merit."} />
+    <LearnBand title={q ? `Results for “${q}”` : "Search"} lede={q ? undefined : "Every topic, lesson, channel, tutor, and study guide on Merit."} />
     <div className="mx-auto max-w-[1100px] px-4 pb-16 sm:px-6">
       <div className="sticky top-[var(--nav-h)] z-20 -mx-4 flex flex-wrap items-center gap-3 border-b-2 border-line bg-bg/90 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
         <Chips chips={TYPES} active={type} param="type" />
@@ -69,7 +69,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
       </div>
 
       {!q ? (
-        <div className="pt-10"><EmptyState title="Search every AP and SAT topic" body="Try a topic, a concept, or a channel, like “chain rule”, “Mansa Musa”, or “Khan Academy”." /></div>
+        <div className="pt-10"><EmptyState title="Search every topic on Merit" body="Try a topic, a concept, or a channel, like “chain rule”, “Mansa Musa”, or “Khan Academy”." /></div>
       ) : !hits.length && !meritCount ? (
         <div className="py-24 text-center">
           <p className="text-lg font-medium text-ink">No results for “{q}”</p>

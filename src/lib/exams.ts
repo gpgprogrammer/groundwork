@@ -20,8 +20,12 @@ export function daysUntil(date: string | Date, now = Date.now()) {
   return Math.max(0, Math.ceil((new Date(new Date(t).toDateString()).getTime() - new Date(new Date(now).toDateString()).getTime()) / DAY));
 }
 
-/** The student's exam date for a course: their own if set, otherwise the AP window. SAT has no default. */
+/**
+ * The student's exam date for a course: their own if set, otherwise the AP window. SAT has no default,
+ * and high school classes have no end-of-year exam (their tests come from the calendar instead).
+ */
 export function examDateFor(course: Pick<Course, "exam">, profile: Pick<Profile, "examDate"> | null, now = Date.now()) {
+  if (course.exam === "Class") return null;
   if (profile?.examDate && new Date(`${profile.examDate}T12:00:00`).getTime() > now) return profile.examDate;
   return course.exam === "AP" ? isoDate(nextApExamStart(now)) : null;
 }

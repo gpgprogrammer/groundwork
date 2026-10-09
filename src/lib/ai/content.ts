@@ -55,13 +55,13 @@ export async function questionsForTopic(topicId: string, need = 6): Promise<Ques
       maxOutputTokens: 6000,
       output: Output.object({ schema: questionSchema }),
       instructions:
-        "You write exam-quality multiple-choice practice questions for high school AP and SAT students. Questions must be accurate, unambiguous, and match the real exam's style and difficulty. Exactly one choice is correct. Wrong choices should be plausible and reflect real misconceptions. Vary the correct answer's position.",
+        "You write exam-quality multiple-choice practice questions for high school students in AP, SAT, honors, and regular classes. Questions must be accurate, unambiguous, and match the real exam's or class test's style and difficulty. Exactly one choice is correct. Wrong choices should be plausible and reflect real misconceptions. Vary the correct answer's position.",
       prompt: `Course: ${course.title}
 Unit ${unit.order}: ${unit.title}
 Topic: ${topic.title}
 What students should know: ${topic.summary} ${topic.keyPoints.join("; ")}
 
-Write 6 multiple-choice questions on this topic in the style of the ${course.exam === "SAT" ? "digital SAT" : `AP ${course.title.replace(/^AP /, "")} exam`}: 2 easy, 3 medium, 1 hard.${course.category === "World Languages & Cultures" ? " Write stems and choices in the target language where the real exam would, with any instructions in English." : ""}${
+Write 6 multiple-choice questions on this topic in the style of ${course.exam === "SAT" ? "the digital SAT" : course.exam === "Class" ? `a high school ${course.title} unit test` : `the AP ${course.title.replace(/^AP /, "")} exam`}: 2 easy, 3 medium, 1 hard.${course.category === "World Languages & Cultures" ? " Write stems and choices in the target language where the real exam would, with any instructions in English." : ""}${
         existing.length ? `\nDon't repeat these existing questions:\n${existing.map((q) => `- ${q.stem.slice(0, 120)}`).join("\n")}` : ""
       }`,
     });
@@ -112,7 +112,7 @@ export async function cramSheet(unitId: string) {
     model: contentModel(),
     maxOutputTokens: 2500,
     instructions:
-      "You write one-page cram sheets for AP and SAT students the week before the exam. Dense, accurate, scannable. Markdown with ### headings and bullet lists only. No tables, no LaTeX; use Unicode for math.",
+      "You write one-page cram sheets for high school students the week before an AP exam, the SAT, or a class test. Dense, accurate, scannable. Markdown with ### headings and bullet lists only. No tables, no LaTeX; use Unicode for math.",
     prompt: `${course.title}, Unit ${unit.order}: ${unit.title}.
 Topics: ${topics.map((t) => `${t.title} (${t.keyPoints.join("; ")})`).join(" | ")}
 
@@ -137,8 +137,8 @@ export async function frqPrompt(unitId: string) {
   const { text } = await generateText({
     model: contentModel(),
     maxOutputTokens: 900,
-    instructions: "You write realistic free-response practice prompts for AP and SAT students. Output only the prompt: any setup, data, or source excerpt, then clearly lettered parts. Plain text; Unicode for math.",
-    prompt: `Write one ${course.exam === "SAT" ? "short constructed-response practice question" : `AP ${course.title.replace(/^AP /, "")}-style free-response question`} on ${course.title}, Unit ${unit.order}: ${unit.title}. Topics to draw from: ${catalog
+    instructions: "You write realistic free-response practice prompts for high school students preparing for AP exams, the SAT, and class tests. Output only the prompt: any setup, data, or source excerpt, then clearly lettered parts. Plain text; Unicode for math.",
+    prompt: `Write one ${course.exam === "SAT" ? "short constructed-response practice question" : course.exam === "Class" ? `free-response question like those on a high school ${course.title} unit test` : `AP ${course.title.replace(/^AP /, "")}-style free-response question`} on ${course.title}, Unit ${unit.order}: ${unit.title}. Topics to draw from: ${catalog
       .topicsForUnit(unit.id)
       .map((t) => t.title)
       .join(", ")}. It should take about 15 minutes.`,
@@ -162,7 +162,7 @@ export async function gradeFrq(unitId: string, prompt: string, answer: string) {
     model: contentModel(),
     maxOutputTokens: 2500,
     output: Output.object({ schema: gradeSchema }),
-    instructions: `You are an experienced ${course.title} exam reader. Score the student's answer against a rubric like the real exam's (one point per required element per part), then coach them. Be encouraging and specific. Use Unicode for math.`,
+    instructions: `You are an experienced ${course.exam === "Class" ? `high school ${course.title} teacher` : `${course.title} exam reader`}. Score the student's answer against a rubric like ${course.exam === "Class" ? "a teacher's test rubric" : "the real exam's"} (one point per required element per part), then coach them. Be encouraging and specific. Use Unicode for math.`,
     prompt: `Question:\n${prompt}\n\nStudent answer:\n${answer}`,
   });
   return output;

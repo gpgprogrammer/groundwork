@@ -38,7 +38,7 @@ export function CoursesBrowser({ courses, categories, signedIn }: { courses: Cou
         <div className="relative mx-auto max-w-6xl px-4 pb-8 pt-9 sm:px-6 lg:px-8 lg:pt-12">
           <h1 className="rise display text-[40px] sm:text-6xl">Courses</h1>
           <p className="rise mt-3 max-w-2xl text-[17px] leading-relaxed text-white/90" style={{ ["--i" as string]: 1 }}>
-            Every AP course and the SAT, organized the way the exam is: units, then the exact topics you&apos;ll be tested on.
+            High school and honors classes, every AP course, and the SAT, organized the way they&apos;re taught: units, then the exact topics you&apos;ll be tested on.
           </p>
           <label className="rise mt-6 flex h-14 w-full max-w-xl items-center gap-3 rounded-2xl bg-white px-4 text-ink shadow-[0_4px_0_0_rgb(0_0_0/0.18)]" style={{ ["--i" as string]: 2 }}>
             <Search className="size-5 shrink-0 text-muted" />

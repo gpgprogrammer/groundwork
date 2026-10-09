@@ -1,4 +1,5 @@
-export type Exam = "AP" | "SAT";
+/** "Class": a regular or honors high school class, with no national exam at the end. */
+export type Exam = "AP" | "SAT" | "Class";
 
 export const CATEGORIES = [
   "Math & Computer Science",
@@ -24,6 +25,10 @@ export type Course = {
   /** Hue (0–360) used for subtle per-course accents. */
   hue: number;
   examMonth: string;
+  /** For high school classes: when students usually take it, e.g. "Grade 9". */
+  grades?: string;
+  /** Honors classes: the regular class whose topics and videos they build on. */
+  honorsOf?: string;
   /** Appended to topic titles when searching YouTube, e.g. "AP Psychology". */
   query: string;
   /** Lowercase phrases that identify the course in titles and calendar events. */

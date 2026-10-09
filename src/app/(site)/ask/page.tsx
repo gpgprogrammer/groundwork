@@ -6,7 +6,7 @@ import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
   title: "Merit AI",
-  description: "Your AP and SAT study partner: clear explanations, practice questions, and the best lesson for any topic.",
+  description: "Your study partner for every class, AP course, and the SAT: clear explanations, practice questions, and the best lesson for any topic.",
 };
 
 export default async function AskPage() {

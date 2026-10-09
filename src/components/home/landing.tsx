@@ -26,6 +26,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
   const lessons = topic ? catalog.videosForTopic(topic.id).filter((v) => !v.isShort).slice(0, 3) : [];
   const lessonCount = `${(Math.floor(catalog.videos.length / 1000) * 1000).toLocaleString("en-US")}+`;
   const apCount = catalog.courses.filter((c) => c.exam === "AP").length;
+  const classCount = catalog.courses.filter((c) => c.exam === "Class").length;
 
   // Real output of Merit's learning plan and readiness engine, run on the built-in sample student.
   const sample = learningPlan(catalog, sampleState(catalog), 3);
@@ -71,7 +72,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:px-8 lg:pb-24 lg:pt-20 grid-cols-[minmax(0,1fr)]">
           <div className="min-w-0">
             <p className="rise inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 font-brand text-[14px] font-extrabold ring-1 ring-inset ring-white/25">
-              <GraduationCap className="size-4" /> Every AP course and the SAT
+              <GraduationCap className="size-4" /> High school classes, every AP course, and the SAT
             </p>
             <h1 className="rise display mt-5 text-[46px] sm:text-6xl lg:text-[68px]" style={{ ["--i" as string]: 1 }}>
               Understand what you&apos;re studying tonight.
@@ -249,9 +250,9 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
       {/* Does it support my course? */}
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="max-w-2xl">
-          <h2 className="display text-[36px] text-ink sm:text-5xl">Every AP course and the SAT.</h2>
+          <h2 className="display text-[36px] text-ink sm:text-5xl">Your classes, every AP course, and the SAT.</h2>
           <p className="mt-4 text-[17px] leading-relaxed text-muted">
-            <span className="tabular font-bold text-ink">{apCount}</span> AP courses plus SAT Math and Reading and Writing, organized the way the exam is:{" "}
+            <span className="tabular font-bold text-ink">{classCount}</span> high school and honors classes, <span className="tabular font-bold text-ink">{apCount}</span> AP courses, and SAT Math and Reading and Writing, organized the way they&apos;re taught:{" "}
             <span className="tabular font-bold text-ink">{catalog.units.length.toLocaleString()}</span> units, <span className="tabular font-bold text-ink">{catalog.topics.length.toLocaleString()}</span> topics, and{" "}
             <span className="tabular font-bold text-ink">{lessonCount}</span> lessons.
           </p>
@@ -317,7 +318,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
             <div className="relative">
               <Sparkles className="size-8" />
               <h3 className="display mt-4 text-[30px]">Stuck at 11pm? Ask Merit AI.</h3>
-              <p className="mt-2 text-[16px] leading-relaxed text-white/90">Explanations, practice questions, and the right lesson for any AP or SAT topic.</p>
+              <p className="mt-2 text-[16px] leading-relaxed text-white/90">Explanations, practice questions, and the right lesson for any topic in your classes, AP courses, or the SAT.</p>
             </div>
             <ul className="relative space-y-2">
               {AI_PROMPTS.map((p) => (
@@ -418,7 +419,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
           {[
             { key: "student", Icon: GraduationCap, tint: "bg-accent-soft text-accent-ink", title: "Students", body: "The best lessons for every topic, tutors when you need one, Merit AI, and Exam Sprints before big tests.", cta: "Create a free account", href: "/signup?as=student" },
             { key: "teacher", Icon: Presentation, tint: "bg-[#f3edff] text-[#6d28d9] dark:bg-[#2a1f45] dark:text-[#c9b5ff]", title: "Teachers and tutors", body: "Publish your own videos and study guides, and get booked for tutoring by students on Merit.", cta: "Create a teacher account", href: "/signup?as=teacher" },
-            { key: "parent", Icon: HeartHandshake, tint: "bg-sprint-soft text-sprint-ink", title: "Parents", body: PAID_PLANS ? "Gift Merit Plus or an Exam Sprint, or find a tutor for any AP course or the SAT." : "Everything on Merit is free for your student. When they want a person, find a tutor for any AP course or the SAT.", cta: "Options for parents", href: "/pricing/parents" },
+            { key: "parent", Icon: HeartHandshake, tint: "bg-sprint-soft text-sprint-ink", title: "Parents", body: PAID_PLANS ? "Gift Merit Plus or an Exam Sprint, or find a tutor for any class, AP course, or the SAT." : "Everything on Merit is free for your student. When they want a person, find a tutor for any class, AP course, or the SAT.", cta: "Options for parents", href: "/pricing/parents" },
           ].map((f) => (
             <div key={f.key} className="flex flex-col rounded-[28px] bg-surface p-6 ring-2 ring-line sm:p-7">
               <span className={`flex size-14 items-center justify-center rounded-2xl ${f.tint}`}>
