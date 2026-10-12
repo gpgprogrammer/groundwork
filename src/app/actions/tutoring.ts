@@ -81,7 +81,8 @@ export async function saveTutorProfile(_: FormState, form: FormData): Promise<Fo
     region: form.get("region") ?? "",
     country: form.get("country") || "United States",
     online: form.get("online") === "on",
-    inPerson: form.get("inPerson") === "on",
+    // In-person tutoring stays off until Merit runs background checks on in-person tutors.
+    inPerson: false,
     bookingUrl: form.get("bookingUrl") ?? "",
     yearsExperience: form.get("yearsExperience") || 0,
     credentials: form.get("credentials") ?? "",

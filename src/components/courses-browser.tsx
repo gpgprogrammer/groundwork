@@ -4,7 +4,7 @@ import { Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CourseIcon, courseColors } from "./course-icon";
-import { cn } from "./ui";
+import { cn, plural } from "./ui";
 
 export type CourseTile = {
   id: string;
@@ -128,7 +128,7 @@ function Grid({ items, big = false }: { items: CourseTile[]; big?: boolean }) {
             <span className="flex flex-1 flex-col p-4">
               <span className={cn("line-clamp-2 font-brand font-extrabold leading-snug text-ink", big ? "text-[18px]" : "text-[15px] sm:text-[16px]")}>{c.title}</span>
               <span className="tabular mt-1 text-[12.5px] font-semibold text-muted">
-                {c.units} units · {c.videos.toLocaleString()} videos
+                {plural(c.units, "unit")} · {plural(c.videos, "lesson")}
               </span>
               {c.progress !== null ? (
                 <span className="mt-auto pt-3">

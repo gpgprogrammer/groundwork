@@ -10,7 +10,7 @@ import { getCatalog } from "@/lib/catalog";
 import { listUploads, toUploadCards } from "@/lib/uploads";
 import { getViewer } from "@/lib/viewer";
 
-export const metadata: Metadata = { title: "Merit Tutors' Videos", description: "Lessons recorded by Merit tutors and teachers, published only on Merit." };
+export const metadata: Metadata = { title: "Merit Tutors' Videos", description: "Lessons recorded by Merit tutors and teachers, published only on Merit.", robots: { index: false } };
 
 export default async function VideosPage({ searchParams }: PageProps<"/videos">) {
   const [sp, catalog, viewer] = await Promise.all([searchParams, getCatalog(), getViewer()]);

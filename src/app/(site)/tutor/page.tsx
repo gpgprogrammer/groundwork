@@ -11,7 +11,6 @@ import { Initials, RatingLine, StatTile, V } from "@/components/tutoring-ui";
 import { ago, cn, EmptyState, Notice, panel, panelLink } from "@/components/ui";
 import { getTutorMeta, ledger, listBookings } from "@/lib/bookings";
 import { listLeads } from "@/lib/leads";
-import { LogSessionForm } from "@/components/lead-ui";
 import { getCatalog } from "@/lib/catalog";
 import { canUploadVideos } from "@/lib/auth/permissions";
 import { getStore } from "@/lib/data/store";
@@ -179,36 +178,6 @@ export default async function TutorDashboard() {
               </ul>
             ) : (
               <EmptyState icon={<Inbox className="size-5" />} title="No messages yet." body="Students who message you from your profile show up here." />
-            )}
-          </Section>
-
-          <Section
-            title="Students Merit referred"
-            sub="If you work with any of these students outside Merit in the next 12 months, log the session here. The 10% referral fee is added to your fees due."
-            count={openLeads.length}
-            i={4}
-          >
-            {openLeads.length ? (
-              <ul className="space-y-3">
-                {openLeads.map((l) => (
-                  <li key={l.id} className={cn(panel, "p-4 sm:p-5")}>
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-brand text-[16px] font-extrabold text-ink">{l.studentName}</p>
-                        <p className="break-all text-[13px] text-muted">{l.studentEmail}</p>
-                      </div>
-                      {l.status === "reported" ? (
-                        <span className="inline-flex h-7 items-center rounded-full bg-warn-soft px-3 font-brand text-xs font-extrabold text-warn">Student reported a session</span>
-                      ) : (
-                        <span className="text-[12px] text-muted">Referred {ago(l.createdAt)}</span>
-                      )}
-                    </div>
-                    <LogSessionForm leadId={l.id} />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="rounded-3xl border-2 border-dashed border-line px-5 py-5 text-sm font-semibold text-muted">No open referrals.</p>
             )}
           </Section>
 

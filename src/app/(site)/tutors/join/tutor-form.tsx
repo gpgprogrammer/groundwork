@@ -8,6 +8,7 @@ import { Field, FormMessage, inputClass, keepValuesOnSubmit } from "@/components
 import { violetButton } from "@/components/tutoring-ui";
 import { cn, panel } from "@/components/ui";
 import type { Tutor } from "@/lib/types";
+import { TUTOR_FEE } from "@/lib/billing/plans";
 
 type Props = { existing: Tutor | null; defaultName: string; courses: { id: string; title: string; category: string }[]; agreed: boolean };
 
@@ -87,11 +88,13 @@ export function TutorForm({ existing, defaultName, courses, agreed }: Props) {
               <input type="checkbox" name="online" defaultChecked={e?.online ?? true} className="size-[18px] shrink-0 accent-[#7c3aed]" />
               <MonitorSmartphone className="size-4 shrink-0" aria-hidden /> Online sessions
             </label>
-            <label className={cn(toggleCard, "cursor-pointer")}>
-              <input type="checkbox" name="inPerson" defaultChecked={e?.inPerson ?? false} className="size-[18px] shrink-0 accent-[#7c3aed]" />
-              <MapPin className="size-4 shrink-0" aria-hidden /> In person
-            </label>
+            <span className={cn(toggleCard, "cursor-not-allowed opacity-60")} aria-disabled="true">
+              <MapPin className="size-4 shrink-0" aria-hidden /> In person (coming later)
+            </span>
           </div>
+          <p className="text-[13px] leading-relaxed text-muted">
+            Merit lists online tutoring only for now. In-person sessions with students will open once Merit runs background checks on every in-person tutor.
+          </p>
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="City">
               <input name="city" defaultValue={e?.city} className={inputClass} autoComplete="address-level2" />
@@ -123,9 +126,9 @@ export function TutorForm({ existing, defaultName, courses, agreed }: Props) {
           </div>
           <ul className="mt-4 space-y-2.5 text-[14px] leading-relaxed text-ink-2">
             {[
-              "Listing is free. Merit earns a 10% referral fee on sessions students book with you through Merit.",
-              "If students pay through Merit, the fee is deducted automatically and the rest is paid out to you. If they pay you directly, Merit bills the 10% after the session.",
-              "The fee applies to every session with a student Merit referred to you (anyone who booked or messaged you through Merit) for 12 months, whether they book here or with you directly. Log sessions held outside Merit from your dashboard.",
+              TUTOR_FEE,
+              "If a student pays through Merit, the 10% is deducted automatically and the rest is paid out to you. If they pay you directly for a session booked on Merit, Merit bills the 10% after the session.",
+              "Sessions a student books with you outside Merit are yours alone. Merit takes nothing from them.",
               "Keep your profile honest. Reviews come from real Merit students and can't be edited or bought.",
             ].map((t) => (
               <li key={t} className="flex gap-2.5">

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCatalog } from "@/lib/catalog";
 import { search } from "@/lib/search";
+import { plural } from "@/components/ui";
 
 export type Suggestion = { kind: "topic" | "video" | "channel" | "course"; href: string; title: string; subtitle: string; image?: string | null };
 
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
       case "course":
         return { kind: "course", href: `/courses/${h.course.slug}`, title: h.course.title, subtitle: "Course" };
       case "channel":
-        return { kind: "channel", href: `/channel/${h.channel.id}`, title: h.channel.title, subtitle: `${h.lessons} videos`, image: h.channel.thumbnail };
+        return { kind: "channel", href: `/channel/${h.channel.id}`, title: h.channel.title, subtitle: plural(h.lessons, "lesson"), image: h.channel.thumbnail };
       case "video":
         return { kind: "video", href: `/go/${h.video.id}`, title: h.video.title, subtitle: h.video.channelTitle, image: h.video.thumbnail };
     }

@@ -10,12 +10,13 @@ import { allTutorMeta } from "@/lib/bookings";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { allServices } from "@/lib/partners";
-import { rankTutors, topCreators, tutorsNear, tutorsOnline, type ServiceKind } from "@/lib/tutoring";
+import { paysMerit, rankTutors, topCreators, tutorsNear, tutorsOnline, type ServiceKind } from "@/lib/tutoring";
+import { TUTOR_FEE } from "@/lib/billing/plans";
 import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
   title: "Tutors",
-  description: "The best tutors near you and online for every high school, AP, and SAT subject, top free teachers, and trusted tutoring services.",
+  description: "Trusted tutoring services, free teachers, and online tutors for every high school, AP, and SAT subject.",
 };
 
 const GROUPS: { kinds: ServiceKind[]; title: string; sub: string; icon: typeof Gift }[] = [
@@ -34,16 +35,20 @@ export default async function TutorsPage({ searchParams }: PageProps<"/tutors">)
   const near = tutorsNear(ranked, location, course?.id).slice(0, 6);
   const online = tutorsOnline(ranked, course?.id).slice(0, 9);
   const creators = topCreators(catalog, { courseId: course?.id }, 12);
-  const covered = services.filter((s) => s.covers(course));
+  // Services that pay Merit are labeled Merit Partner, so the label always matches the disclosure.
+  const covered = services.filter((s) => s.covers(course)).map((s) => ({ ...s, partner: paysMerit(s) }));
+  const anyPartner = covered.some((s) => s.partner);
+  // Until tutors join, the page leads with outside services instead of empty tutor shelves.
+  const hasTutors = ranked.length > 0;
   const subject = course?.title ?? "every high school, AP, and SAT subject";
   const place = location ? [location.city, location.region].filter(Boolean).join(", ") || location.zip : null;
   const isTutor = viewer?.state.profile.role === "tutor";
   const zipQs = (extra: Record<string, string> = {}) => new URLSearchParams({ ...(course ? { course: course.id } : {}), ...(location?.zip ? { zip: location.zip } : {}), ...extra }).toString();
 
   const stats = [
-    { n: ranked.length, label: ranked.length === 1 ? "Merit tutor" : "Merit tutors" },
-    { n: creators.length, label: "top free teachers" },
+    ...(hasTutors ? [{ n: ranked.length, label: ranked.length === 1 ? "Merit tutor" : "Merit tutors" }] : []),
     { n: covered.length, label: "tutoring services" },
+    { n: creators.length, label: "free teachers" },
   ];
 
   return (
@@ -52,9 +57,11 @@ export default async function TutorsPage({ searchParams }: PageProps<"/tutors">)
         <HeroKicker>
           <GraduationCap className="size-4" /> Tutors
         </HeroKicker>
-        <h1 className="display rise mt-4 max-w-3xl text-[36px] sm:text-5xl lg:text-[58px]">The best help for {subject}.</h1>
+        <h1 className="display rise mt-4 max-w-3xl text-[36px] sm:text-5xl lg:text-[58px]">Tutoring help for {subject}.</h1>
         <p className="rise mt-4 max-w-2xl text-[16.5px] leading-relaxed text-white/90" style={{ ["--i" as string]: 1 }}>
-          Book top-rated tutors near you or online, learn from the best free teachers, or pick a trusted tutoring service. All in one place, ranked for your subject.
+          {hasTutors
+            ? "Book an online tutor on Merit, learn from free teachers, or pick a trusted tutoring service."
+            : "Merit tutors are coming soon. Meanwhile, here are trusted tutoring services and free teachers for your subject."}
         </p>
         <div className="rise mt-7 rounded-3xl bg-surface p-3 text-ink shadow-[0_6px_0_0_rgb(0_0_0/0.18)] sm:p-4" style={{ ["--i" as string]: 2 }}>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -72,6 +79,64 @@ export default async function TutorsPage({ searchParams }: PageProps<"/tutors">)
       </WorldHero>
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <section className="mt-12">
+          <div className="flex items-center gap-3">
+            <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-2xl", V.solid)}>
+              <Sparkles className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="headline text-[24px] text-ink sm:text-[28px]">Tutoring services{course ? ` for ${course.shortTitle}` : ""}</h2>
+              <p className="mt-0.5 text-sm text-muted">{covered.length} trusted options, from free volunteer tutoring to local centers and full test prep.</p>
+              <p className="mt-1 text-[12.5px] text-muted">
+                {anyPartner
+                  ? "Disclosure: Merit earns a referral fee when you book with a service labeled Merit Partner. Rankings and listings are never paid for."
+                  : "Disclosure: Merit doesn't earn anything from these links today. If a service becomes a paying partner, it will be labeled Merit Partner."}
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 space-y-5">
+            {GROUPS.map((g, gi) => {
+              const items = covered.filter((s) => g.kinds.includes(s.kind));
+              if (!items.length) return null;
+              return (
+                <div key={g.title} className={cn("rounded-[28px] p-4 sm:p-6", GROUP_TONES[gi % GROUP_TONES.length].wrap)}>
+                  <div className="mb-4 flex items-center gap-3">
+                    <span className={cn("press-sm flex size-10 shrink-0 items-center justify-center rounded-2xl text-white", GROUP_TONES[gi % GROUP_TONES.length].icon)}>
+                      <g.icon className="size-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="font-brand text-[18px] font-extrabold leading-tight text-ink">{g.title}</h3>
+                      <p className="text-[13px] text-ink-2">{g.sub}</p>
+                    </div>
+                    <span className="tabular ml-auto hidden h-7 shrink-0 items-center rounded-full bg-surface px-3 font-brand text-[13px] font-extrabold text-ink-2 ring-2 ring-line sm:inline-flex">{items.length}</span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {items.map((s) => (
+                      <ServiceCard key={s.id} s={s} course={course} zip={location?.zip || null} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <Section
+          icon={<CirclePlay className="size-5" />}
+          title={`Best free teachers${course ? ` for ${course.shortTitle}` : ""}`}
+          sub="The YouTube teachers whose lessons rank highest on Merit for this subject. See how ranking works."
+        >
+          <ol className="scrollbar-none -mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 pt-1 after:block after:w-px after:shrink-0 after:content-[''] sm:-mx-6 sm:scroll-px-6 sm:px-6 sm:after:w-2 lg:-mx-8 lg:scroll-px-8 lg:px-8 lg:after:w-4">
+            {creators.map((c, i) => (
+              <li key={c.channel.id} className="w-[168px] shrink-0 snap-start sm:w-[184px]">
+                <CreatorCard c={c} rank={i + 1} />
+              </li>
+            ))}
+          </ol>
+        </Section>
+
+        {hasTutors ? (
+          <>
         <Section icon={<MapPin className="size-5" />} title={place ? `Merit tutors near ${place}` : "Merit tutors near you"} sub="Book in-person sessions with tutors in your area, ranked by student reviews.">
           {near.length ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -112,56 +177,8 @@ export default async function TutorsPage({ searchParams }: PageProps<"/tutors">)
           )}
         </Section>
 
-        <Section
-          icon={<CirclePlay className="size-5" />}
-          title={`Best free teachers${course ? ` for ${course.shortTitle}` : ""}`}
-          sub="The teachers whose lessons rank highest on Merit, from real results: views, likes, and student votes."
-        >
-          <ol className="scrollbar-none -mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 pt-1 after:block after:w-px after:shrink-0 after:content-[''] sm:-mx-6 sm:scroll-px-6 sm:px-6 sm:after:w-2 lg:-mx-8 lg:scroll-px-8 lg:px-8 lg:after:w-4">
-            {creators.map((c, i) => (
-              <li key={c.channel.id} className="w-[168px] shrink-0 snap-start sm:w-[184px]">
-                <CreatorCard c={c} rank={i + 1} />
-              </li>
-            ))}
-          </ol>
-        </Section>
-
-        <section className="mt-14">
-          <div className="flex items-center gap-3">
-            <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-2xl", V.solid)}>
-              <Sparkles className="size-5" />
-            </span>
-            <div className="min-w-0">
-              <h2 className="headline text-[24px] text-ink sm:text-[28px]">Tutoring services{course ? ` for ${course.shortTitle}` : ""}</h2>
-              <p className="mt-0.5 text-sm text-muted">{covered.length} trusted options, from free volunteer tutoring to local centers and full test prep.</p>
-            </div>
-          </div>
-          <div className="mt-6 space-y-5">
-            {GROUPS.map((g, gi) => {
-              const items = covered.filter((s) => g.kinds.includes(s.kind));
-              if (!items.length) return null;
-              return (
-                <div key={g.title} className={cn("rounded-[28px] p-4 sm:p-6", GROUP_TONES[gi % GROUP_TONES.length].wrap)}>
-                  <div className="mb-4 flex items-center gap-3">
-                    <span className={cn("press-sm flex size-10 shrink-0 items-center justify-center rounded-2xl text-white", GROUP_TONES[gi % GROUP_TONES.length].icon)}>
-                      <g.icon className="size-5" />
-                    </span>
-                    <div className="min-w-0">
-                      <h3 className="font-brand text-[18px] font-extrabold leading-tight text-ink">{g.title}</h3>
-                      <p className="text-[13px] text-ink-2">{g.sub}</p>
-                    </div>
-                    <span className="tabular ml-auto hidden h-7 shrink-0 items-center rounded-full bg-surface px-3 font-brand text-[13px] font-extrabold text-ink-2 ring-2 ring-line sm:inline-flex">{items.length}</span>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {items.map((s) => (
-                      <ServiceCard key={s.id} s={s} course={course} zip={location?.zip || null} />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+          </>
+        ) : null}
 
         <div className="mt-14 grid gap-4 md:grid-cols-2">
           <section className="relative flex flex-col justify-between gap-6 overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#7c3aed,#6d28d9)] px-6 py-8 text-white sm:px-8 sm:py-10">
@@ -172,7 +189,7 @@ export default async function TutorsPage({ searchParams }: PageProps<"/tutors">)
               </span>
               <h2 className="display mt-4 text-[28px] sm:text-[32px]">{isTutor ? "Your tutor listing is live" : "Tutor on Merit"}</h2>
               <p className="mt-2 max-w-md text-[15.5px] leading-relaxed text-white/90">
-                {isTutor ? "Manage bookings, hours, and payouts from your dashboard." : "List yourself free and get booked by students studying your subjects. Merit keeps 10% of sessions booked here, nothing else."}
+                {isTutor ? "Manage bookings, hours, and payouts from your dashboard." : `Online tutors: list yourself and get booked by students studying your subjects. ${TUTOR_FEE}`}
               </p>
             </div>
             <Link href={isTutor ? "/tutor" : "/tutors/join"} className={cn(heroBtn, WORLD_ON_WHITE.violet, "relative w-fit")}>

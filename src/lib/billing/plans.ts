@@ -56,6 +56,10 @@ export const sprintFeatures = () =>
 
 export const TUTOR_COMMISSION = 0.1;
 
+/** How Merit earns from tutoring, word for word everywhere it's described (tutors, partners, Terms). */
+export const TUTOR_FEE = "Listing is free. Merit keeps 10% of sessions booked on Merit, and nothing else.";
+export const PARTNER_FEE = "Listing is free. Partners pay Merit 10% of sessions students book through Merit, and nothing else.";
+
 export type Product = "plus-month" | "plus-year" | "sprint";
 
 export const PRODUCTS: Record<Product, { label: string; amount: number; recurring: "month" | "year" | null }> = {

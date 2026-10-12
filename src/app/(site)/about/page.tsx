@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LogoMark, Wordmark } from "@/components/logo";
 import { Faq } from "@/components/marketing";
-import { IconTile } from "@/components/ui";
+import { IconTile, plural } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
 import { PAID_PLANS } from "@/lib/billing/plans";
 
@@ -57,9 +57,9 @@ export default async function AboutPage() {
               <IconTile>
                 <GraduationCap className="size-5" />
               </IconTile>
-              <h2 className="headline mt-5 text-2xl text-ink">{catalog.courses.length} courses, every topic</h2>
+              <h2 className="headline mt-5 text-2xl text-ink">{plural(catalog.courses.length, "course")}, every topic</h2>
               <p className="mt-2 max-w-md text-[15px] leading-relaxed text-muted">
-                High school and honors classes, every AP course, and the SAT, organized the way they&apos;re taught: {catalog.units.length} units and {catalog.topics.length} topics, each with the lessons that teach it best.
+                High school and honors classes, every AP course, and the SAT, organized the way they&apos;re taught: {plural(catalog.units.length, "unit")} and {plural(catalog.topics.length, "topic")}, each with the lessons that teach it best.
               </p>
             </div>
             <dl className="grid grid-cols-3 divide-x divide-line rounded-2xl bg-bg-subtle py-4">

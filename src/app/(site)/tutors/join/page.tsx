@@ -29,7 +29,7 @@ export default async function JoinPage() {
         </div>
         <h1 className="display rise mt-4 text-[36px] sm:text-5xl">{existing ? "Edit your tutor listing" : "Become a tutor on Merit"}</h1>
         <p className="rise mt-3 max-w-2xl text-[16px] leading-relaxed text-white/90" style={{ ["--i" as string]: 1 }}>
-          Listing is free. Students studying your subjects find you on the Tutors page and book sessions right on Merit. You set your rate and hours; Merit keeps 10% of sessions booked here, and nothing else.
+          Listing is free. Students studying your subjects find you on the Tutors page and book sessions right on Merit. You set your rate and hours. Merit keeps 10% of sessions booked on Merit, and nothing else.
         </p>
         <ul className="rise mt-5 flex flex-wrap gap-2" style={{ ["--i" as string]: 2 }}>
           {perks.map((p) => (

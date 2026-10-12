@@ -6,6 +6,7 @@ import { getStore } from "@/lib/data/store";
 import { EMPTY_SITE_STATS, rankVideo, type RankBreakdown } from "@/lib/ranking";
 import type { Channel, Concept, Contribution, Course, Curriculum, Educator, Library, SiteStats, Topic, Unit, YtVideo } from "@/lib/types";
 import { buildCurriculum } from "./build";
+import { SHORTS_ENABLED } from "@/lib/flags";
 import { withRefreshed } from "@/lib/youtube-refresh";
 
 export type RankedVideo = YtVideo & { rank: RankBreakdown; site: SiteStats };
@@ -61,8 +62,9 @@ export function indexCatalog(lib: Library, stats: Record<string, SiteStats>): In
   const { courses, units, concepts, topics } = curriculum;
   const live = new Set(courses.map((c) => c.id));
   const videos: RankedVideo[] = lib.videos
-    // Videos imported for high school classes that haven't launched yet stay out of the site.
-    .filter((v) => live.has(v.courseId))
+    // Videos imported for high school classes that haven't launched yet stay out of the site,
+    // and so do Shorts while they're switched off.
+    .filter((v) => live.has(v.courseId) && (SHORTS_ENABLED || !v.isShort))
     .map((v) => {
       const site = stats[v.id] ?? EMPTY_SITE_STATS;
       return { ...v, site, rank: rankVideo(v, site) };

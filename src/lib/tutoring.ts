@@ -279,6 +279,9 @@ export const SERVICES: Service[] = [
 
 export const serviceById = (id: string) => SERVICES.find((s) => s.id === id);
 
+/** Whether Merit earns from sending students to this service: a signed partner, or a referral code is set. */
+export const paysMerit = (service: Service) => Boolean(service.partner || process.env[`PARTNER_REF_${service.id.replace(/-/g, "_").toUpperCase()}`]);
+
 /** Adds a partner's referral parameter when one is configured (e.g. PARTNER_REF_WYZANT=abc123). */
 export function withReferral(service: Service, url: string) {
   const ref = process.env[`PARTNER_REF_${service.id.replace(/-/g, "_").toUpperCase()}`];

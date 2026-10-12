@@ -2,7 +2,7 @@ import { ArrowRight, CalendarCheck, CalendarDays, Check, Lock, NotebookPen, Play
 import Link from "next/link";
 import { CalendarNudge, wantsCalendar } from "@/components/calendar-nudge";
 import { CourseIcon, courseColors } from "@/components/course-icon";
-import { cn, panel, panelLink } from "@/components/ui";
+import { cn, panel, panelLink, plural } from "@/components/ui";
 import { hasPlus } from "@/lib/billing/access";
 import type { IndexedCatalog } from "@/lib/catalog";
 import { learningPlan } from "@/lib/learning-plan";
@@ -82,7 +82,7 @@ export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalo
                     <span className="min-w-0">
                       <span className="block truncate font-brand text-[18px] font-black leading-tight">{c.title}</span>
                       <span className="tabular block text-[12.5px] font-bold text-white/80">
-                        {p.done}/{p.total} topics understood
+                        {p.done}/{plural(p.total, "topic")} understood
                       </span>
                     </span>
                   </Link>

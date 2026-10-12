@@ -11,7 +11,7 @@ import { inputClass } from "@/components/form";
 import { Gauge, ReadinessBars, tone } from "@/components/sprint/readiness";
 import { SprintTaskToggle } from "@/components/sprint/task-toggle";
 import { BuyButton } from "@/components/upgrade";
-import { buttonClass, cn, panel } from "@/components/ui";
+import { buttonClass, cn, panel, plural } from "@/components/ui";
 import { SPRINT, usd } from "@/lib/billing/plans";
 import { getCatalog } from "@/lib/catalog";
 import { daysLeft, estimatedScore, overall, readiness, sprintPlan, type SprintDay, type SprintTask } from "@/lib/sprint";
@@ -254,7 +254,7 @@ export default async function SprintDashboard({ params, searchParams }: PageProp
                 </span>
                 <span className="relative min-w-0 flex-1">
                   <span className="block font-brand text-[17px] font-extrabold">Free-response coach</span>
-                  <span className="block text-[13px] text-white/85">{sprint.frq.length ? `${sprint.frq.length} answers graded` : "Write an answer, get rubric feedback"}</span>
+                  <span className="block text-[13px] text-white/85">{sprint.frq.length ? `${plural(sprint.frq.length, "answer")} graded` : "Write an answer, get rubric feedback"}</span>
                 </span>
                 <ArrowRight className="relative size-5 shrink-0 transition-transform group-hover:translate-x-0.5" />
               </Link>
@@ -347,7 +347,7 @@ function taskTitle(t: SprintTask) {
     case "learn":
       return `Learn: ${t.topic.title}`;
     case "practice":
-      return `Practice: ${t.count} questions`;
+      return `Practice: ${plural(t.count, "question")}`;
     case "checkpoint":
       return `Checkpoint: ${t.count} mixed questions`;
     case "cram":

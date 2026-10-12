@@ -32,7 +32,7 @@ export default async function PayoutsPage({ searchParams }: PageProps<"/tutor/pa
         <div className="rise mt-4 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="display text-[36px] sm:text-5xl">Payouts and fees</h1>
-            <p className="mt-2 max-w-md text-[15.5px] leading-relaxed text-white/90">Merit keeps 10% of sessions booked here. Everything else is yours.</p>
+            <p className="mt-2 max-w-md text-[15.5px] leading-relaxed text-white/90">Merit keeps 10% of sessions booked on Merit, and nothing else.</p>
           </div>
           <div className="shrink-0 rounded-3xl bg-white px-5 py-4 text-ink shadow-[0_5px_0_0_rgb(0_0_0/0.2)]">
             <p className="font-brand text-[13px] font-extrabold text-muted">You keep</p>

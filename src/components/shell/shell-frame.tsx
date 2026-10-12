@@ -5,7 +5,6 @@ import {
   CalendarDays,
   ChartColumn,
   ChevronDown,
-  Clapperboard,
   Clock,
   CreditCard,
   GraduationCap,
@@ -15,7 +14,6 @@ import {
   LibraryBig,
   LogOut,
   Menu,
-  MonitorPlay,
   NotebookPen,
   Search,
   Settings,
@@ -78,8 +76,6 @@ const SUBNAV: Record<string, { href: string; label: string }[]> = {
   learn: [
     { href: "/courses", label: "Courses" },
     { href: "/lessons", label: "Lessons" },
-    { href: "/shorts", label: "Quick lessons" },
-    { href: "/videos", label: "Merit Tutors' Videos" },
     { href: "/library", label: "Your library" },
   ],
   practice: [
@@ -93,7 +89,6 @@ const SUBNAV: Record<string, { href: string; label: string }[]> = {
   ],
   tutors: [
     { href: "/tutors", label: "Find a tutor" },
-    { href: "/videos", label: "Merit Tutors' Videos" },
     { href: "/bookings", label: "My sessions" },
     { href: "/tutors/join", label: "Tutor on Merit" },
   ],
@@ -622,8 +617,6 @@ function ExploreGroup({ data, pathname }: { data: ShellData; pathname: string })
         More from Merit
       </summary>
       <div className="mt-0.5 space-y-0.5">
-        <NavRow href="/shorts" icon={<Clapperboard className="size-[18px]" />} label="Quick lessons" pathname={pathname} />
-        <NavRow href="/videos" icon={<MonitorPlay className="size-[18px]" />} label="Merit Tutors' Videos" pathname={pathname} />
         {data.channels.map((c) => (
           <NavRow key={c.id} href={`/channel/${c.id}`} icon={<ChannelAvatar title={c.title} src={c.thumbnail} size={20} />} label={c.title} pathname={pathname} />
         ))}
@@ -753,9 +746,10 @@ function TabBar({ pathname, onMore }: { pathname: string; onMore: () => void }) 
 
 function SiteFooter({ signedIn }: { signedIn: boolean }) {
   const cols: { title: string; links: [string, string][] }[] = [
-    { title: "Learn", links: [["/courses", "Courses"], ["/lessons", "Lessons"], ["/shorts", "Quick lessons"], ["/videos", "Merit Tutors' Videos"], ["/ask", "Merit AI"]] },
-    { title: "Study", links: [["/sprint", "Exam Sprint"], ["/master", "Quick session"], ["/plan", "Learning plan"], ["/schedule", "My schedule"], ["/progress", "Progress"]] },
-    { title: "Tutoring", links: [["/tutors", "Find a tutor"], ["/tutors/join", "Become a tutor"], ["/tutors/partners", "Partner with Merit"], ["/studio", "For teachers"]] },
+    { title: "Learn", links: [["/courses", "Courses"], ["/lessons", "Lessons"], ["/ask", "Merit AI"]] },
+    { title: "Practice", links: [["/sprint", "Exam Sprint"], ["/master", "Quick session"]] },
+    { title: "Plan", links: [["/plan", "Learning plan"], ["/schedule", "My schedule"], ["/progress", "Progress"]] },
+    { title: "Tutors", links: [["/tutors", "Find a tutor"], ["/tutors/join", "Become a tutor"], ["/tutors/partners", "Partner with Merit"], ["/studio", "For teachers"]] },
     { title: "Merit", links: [["/about", "About"], ...(PAID_PLANS ? [["/pricing", "Pricing"] as [string, string]] : []), ["/pricing/parents", "For parents"], ["/how-ranking-works", "How ranking works"], ["/privacy", "Privacy"], ["/terms", "Terms"]] },
   ];
   return (
@@ -767,7 +761,7 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
             <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-muted">High school classes, every AP course, and the SAT, with the best lessons, Merit AI, and a plan for every test.</p>
           </div>
         ) : null}
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
           {cols.map((c) => (
             <div key={c.title}>
               <p className="font-brand text-[15px] font-extrabold text-ink">{c.title}</p>

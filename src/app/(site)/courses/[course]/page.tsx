@@ -7,7 +7,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Chips, FeedGrid, SortControls } from "@/components/feed";
 import { ChannelAvatar } from "@/components/video-card";
-import { cn, panel } from "@/components/ui";
+import { cn, panel, plural } from "@/components/ui";
 import { getCatalog, type IndexedCatalog } from "@/lib/catalog";
 import { pageOf, queryFeed } from "@/lib/feed";
 import { courseProgress, nextTopicInCourse, topicStatus } from "@/lib/recommend";
@@ -65,7 +65,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
             <div className="min-w-0">
               <h1 className="display text-[34px] sm:text-5xl lg:text-[56px]">{course.title}</h1>
               <p className="tabular mt-1 font-brand text-[14px] font-bold text-white/80">
-                {units.length} units · {topics.length} topics · {videoCount.toLocaleString()} videos · {course.exam === "Class" ? (course.grades ?? "High school") : `Exam: ${course.examMonth}`}
+                {plural(units.length, "unit")} · {plural(topics.length, "topic")} · {plural(videoCount, "lesson")} · {course.exam === "Class" ? (course.grades ?? "High school") : `Exam: ${course.examMonth}`}
               </p>
             </div>
           </div>
@@ -158,7 +158,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
                 <p className="font-brand text-[15px] font-extrabold text-ink">Your progress</p>
                 <p className="tabular mt-2 font-brand text-4xl font-black text-ink">
                   {prog.done}
-                  <span className="text-base font-bold text-muted"> / {prog.total} topics understood</span>
+                  <span className="text-base font-bold text-muted"> / {plural(prog.total, "topic")} understood</span>
                 </p>
                 <div className="mt-3 h-3 overflow-hidden rounded-full bg-bg-subtle">
                   <div className="h-full rounded-full bg-[var(--c)] transition-[width] duration-700" style={{ width: `${(prog.done / Math.max(1, prog.total)) * 100}%` }} />
@@ -200,7 +200,7 @@ function Outline({ course, catalog, viewer, nextTopicId, openUnit }: { course: C
                 <p className="mt-0.5 line-clamp-1 text-[13.5px] text-muted">{u.summary}</p>
               </div>
               <span className="tabular hidden shrink-0 rounded-full bg-bg-subtle px-3 py-1 font-brand text-[13px] font-bold text-ink-2 sm:block">
-                {viewer ? `${done}/${ts.length}` : `${ts.length} topics`}
+                {viewer ? `${done}/${ts.length}` : plural(ts.length, "topic")}
               </span>
               <ChevronDown className="size-5 shrink-0 text-muted transition-transform duration-200 group-open:rotate-180" />
             </summary>
@@ -226,7 +226,7 @@ function Outline({ course, catalog, viewer, nextTopicId, openUnit }: { course: C
                         <span className="block text-[15.5px] font-bold text-ink">{t.title}</span>
                         {upNext ? <span className="font-brand text-[12.5px] font-extrabold text-[var(--c)]">Up next</span> : null}
                       </span>
-                      <span className="tabular shrink-0 text-[13px] font-semibold text-muted">{count ? `${count} videos` : "Lessons from this unit"}</span>
+                      <span className="tabular shrink-0 text-[13px] font-semibold text-muted">{count ? plural(count, "lesson") : "Lessons from this unit"}</span>
                       <ArrowRight className="size-4 shrink-0 text-faint transition-transform group-hover/row:translate-x-0.5" />
                     </Link>
                   </li>
@@ -254,7 +254,7 @@ function TopCreators({ course, catalog }: { course: Course; catalog: IndexedCata
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-bold text-ink">{c.channel.title}</span>
                 <span className="tabular block text-xs text-muted">
-                  {c.lessons} lessons · {c.topics} topics
+                  {plural(c.lessons, "lesson")} · {plural(c.topics, "topic")}
                 </span>
               </span>
             </Link>

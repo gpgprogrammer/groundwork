@@ -9,7 +9,7 @@ import { PlusFeedCard, SprintFeedCard } from "@/components/upgrade";
 import { Fragment } from "react";
 import { ShortCard, VideoCard } from "@/components/video-card";
 import { getCatalog } from "@/lib/catalog";
-import { CHIP_EXTRAS, pageOf, queryFeed, toFeedVideo } from "@/lib/feed";
+import { CHIP_EXTRAS, pageOf, queryFeed, toFeedVideo, SHORTS_ENABLED } from "@/lib/feed";
 import { scheduleShelf } from "@/lib/recommend";
 import { getViewer } from "@/lib/viewer";
 import { hasPlus } from "@/lib/billing/access";
@@ -50,7 +50,7 @@ export default async function Lessons({ searchParams }: PageProps<"/lessons">) {
   const rest = page.items.slice(FIRST_ROWS);
   const query = new URLSearchParams({ chip, ...(str(sp.sort) ? { sort: str(sp.sort)! } : {}), ...(str(sp.length) ? { length: str(sp.length)! } : {}) }).toString();
   const uploads = showShelves ? await toUploadCards((await listUploads()).slice(0, 4)) : [];
-  const shorts = showShelves ? catalog.videos.filter((v) => v.isShort).slice(0, 12).map((v) => toFeedVideo(catalog, v)) : [];
+  const shorts = showShelves && SHORTS_ENABLED ? catalog.videos.filter((v) => v.isShort).slice(0, 12).map((v) => toFeedVideo(catalog, v)) : [];
 
   if (!catalog.videos.length) {
     return (

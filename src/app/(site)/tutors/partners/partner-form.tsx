@@ -38,7 +38,7 @@ export function PartnerForm() {
       </Field>
       <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-bg-subtle p-4 text-[13.5px] leading-relaxed text-ink-2 ring-2 ring-inset ring-line has-[:checked]:bg-[#f3edff] has-[:checked]:ring-[#7c3aed] dark:has-[:checked]:bg-[#2a1f45]">
         <input type="checkbox" name="agree" required className="mt-0.5 size-[18px] shrink-0 accent-[#7c3aed]" />
-        We agree to pay Merit a 10% referral fee (revenue share or agreed lead fee) on students referred by Merit, and to honor the prices shown to students.
+        We agree to pay Merit 10% of sessions students book through Merit, and nothing else, and to honor the prices shown to students.
       </label>
       <FormMessage error={state.error} />
       <button

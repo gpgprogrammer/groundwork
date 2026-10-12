@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CourseIcon, courseColors } from "@/components/course-icon";
 import { WorldBand } from "@/components/learn-band";
-import { buttonClass, cn } from "@/components/ui";
+import { buttonClass, cn, plural } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
 import { sessionMinutes } from "@/lib/quick";
 import { nextTopicInCourse } from "@/lib/recommend";
@@ -170,7 +170,7 @@ function CoursePicker({
           <div className="min-w-0">
             <h2 className="headline text-[24px] leading-tight text-ink">{course.title}</h2>
             <p className="tabular text-[14px] text-muted">
-              {done} of {total.length} topics mastered
+              {done} of {plural(total.length, "topic")} mastered
             </p>
           </div>
         </div>

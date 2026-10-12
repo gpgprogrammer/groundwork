@@ -4,7 +4,7 @@ import Link from "next/link";
 import { CourseIcon, courseColors } from "@/components/course-icon";
 import { HeroPill, heroWhite, PlanHero } from "@/components/plan-ui";
 import { PlusBadge, PlusLocked } from "@/components/upgrade";
-import { cn, Notice } from "@/components/ui";
+import { cn, Notice, plural } from "@/components/ui";
 import { hasPlus } from "@/lib/billing/access";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
@@ -197,7 +197,7 @@ export default async function ProgressPage() {
                         {c.title}
                       </Link>
                       <p className="tabular font-brand text-[13.5px] font-bold text-white/85">
-                        {p.done} of {p.total} topics · {pct}%
+                        {p.done} of {plural(p.total, "topic")} · {pct}%
                       </p>
                     </div>
                     <span className="tabular display text-[34px] leading-none">{pct}%</span>

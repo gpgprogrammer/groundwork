@@ -6,7 +6,7 @@ import { CalendarNudge, wantsCalendar } from "@/components/calendar-nudge";
 import { CourseSearch } from "@/components/course-search";
 import { FeedGrid, SortControls } from "@/components/feed";
 import { MasteryButton } from "@/components/mastery-button";
-import { cn, EmptyState, panel, panelLink } from "@/components/ui";
+import { cn, EmptyState, panel, panelLink, plural } from "@/components/ui";
 import { courseColors } from "@/components/course-icon";
 import { getCatalog } from "@/lib/catalog";
 import { pageOf, queryFeed } from "@/lib/feed";
@@ -182,7 +182,7 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
 
           <div className="sticky top-[var(--nav-h)] z-20 -mx-4 flex items-center justify-between gap-3 border-b-2 border-line bg-bg/90 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
             <h2 className="headline text-[18px] text-ink">
-              {total} videos <span className="hidden font-brand text-[14px] font-bold text-muted sm:inline">ranked by how well they teach</span>
+              {plural(total, "lesson")} <span className="hidden font-brand text-[14px] font-bold text-muted sm:inline">ranked by how well they teach</span>
             </h2>
             <SortControls sort={result.sort} length={result.length} />
           </div>

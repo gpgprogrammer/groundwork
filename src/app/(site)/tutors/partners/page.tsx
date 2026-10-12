@@ -4,11 +4,12 @@ import Link from "next/link";
 import { HeroKicker } from "@/components/marketing";
 import { cn, panel } from "@/components/ui";
 import { PartnerForm } from "./partner-form";
+import { PARTNER_FEE } from "@/lib/billing/plans";
 
 export const metadata: Metadata = { title: "Partner with Merit", description: "Tutoring businesses: reach students studying your subjects. Pay only for the students we send you." };
 
 const POINTS = [
-  { Icon: Users, title: "Pay only for results", body: "No listing fees. Merit earns 10% of the first-term revenue from students we refer, as a revenue share or a flat lead fee we agree on." },
+  { Icon: Users, title: "Pay only for results", body: PARTNER_FEE },
   { Icon: LineChart, title: "Tracked referrals", body: "Every click from Merit to your site is logged with the subject, so both of us can see exactly what Merit sends you." },
   { Icon: BadgeCheck, title: "Clearly labeled", body: "Partners carry a Merit Partner label. Rankings of tutors and lessons are never for sale." },
 ];

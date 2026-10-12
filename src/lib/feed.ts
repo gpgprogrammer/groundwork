@@ -3,6 +3,9 @@ import { compareBy, inLength, isSortKey, LENGTHS, type LengthKey, type SortKey }
 import { recommend } from "@/lib/recommend";
 import type { UserState } from "@/lib/types";
 
+import { SHORTS_ENABLED } from "@/lib/flags";
+export { SHORTS_ENABLED };
+
 /** What a video card needs, serializable for client-side infinite scroll. */
 export type FeedVideo = {
   id: string;
@@ -105,7 +108,8 @@ export function queryFeed(catalog: IndexedCatalog, state: UserState | null, para
   if (params.channelId) pool = pool.filter((v) => v.channelId === params.channelId);
   if (courseFilter && (params.topicId || params.channelId)) pool = pool.filter((v) => v.courseId === courseFilter);
 
-  const wantShorts = chip === "shorts";
+  // Shorts only appear when they're switched on (they need an allowlist and review first).
+  const wantShorts = chip === "shorts" && SHORTS_ENABLED;
   pool = pool.filter((v) => v.isShort === wantShorts && inLength(v, length));
   if (chip === "quick") pool = pool.filter((v) => v.durationSec < 600);
   if (chip === "reviews") pool = pool.filter((v) => v.durationSec >= 1800 || /\b(full|complete|unit|final|cram)\b.*\breview\b|\breview\b/i.test(v.title) && v.durationSec >= 900);

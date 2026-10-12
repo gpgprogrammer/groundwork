@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Chips, SortControls } from "@/components/feed";
 import { ChannelAvatar, VideoRow } from "@/components/video-card";
-import { EmptyState, formatViews } from "@/components/ui";
+import { EmptyState, formatViews, plural } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
 import { parseLength, parseSort, toFeedVideo } from "@/lib/feed";
 import { compareBy, inLength } from "@/lib/ranking";
@@ -135,7 +135,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
                     </p>
                     <p className="mt-1.5 text-[16px] font-medium text-ink">{h.topic.title}</p>
                     <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-muted">{h.topic.summary}</p>
-                    <p className="mt-2 text-xs font-medium text-accent-ink">{h.lessons} videos →</p>
+                    <p className="mt-2 text-xs font-medium text-accent-ink">{plural(h.lessons, "lesson")} →</p>
                   </Link>
                 ) : h.kind === "course" ? (
                   <Link key={h.course.id} href={`/courses/${h.course.slug}`} className="rounded-2xl bg-surface p-4 ring-2 ring-line transition-[box-shadow] duration-200 hover:shadow-soft hover:ring-line-strong">
@@ -159,7 +159,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
                     <div className="min-w-0">
                       <p className="text-lg font-medium text-ink">{h.channel.title}</p>
                       <p className="tabular mt-1 text-[13px] text-muted">
-                        {[h.channel.handle, h.channel.subscribers ? `${formatViews(h.channel.subscribers)} subscribers` : null, `${h.lessons} lessons on Merit`].filter(Boolean).join(" · ")}
+                        {[h.channel.handle, h.channel.subscribers ? `${formatViews(h.channel.subscribers)} subscribers` : null, `${plural(h.lessons, "lesson")} on Merit`].filter(Boolean).join(" · ")}
                       </p>
                     </div>
                   </Link>

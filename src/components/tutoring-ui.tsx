@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import type { CreatorStat, Service } from "@/lib/tutoring";
 import { formatPlace } from "@/lib/tutoring";
 import type { Course, TutorWithStats } from "@/lib/types";
-import { Avatar, cn, formatViews, panel, panelLink } from "./ui";
+import { Avatar, cn, formatViews, panel, panelLink, plural } from "./ui";
 import { ChannelAvatar } from "./video-card";
 
 /*
@@ -141,7 +141,7 @@ export function CreatorCard({ c, rank }: { c: CreatorStat; rank: number }) {
       </div>
       <p className="mt-2.5 line-clamp-2 min-h-[2.5em] px-3 font-brand text-[15px] font-extrabold leading-tight text-ink">{c.channel.title}</p>
       <p className="tabular mt-1 px-3 text-[12.5px] font-semibold text-muted">
-        {c.lessons} lessons · {c.topics} topics
+        {plural(c.lessons, "lesson")} · {plural(c.topics, "topic")}
       </p>
       {c.channel.subscribers ? <p className="tabular px-3 text-[12.5px] text-muted">{formatViews(c.channel.subscribers)} subscribers</p> : null}
     </Link>

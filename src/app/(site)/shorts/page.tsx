@@ -3,11 +3,13 @@ import { LearnBand } from "@/components/learn-band";
 import { Chips, FeedGrid } from "@/components/feed";
 import { EmptyState } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
-import { pageOf, queryFeed } from "@/lib/feed";
+import { redirect } from "next/navigation";
+import { pageOf, queryFeed, SHORTS_ENABLED } from "@/lib/feed";
 
-export const metadata: Metadata = { title: "Quick lessons" };
+export const metadata: Metadata = { title: "Quick lessons", robots: { index: false } };
 
 export default async function ShortsPage({ searchParams }: PageProps<"/shorts">) {
+  if (!SHORTS_ENABLED) redirect("/lessons");
   const [catalog, sp] = await Promise.all([getCatalog(), searchParams]);
   const course = typeof sp.course === "string" && catalog.course(sp.course) ? sp.course : undefined;
   const result = queryFeed(catalog, null, { chip: "shorts", courseId: course, sort: "views" });

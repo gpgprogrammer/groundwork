@@ -305,6 +305,9 @@ export function timeAgo(iso: string, now = Date.now()) {
 }
 
 /** "1.2M views", like YouTube. */
+/** "1 lesson", "2 lessons", "1,350 topics": a count with the right word, always with thousands separators. */
+export const plural = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString("en-US")} ${n === 1 ? one : many}`;
+
 export function formatViews(n: number) {
   if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1).replace(/\.0$/, "")}B`;
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1).replace(/\.0$/, "")}M`;

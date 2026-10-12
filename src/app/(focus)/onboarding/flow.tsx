@@ -7,7 +7,7 @@ import { useMemo, useState, useTransition } from "react";
 import { completeOnboarding } from "@/app/actions/learning";
 import { inputClass } from "@/components/form";
 import { CourseIcon, courseColor } from "@/components/course-icon";
-import { Button, cn } from "@/components/ui";
+import { Button, cn, plural } from "@/components/ui";
 
 type CourseOption = { id: string; title: string; exam: string; category: string; hue: number; topics: number; videos: number };
 
@@ -113,7 +113,7 @@ export function OnboardingFlow({ firstName, initial, courses, next }: Props) {
                       <CourseIcon id={c.id} size={36} />
                       <span className="min-w-0 flex-1">
                         <span className="block text-[15px] font-semibold leading-snug text-ink">{c.title}</span>
-                        <span className="tabular block text-xs text-muted">{c.videos.toLocaleString()} videos</span>
+                        <span className="tabular block text-xs text-muted">{plural(c.videos, "lesson")}</span>
                       </span>
                       <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-full", on ? "bg-[var(--c)] text-white" : "ring-2 ring-line-strong")}>
                         {on ? <Check className="check-pop size-4" strokeWidth={3.5} /> : null}

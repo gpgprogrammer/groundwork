@@ -11,7 +11,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     page("", 1, "daily"),
     page("/courses", 0.9),
-    page("/shorts", 0.6),
     page("/about", 0.6, "monthly"),
     page("/tutors", 0.9),
     page("/pricing", 0.8),
