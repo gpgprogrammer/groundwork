@@ -7,6 +7,7 @@ import { EMPTY_SITE_STATS, rankVideo, type RankBreakdown } from "@/lib/ranking";
 import type { Channel, Concept, Contribution, Course, Curriculum, Educator, Library, SiteStats, Topic, Unit, YtVideo } from "@/lib/types";
 import { buildCurriculum } from "./build";
 import { SHORTS_ENABLED } from "@/lib/flags";
+import { isHidden, type AuditEntry } from "./quality";
 import { withRefreshed } from "@/lib/youtube-refresh";
 
 export type RankedVideo = YtVideo & { rank: RankBreakdown; site: SiteStats };
@@ -36,6 +37,21 @@ export type IndexedCatalog = Curriculum & {
 
 const curriculum = buildCurriculum();
 
+/**
+ * Editorial data that ships with the site: the AI audit of every video's topic fit and flags, and the
+ * lessons Merit's editors picked for high-traffic topics (topicId -> video ids, best first).
+ */
+function readJson<T>(file: string, fallback: T): T {
+  try {
+    return JSON.parse(readFileSync(path.join(process.cwd(), "src", "data", file), "utf8")) as T;
+  } catch {
+    return fallback;
+  }
+}
+const audit = readJson<Record<string, AuditEntry>>("video-audit.json", {});
+const picks = readJson<Record<string, string[]>>("picks.json", {});
+const pickedFor = new Map(Object.entries(picks).flatMap(([topicId, ids]) => ids.map((id) => [`${topicId}|${id}`, true] as const)));
+
 let library: Library | null = null;
 export function loadLibrary(): Library {
   if (library && process.env.NODE_ENV === "production") return library;
@@ -60,16 +76,18 @@ function group<T, K>(items: T[], key: (t: T) => K) {
 
 export function indexCatalog(lib: Library, stats: Record<string, SiteStats>): IndexedCatalog {
   const { courses, units, concepts, topics } = curriculum;
-  const live = new Set(courses.map((c) => c.id));
+  const live = new Map(courses.map((c) => [c.id, c]));
+  const topicById = new Map(topics.map((t) => [t.id, t]));
   const videos: RankedVideo[] = lib.videos
-    // Videos imported for high school classes that haven't launched yet stay out of the site,
-    // and so do Shorts while they're switched off.
-    .filter((v) => live.has(v.courseId) && (SHORTS_ENABLED || !v.isShort))
+    // Videos imported for high school classes that haven't launched yet stay out of the site, and so
+    // do Shorts while they're switched off. Ads, spam, and off-topic or non-English videos never show.
+    .filter((v) => live.has(v.courseId) && (SHORTS_ENABLED || !v.isShort) && (v.addedBy || !isHidden(v, audit[v.id])))
     .map((v) => {
       const site = stats[v.id] ?? EMPTY_SITE_STATS;
-      return { ...v, site, rank: rankVideo(v, site) };
+      const pick = Boolean(v.topicId && pickedFor.has(`${v.topicId}|${v.id}`));
+      return { ...v, site, rank: rankVideo(v, site, { course: live.get(v.courseId), topic: v.topicId ? topicById.get(v.topicId) : undefined, audit: audit[v.id], pick }) };
     })
-    .sort((a, b) => b.rank.score - a.rank.score);
+    .sort((a, b) => Number(b.rank.pick) - Number(a.rank.pick) || b.rank.score - a.rank.score || b.views - a.views);
 
   const byId = <T extends { id: string }>(xs: T[]) => new Map(xs.map((x) => [x.id, x]));
   const courseMap = byId(courses);

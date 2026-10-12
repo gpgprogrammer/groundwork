@@ -1,17 +1,20 @@
-import type { SiteStats, YtVideo } from "@/lib/types";
+import { freshness, lengthFit, topicFit, type AuditEntry } from "@/lib/catalog/quality";
+import type { Course, SiteStats, YtVideo } from "@/lib/types";
 
 /**
- * Merit's quality score for a lesson (0–100), built only from Merit's own
- * signals: how squarely it covers the topic (our curriculum mapping), and what
- * Merit students do with it (helpful votes, saves). YouTube's numbers (views,
- * likes, comments) are never folded into a score or turned into new metrics, per
- * the YouTube API Services policies; views are only used as a plain tie-breaker
- * and shown as YouTube reports them.
+ * Merit's quality score for a lesson (0–100), built only from Merit's own signals: how squarely it
+ * teaches the topic at a high school level, whether its length suits one topic, whether it predates
+ * the current course framework, and what Merit students do with it (helpful votes, saves).
+ * YouTube's numbers (views, likes, comments) are never folded into a score or turned into new
+ * metrics, per the YouTube API Services policies; views only break exact ties and are shown as
+ * YouTube reports them. Lessons Merit's editors picked for a topic are pinned above the rest.
  */
 export const RANKING_WEIGHTS = {
-  relevance: 0.5, // how squarely it covers the topic
-  helpful: 0.35, // Merit students' helpful votes
-  saves: 0.15, // saved per open on Merit
+  relevance: 0.45, // how squarely it teaches the topic, at the right level
+  helpful: 0.2, // Merit students' helpful votes
+  length: 0.15, // a sensible length for one topic
+  freshness: 0.1, // made for the current course framework
+  saves: 0.1, // saved per open on Merit
 } as const;
 
 /** Votes needed before Merit shows a "% helpful" figure. */
@@ -43,6 +46,10 @@ export type RankBreakdown = {
   helpfulPct: number | null;
   relevance: number;
   saves: number;
+  length: number;
+  freshness: number;
+  /** Picked by Merit's editors for this topic; pinned above the ranked lessons. */
+  pick: boolean;
 };
 
 export const EMPTY_SITE_STATS: SiteStats = { opens: 0, saves: 0, helpful: 0, notHelpful: 0 };
@@ -60,14 +67,30 @@ export function helpfulPercent(s: SiteStats) {
   return votes >= MIN_VOTES_TO_SHOW ? Math.round((s.helpful / votes) * 100) : null;
 }
 
-export function rankVideo(v: YtVideo, s: SiteStats = EMPTY_SITE_STATS): RankBreakdown {
+export function rankVideo(
+  v: YtVideo,
+  s: SiteStats = EMPTY_SITE_STATS,
+  ctx: { course?: Pick<Course, "id" | "exam">; topic?: { title: string; aliases: string[] }; audit?: AuditEntry; pick?: boolean; now?: number } = {},
+): RankBreakdown {
   const helpful = helpfulShare(s);
-  const relevance = v.topicId ? Math.min(1, v.relevance) : 0.35;
+  const relevance = topicFit(v, ctx.audit, ctx.topic);
   const saves = Math.min(1, (s.saves + 0.5) / (s.opens + 10) / 0.15);
+  const length = lengthFit(v.durationSec);
+  const fresh = freshness(v.publishedAt, ctx.course, ctx.now);
   const w = RANKING_WEIGHTS;
-  const score = 100 * (w.helpful * helpful + w.relevance * relevance + w.saves * saves);
+  const score = 100 * (w.relevance * relevance + w.helpful * helpful + w.length * length + w.freshness * fresh + w.saves * saves);
   const adjusted = isEntertainment(v) ? score * ENTERTAINMENT_FACTOR : score;
-  return { score: Math.round(adjusted * 10) / 10, helpful, votes: s.helpful + s.notHelpful, helpfulPct: helpfulPercent(s), relevance, saves };
+  return {
+    score: Math.round(adjusted * 10) / 10,
+    helpful,
+    votes: s.helpful + s.notHelpful,
+    helpfulPct: helpfulPercent(s),
+    relevance,
+    saves,
+    length,
+    freshness: fresh,
+    pick: Boolean(ctx.pick),
+  };
 }
 
 export const SORTS = {
@@ -97,8 +120,8 @@ export function compareBy<T extends YtVideo & { rank: RankBreakdown }>(sort: Sor
     case "longest":
       return (a, b) => b.durationSec - a.durationSec;
     default:
-      // Ties (common before students vote) keep YouTube's own order of popularity.
-      return (a, b) => b.rank.score - a.rank.score || b.views - a.views;
+      // Editors' picks first, then the score; only exact ties fall back to YouTube's view count.
+      return (a, b) => Number(b.rank.pick) - Number(a.rank.pick) || b.rank.score - a.rank.score || b.views - a.views;
   }
 }
 

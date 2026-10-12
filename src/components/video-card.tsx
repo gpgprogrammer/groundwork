@@ -1,13 +1,13 @@
 "use client";
 
-import { Bookmark, BookmarkCheck, GraduationCap, EllipsisVertical, Link2, ListVideo, ThumbsDown, ThumbsUp, UserRound } from "lucide-react";
+import { Bookmark, BookmarkCheck, GraduationCap, EllipsisVertical, Link2, ListVideo, Star, ThumbsDown, ThumbsUp, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { toggleSave, vote } from "@/app/actions/learning";
 import type { FeedVideo } from "@/lib/feed";
 import { courseColor } from "./course-icon";
-import { ago, cn, formatDuration, formatViews } from "./ui";
+import { cn, formatDuration, formatViews } from "./ui";
 import { useViewerMarks } from "./viewer-marks";
 
 export function ChannelAvatar({ title, src, size = 36 }: { title: string; src: string | null; size?: number }) {
@@ -51,6 +51,15 @@ function Thumb({ v, className }: { v: FeedVideo; className?: string }) {
       />
       <span className="tabular absolute bottom-2 right-2 rounded-lg bg-black/75 px-1.5 py-0.5 text-[12px] font-bold text-white backdrop-blur-sm">{formatDuration(v.durationSec)}</span>
     </div>
+  );
+}
+
+/** One of the lessons Merit's editors picked for this topic. */
+export function PickBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-[12px] font-bold text-accent-ink" title="Picked by Merit's editors for this topic">
+      <Star className="size-3" aria-hidden /> Merit pick
+    </span>
   );
 }
 
@@ -101,7 +110,7 @@ export function VideoCard({ v }: { v: FeedVideo }) {
             <span className="truncate">{v.channelTitle}</span>
           </Link>
           <p className="tabular mt-1.5 truncate text-[12.5px] text-muted">
-            {formatViews(v.views)} views on YouTube{ago(v.publishedAt) ? ` · ${ago(v.publishedAt)}` : ""}
+            {formatViews(v.views)} views on YouTube
           </p>
           {v.addedBy ? (
             <Link href={v.addedBy.href} className="mt-1.5 flex items-center gap-1 truncate text-[12.5px] font-bold text-positive hover:underline">
@@ -132,7 +141,7 @@ export function VideoRow({ v, rank, extra }: { v: FeedVideo; rank?: number; extr
           </h3>
         </a>
         <p className="tabular mt-1 text-[12.5px] text-muted">
-          {formatViews(v.views)} views on YouTube{ago(v.publishedAt) ? ` · ${ago(v.publishedAt)}` : ""}
+          {formatViews(v.views)} views on YouTube
         </p>
         <Link href={`/channel/${v.channelId}`} className="mt-2 flex items-center gap-2 text-[13px] font-medium text-ink-2 hover:text-ink sm:mt-3">
           <ChannelAvatar title={v.channelTitle} src={v.channelThumb} size={22} />
@@ -140,6 +149,7 @@ export function VideoRow({ v, rank, extra }: { v: FeedVideo; rank?: number; extr
         </Link>
         <div className="mt-2.5 hidden flex-wrap items-center gap-1.5 sm:flex">
           <TopicTag v={v} />
+          {v.pick ? <PickBadge /> : null}
           {v.helpfulPct != null ? (
             <span className="rounded-full bg-positive-soft px-2.5 py-1 text-[12px] font-bold text-positive" title="From Merit students' votes">
               {v.helpfulPct}% helpful on Merit

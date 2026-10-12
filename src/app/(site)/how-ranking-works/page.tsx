@@ -7,16 +7,18 @@ import { RANKING_WEIGHTS, SORTS } from "@/lib/ranking";
 
 export const metadata: Metadata = {
   title: "How ranking works",
-  description: "How Merit orders lessons: topic fit and what Merit students find helpful.",
+  description: "How Merit orders lessons: topic fit at a high school level, length, freshness, what Merit students find helpful, and editors' picks.",
 };
 
 const SIGNALS = [
-  ["relevance", "Topic fit", "How squarely the video covers the topic, from its title and description. A focused 8-minute lesson on the chain rule beats a 2-hour unit review that mentions it."],
-  ["helpful", "Helpfulness", "Merit students mark videos as helpful (or not) for studying. Votes are smoothed so a lesson with three votes isn't ranked on luck, and one with three thousand is ranked on what students said. We show a \"% helpful\" figure once at least 5 students have voted."],
-  ["saves", "Saves", "How often Merit students save a lesson to watch again before an exam."],
+  ["relevance", "Topic fit", "How squarely the lesson teaches this topic, at a high school level. A lesson whose title names the topic beats one that only mentions it, unit reviews and roundups rank below focused lessons, and college lectures (like multivariable calculus) or other countries' exam courses are pushed down."],
+  ["helpful", "Helpfulness", "Merit students mark lessons as helpful (or not) after watching. Votes are smoothed so a lesson with three votes isn't ranked on luck, and one with three thousand is ranked on what students said. We show a \"% helpful\" figure once at least 5 students have voted."],
+  ["length", "Length for one topic", "A focused 4 to 20 minute lesson scores highest. Full-unit reviews and multi-hour lectures cover much more than one topic, so they rank lower but stay findable."],
+  ["freshness", "Made for today's course", "Lessons made before a course's current College Board framework (or the digital SAT) may teach what's no longer on the exam, so they score lower."],
+  ["saves", "Saves", "How often Merit students save a lesson to watch again before a test."],
 ] as const;
 
-const TONES = ["bg-accent", "bg-accent/55", "bg-accent/25"];
+const TONES = ["bg-accent", "bg-accent/70", "bg-accent/50", "bg-accent/35", "bg-accent/20"];
 
 export default function HowRankingWorksPage() {
   const sorts = Object.values(SORTS).slice(1);
@@ -25,7 +27,7 @@ export default function HowRankingWorksPage() {
     <WorldBand
       kicker="Ranking"
       title="How ranking works"
-      lede="YouTube orders videos by what keeps people watching. We order them by what helps students study. Each lesson gets a score from 0 to 100 built only from Merit's own signals, recomputed as students use Merit. When two lessons tie, the one with more YouTube views comes first."
+      lede="YouTube orders videos by what keeps people watching. We order them by what helps students study. Each lesson gets a score from 0 to 100 built only from Merit's own signals, recomputed as students use Merit. YouTube views never add to the score; they only break exact ties."
     />
     <Container size="md" className="pb-24 pt-2">
 
@@ -74,6 +76,18 @@ export default function HowRankingWorksPage() {
             );
           })}
         </ol>
+      </section>
+
+      <section aria-labelledby="picks-h" className="mt-14">
+        <h2 id="picks-h" className="headline text-2xl text-ink">
+          Editors&apos; picks and what we leave out
+        </h2>
+        <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
+          On the most-studied topics, Merit&apos;s editors watch the top candidates and pin up to three lessons first, marked &quot;Merit pick.&quot; Everything below them is ranked by the score.
+        </p>
+        <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
+          Some videos never appear at all: ads, hashtag-farmed clips, and lessons that aren&apos;t in English (outside the world language courses).
+        </p>
       </section>
 
       <section aria-labelledby="sort-h" className="mt-14">

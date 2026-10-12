@@ -277,9 +277,10 @@ export function Stars({ rating, className }: { rating: number; className?: strin
 }
 
 export function formatDuration(sec: number) {
-  const m = Math.floor(sec / 60);
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
   const s = Math.round(sec % 60);
-  return `${m}:${String(s).padStart(2, "0")}`;
+  return h ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
 }
 
 export function formatCount(n: number) {

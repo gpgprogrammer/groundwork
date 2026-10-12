@@ -28,6 +28,8 @@ export type FeedVideo = {
   reason?: string;
   /** A teacher on Merit recommended this lesson. */
   addedBy?: { name: string; href: string; note: string };
+  /** One of the lessons Merit's editors picked for this topic. */
+  pick?: boolean;
 };
 
 export function toFeedVideo(catalog: IndexedCatalog, v: RankedVideo, reason?: string): FeedVideo {
@@ -45,6 +47,7 @@ export function toFeedVideo(catalog: IndexedCatalog, v: RankedVideo, reason?: st
     publishedAt: v.publishedAt,
     durationSec: v.durationSec,
     isShort: v.isShort,
+    pick: v.rank.pick || undefined,
     courseId: course?.id ?? null,
     courseShort: course?.shortTitle ?? null,
     topicTitle: topic?.title ?? null,
