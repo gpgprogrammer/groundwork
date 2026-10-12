@@ -1,23 +1,35 @@
 import type { Metadata } from "next";
-import { Clause, Contact, LegalPage } from "@/components/legal";
+import { Clause, CompanyName, Contact, LegalPage } from "@/components/legal";
+import { MIN_AGE } from "@/lib/company";
 
 export const metadata: Metadata = { title: "Privacy Policy", description: "How Merit Learning collects, uses, and protects your information." };
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="September 24, 2026">
+    <LegalPage title="Privacy Policy" updated="October 12, 2026">
       <Clause title="Overview">
-        <p>Merit Learning (&quot;Merit&quot;) helps high school students study for AP exams and the SAT. This policy explains what we collect, why, and the choices you have. We don&apos;t sell personal information and we don&apos;t show third-party ads.</p>
+        <p>
+          Merit Learning (&quot;Merit&quot;), operated by <CompanyName />, helps high school students learn their classes, AP courses, and the SAT. Merit is free for students. This policy explains what we collect, why, and the choices you have. We don&apos;t sell personal information and we don&apos;t show ads.
+        </p>
       </Clause>
       <Clause title="What we collect">
         <p>
-          <strong className="text-ink">Account</strong>: your name, email, and password (stored hashed), or your Google or Apple sign-in. <strong className="text-ink">Learning activity</strong>: courses, lessons you open, saves, helpful votes, topics you mark understood, study plan progress, Exam Sprint answers, and messages you send to Merit AI.{" "}
+          <strong className="text-ink">Account</strong>: your name, email, password (stored hashed) or Google or Apple sign-in, and your birth month and year (to confirm you&apos;re {MIN_AGE} or older). <strong className="text-ink">Learning activity</strong>: courses, lessons you watch, saves, helpful votes, topics you mark understood, learning plan progress, Exam Sprint answers, and messages you send to Merit AI.{" "}
           <strong className="text-ink">Calendar</strong>: if you connect one, the school events on it and the private link you gave us (kept private to your account). <strong className="text-ink">Location</strong>: the city, state, or ZIP you enter to find tutors.{" "}
-          <strong className="text-ink">Payments</strong>: handled by Stripe; we keep a record of what you bought, not your card number. <strong className="text-ink">Tutoring</strong>: bookings and messages between students and tutors. <strong className="text-ink">Uploads</strong>: videos and descriptions teachers and tutors publish, which are public on Merit. <strong className="text-ink">Usage</strong>: pages you visit on Merit, the device type, the country (from your connection, not stored as an IP address), and the site that referred you, tied to a random ID in a first-party cookie.
+          <strong className="text-ink">Tutoring</strong>: bookings and messages between students and tutors; session payments are handled by Stripe, and we keep a record of the payment, not your card number. <strong className="text-ink">Uploads</strong>: videos and descriptions teachers and tutors publish, which are public on Merit.{" "}
+          <strong className="text-ink">Usage</strong>: pages you visit on Merit, the device type, the country (from your connection, not stored as an IP address), and the site that referred you, tied to a random ID in a first-party cookie.
         </p>
       </Clause>
       <Clause title="How we use it">
-        <p>To run Merit: build your plan, rank lessons, personalize practice, answer your questions, process purchases and bookings, prevent abuse, and improve the service. Aggregated, anonymous engagement helps rank lessons for everyone.</p>
+        <p>To run Merit: build your learning plan, rank lessons, personalize practice, answer your questions, handle tutoring bookings, prevent abuse, and improve the service. Aggregated, anonymous engagement helps rank lessons for everyone.</p>
+      </Clause>
+      <Clause title="School calendars and FERPA">
+        <p>
+          When you connect a school calendar (Canvas, Schoology, Blackbaud, Google Classroom, or any calendar link or file), you choose to share it with Merit. Merit reads event titles and dates to find your quizzes, tests, and assignments and match them to lessons. It never sees your grades, never changes your calendar, and never shares calendar data with anyone. Disconnect at any time from My schedule and Merit deletes the link and the events it saved.
+        </p>
+        <p>
+          Merit doesn&apos;t receive education records from schools; students share their own calendars. If a school or district wants to provide Merit to its students, we&apos;ll sign a student data privacy agreement and act as a &quot;school official&quot; under FERPA, using student data only for the school&apos;s purposes. <Contact /> to set one up.
+        </p>
       </Clause>
       <Clause title="Google Calendar">
         <p>
@@ -33,23 +45,33 @@ export default function PrivacyPage() {
       </Clause>
       <Clause title="YouTube API Services">
         <p>
-          Merit uses YouTube API Services to find, describe, and show YouTube lessons. When you watch a lesson on YouTube, Google&apos;s <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-accent-ink underline">Privacy Policy</a> applies. Merit doesn&apos;t access your YouTube or Google account. We store public video details (title, channel, thumbnail, length, view count) to build lesson pages, refresh them regularly, and remove videos that are no longer public. If you signed in with Google, you can revoke Merit&apos;s access at any time from <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-accent-ink underline">Google security settings</a>.
+          Merit uses YouTube API Services to find, describe, and show YouTube lessons. Lessons play in YouTube&apos;s embedded player (in privacy-enhanced mode) or on YouTube, where Google&apos;s{" "}
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-accent-ink underline">
+            Privacy Policy
+          </a>{" "}
+          applies. Merit doesn&apos;t access your YouTube or Google account. We store public video details (title, channel, thumbnail, length, view count) to build lesson pages, refresh them regularly, and remove videos that are no longer public. If you signed in with Google, you can revoke Merit&apos;s access at any time from{" "}
+          <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-accent-ink underline">
+            Google security settings
+          </a>
+          .
         </p>
       </Clause>
       <Clause title="Sharing">
         <p>
-          With service providers that run Merit for us (for example hosting, database, payments, and AI model providers that process Merit AI requests under their own privacy terms and do not use them to train models on your data where that option is available). With a tutor you book: your name, email, and message. With a parent or guardian who bought Merit for you: that the purchase was used. We share information if the law requires it.
+          With service providers that run Merit for us (for example hosting, database, payments for tutoring, and AI model providers that process Merit AI requests under their own privacy terms and do not use them to train models on your data where that option is available). With a tutor you book or message: your name, email, and message. We share information if the law requires it. We never sell it.
         </p>
       </Clause>
       <Clause title="Retention and deletion">
-        <p>We keep your data while your account is active. You can clear your history in your library, disconnect your calendar at any time, and ask us to delete your account.</p>
+        <p>We keep your data while your account is active. You can clear your history in your library, disconnect your calendar at any time, and ask us to delete your account and its data, with or without an account, by contacting us below.</p>
       </Clause>
       <Clause title="Children">
-        <p>Merit is designed for high school students. Children under 13 should use Merit only with a parent or guardian. If you believe a child under 13 gave us information without consent, contact us and we will delete it.</p>
+        <p>
+          Merit is for students {MIN_AGE} and older. Signup asks for a birth month and year and doesn&apos;t create an account for anyone younger, and we don&apos;t knowingly collect personal information from children under {MIN_AGE}. If you believe a child under {MIN_AGE} has given us information, <Contact /> and we will delete it.
+        </p>
       </Clause>
       <Clause title="Contact">
         <p>
-          To exercise your privacy rights or ask a question, <Contact />.
+          To exercise your privacy rights (access, correction, or deletion) or ask a question, <Contact />. You don&apos;t need an account to reach us.
         </p>
       </Clause>
     </LegalPage>

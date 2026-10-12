@@ -6,11 +6,13 @@ import { LogoMark, Wordmark } from "@/components/logo";
 import { Faq } from "@/components/marketing";
 import { IconTile, plural } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
-import { PAID_PLANS } from "@/lib/billing/plans";
+import { PAID_PLANS, TUTOR_FEE } from "@/lib/billing/plans";
+import { CompanyName, Contact, Placeholder } from "@/components/legal";
+import { COMPANY, FOUNDER_STORY } from "@/lib/company";
 
 export const metadata: Metadata = {
   title: "About Merit",
-  description: "Merit Learning helps high school students master their classes, every AP course, and the SAT: the best lessons, an AI study partner, a learning plan for your classes, exam sprints, and real tutors.",
+  description: "Merit Learning helps high school students learn their classes, every AP course, and the SAT: ranked lessons, an AI study partner, a learning plan that follows your class calendar, and Exam Sprints. Free for students, funded by tutoring.",
 };
 
 export default async function AboutPage() {
@@ -35,7 +37,7 @@ export default async function AboutPage() {
             Every student deserves a great teacher and a clear plan.
           </h1>
           <p className="rise mt-5 max-w-2xl text-[17px] leading-relaxed text-white/90 sm:text-[18px]" style={{ ["--i" as string]: 2 }}>
-            Merit brings together the best lessons for every topic in high school classes, AP courses, and the SAT, an AI study partner, and real tutors, then picks the right videos for what you&apos;re learning in class. Learning is free. Planning and exam prep tools are affordable. And when you want a person, the best tutors are a click away.
+            Merit brings together lessons for every topic in high school classes, AP courses, and the SAT, ranked by how well they teach, with an AI study partner and a learning plan that follows your class calendar. It&apos;s free for students, and funded by tutoring, never by students.
           </p>
           <div className="rise mt-8 flex flex-wrap items-center gap-3" style={{ ["--i" as string]: 3 }}>
             <Link href="/signup" className={bandCta}>
@@ -111,8 +113,8 @@ export default async function AboutPage() {
                   <Users className="size-5" />
                 </IconTile>
                 <div>
-                  <h2 className="font-semibold text-ink">Real tutors</h2>
-                  <p className="mt-1 text-[14px] leading-relaxed text-muted">Book top-rated tutors near you or online, or choose from trusted tutoring services, right where you study.</p>
+                  <h2 className="font-semibold text-ink">Tutoring help</h2>
+                  <p className="mt-1 text-[14px] leading-relaxed text-muted">Trusted tutoring services and free teachers for your subject, with Merit tutors coming soon.</p>
                 </div>
               </li>
               <li className="flex gap-4">
@@ -127,6 +129,38 @@ export default async function AboutPage() {
             </ul>
           </article>
         </div>
+      </section>
+
+      {/* How it's funded, and who's behind it */}
+      <section className="mx-auto grid max-w-6xl gap-4 px-4 pb-20 sm:px-6 lg:grid-cols-2 lg:px-8">
+        <article className="rounded-3xl bg-surface p-6 ring-2 ring-line sm:p-8">
+          <h2 className="headline text-2xl text-ink">Free for students, funded by tutoring</h2>
+          <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
+            Everything students use on Merit is free: lessons, Merit AI, the learning plan, calendar sync, and Exam Sprint. Merit earns money only from tutoring. {TUTOR_FEE} Tutoring services that pay Merit are labeled Merit Partner, and nobody can pay to rank higher.
+          </p>
+          <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
+            Merit is a company, not a nonprofit. The .org is about the mission: free learning for every student.
+          </p>
+        </article>
+        <article className="rounded-3xl bg-surface p-6 ring-2 ring-line sm:p-8">
+          <h2 className="headline text-2xl text-ink">Who&apos;s behind Merit</h2>
+          {FOUNDER_STORY ? (
+            <>
+              <p className="mt-3 text-[15px] leading-relaxed text-ink-2">{FOUNDER_STORY.story}</p>
+              <p className="mt-3 font-semibold text-ink">
+                {FOUNDER_STORY.name}, {FOUNDER_STORY.role}
+              </p>
+            </>
+          ) : (
+            <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
+              <Placeholder>founder story: who built Merit and why, in a few sentences</Placeholder>
+            </p>
+          )}
+          <p className="mt-4 text-[15px] leading-relaxed text-ink-2">
+            Merit Learning is operated by <CompanyName />
+            {COMPANY.address ? `, ${COMPANY.address}` : null}. Parents, teachers, and schools can reach us without an account: <Contact />.
+          </p>
+        </article>
       </section>
 
       {/* FAQ */}

@@ -8,6 +8,15 @@ import { Field, FormMessage } from "@/components/form";
 import { LogoMark } from "@/components/logo";
 import { cn } from "@/components/ui";
 import { PLUS, PAID_PLANS } from "@/lib/billing/plans";
+import { ageFrom, MIN_AGE, TOO_YOUNG } from "@/lib/company";
+
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+/** Birth years a student might choose: today back 100 years, newest first. */
+const YEARS = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i);
+/** Remembered for an hour so Google or Apple sign-up can carry the student's answer to onboarding. */
+const rememberBirth = (m: string, y: string) => {
+  document.cookie = `merit_birth=${m}-${y}; path=/; max-age=3600; samesite=lax`;
+};
 
 export type AccountType = "student" | "teacher";
 
@@ -17,11 +26,11 @@ const inputClass =
 
 /** What Merit actually does. Every line is a real feature. */
 const VALUE = [
-  { Icon: ListOrdered, title: "The best lessons, ranked", body: "High school classes, every AP course, and the SAT, with lessons ranked by how well they teach." },
-  { Icon: CalendarCheck, title: "A learning plan for your classes", body: "The best videos for what you're covering in class, and for every quiz and test on your calendar." },
+  { Icon: ListOrdered, title: "Lessons ranked for teaching", body: "High school classes, every AP course, and the SAT, with lessons ranked by how well they teach each topic." },
+  { Icon: CalendarCheck, title: "A learning plan for your classes", body: "Lessons for what you're covering in class, and for every quiz and test on your calendar." },
   { Icon: Sparkles, title: "Merit AI", body: "Explanations, practice questions, and the right lesson for any topic." },
   { Icon: Target, title: "Exam Sprints", body: "A day-by-day plan to exam day, starting with a free diagnostic." },
-  { Icon: Users, title: "Real tutors", body: "Book tutors near you or online, right from Merit." },
+  { Icon: Users, title: "Tutoring help", body: "Trusted tutoring services and free teachers, with Merit tutors coming soon." },
 ] as const;
 
 /**
@@ -102,6 +111,13 @@ const TYPE_NOTE: Record<AccountType, string> = {
 export function SignUpForm({ next, initialType, oauth }: { next?: string; initialType?: AccountType; oauth?: Record<AccountType, ReactNode> }) {
   const [state, action, pending] = useActionState<AuthState, FormData>(signUp, {});
   const [type, setType] = useState<AccountType | null>(initialType ?? null);
+  const [month, setMonth] = useState("");
+  const [year, setYear] = useState("");
+  const [adult, setAdult] = useState(false);
+  const born = month && year ? ageFrom(Number(month), Number(year)) : null;
+  const tooYoung = type === "student" && born !== null && born < MIN_AGE;
+  // Google and Apple sign-up appear once the student's age is in (and old enough), or a teacher confirms they're an adult.
+  const ageReady = type === "teacher" ? adult : born !== null && !tooYoung;
   if (state.message) {
     return (
       <div className="fade rounded-3xl bg-positive-soft p-5 text-[15px] leading-relaxed text-ink">
@@ -151,8 +167,63 @@ export function SignUpForm({ next, initialType, oauth }: { next?: string; initia
           </p>
         ) : null}
       </fieldset>
-      {/* Google / Apple sign-up carries the chosen account type, so it only appears once one is picked. */}
-      {type && oauth ? oauth[type] : null}
+      {type === "student" ? (
+        <fieldset>
+          <legend className="mb-1.5 text-[14px] font-medium text-ink-2">Your birthday</legend>
+          <div className="grid grid-cols-2 gap-3">
+            <select
+              name="birthMonth"
+              required
+              aria-label="Birth month"
+              value={month}
+              onChange={(e) => {
+                setMonth(e.target.value);
+                if (e.target.value && year) rememberBirth(e.target.value, year);
+              }}
+              className={cn(inputClass, "appearance-none")}
+            >
+              <option value="">Month</option>
+              {MONTHS.map((m, i) => (
+                <option key={m} value={i + 1}>
+                  {m}
+                </option>
+              ))}
+            </select>
+            <select
+              name="birthYear"
+              required
+              aria-label="Birth year"
+              value={year}
+              onChange={(e) => {
+                setYear(e.target.value);
+                if (month && e.target.value) rememberBirth(month, e.target.value);
+              }}
+              className={cn(inputClass, "appearance-none")}
+            >
+              <option value="">Year</option>
+              {YEARS.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </div>
+          {tooYoung ? (
+            <p className="fade mt-3 rounded-2xl bg-warn-soft px-4 py-3 text-[14px] leading-relaxed text-ink" role="alert">
+              {TOO_YOUNG}
+            </p>
+          ) : (
+            <p className="mt-1.5 text-[12.5px] text-muted">Merit is for students {MIN_AGE} and older. We only keep the month and year.</p>
+          )}
+        </fieldset>
+      ) : type === "teacher" ? (
+        <label className="flex items-start gap-3 text-[14px] leading-relaxed text-ink-2">
+          <input type="checkbox" name="adult" checked={adult} onChange={(e) => setAdult(e.target.checked)} required className="mt-1 size-[18px] shrink-0 accent-[var(--accent)]" />
+          I&apos;m 18 or older. Teacher and tutor accounts are for adults.
+        </label>
+      ) : null}
+      {/* Google / Apple sign-up carries the chosen account type, so it only appears once one is picked and the age check passes. */}
+      {type && oauth && ageReady ? oauth[type] : null}
       <Field label="Your name">
         <input name="name" required autoComplete="name" autoFocus defaultValue={state.fields?.name} className={inputClass} placeholder="Maya Alvarez" />
       </Field>
@@ -163,7 +234,7 @@ export function SignUpForm({ next, initialType, oauth }: { next?: string; initia
         <input name="password" type="password" required minLength={8} autoComplete="new-password" className={inputClass} />
       </Field>
       <FormMessage error={state.error} />
-      <button type="submit" className={submitClass} disabled={pending || !type}>
+      <button type="submit" className={submitClass} disabled={pending || !type || tooYoung}>
         {pending ? "Creating account…" : type === "teacher" ? "Create teacher account" : type === "student" ? "Create student account" : "Choose an account type"}
       </button>
     </form>

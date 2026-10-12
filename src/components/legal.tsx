@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { WorldBand } from "@/components/learn-band";
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
-import { env } from "@/lib/env";
+import { COMPANY } from "@/lib/company";
 
 const slug = (s: string) =>
   s
@@ -71,15 +71,28 @@ export function Clause({ title, children }: { title: string; children: ReactNode
   );
 }
 
+/** A value that hasn't been filled in yet: obvious in the preview so it can't ship by accident. */
+export function Placeholder({ children }: { children: ReactNode }) {
+  return <mark className="rounded bg-warn-soft px-1 font-semibold text-warn ring-1 ring-warn/40">[{children}]</mark>;
+}
+
+/** "email hello@…" — the way anyone, with or without an account, can reach Merit. */
 export function Contact() {
-  return env.contactEmail ? (
+  return COMPANY.email ? (
     <>
       email{" "}
-      <a href={`mailto:${env.contactEmail}`} className="font-medium text-ink underline underline-offset-2">
-        {env.contactEmail}
+      <a href={`mailto:${COMPANY.email}`} className="font-medium text-ink underline underline-offset-2">
+        {COMPANY.email}
       </a>
     </>
   ) : (
-    <>contact the Merit team from your account settings</>
+    <>
+      email <Placeholder>contact email</Placeholder>
+    </>
   );
+}
+
+/** The legal entity that operates Merit. */
+export function CompanyName() {
+  return COMPANY.name ? <>{COMPANY.name}</> : <Placeholder>company legal name</Placeholder>;
 }

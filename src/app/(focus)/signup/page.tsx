@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/viewer";
 import { AuthShell } from "../auth-shell";
 import { SignUpForm } from "../auth-forms";
+import { MIN_AGE, TOO_YOUNG } from "@/lib/company";
 
 export const metadata: Metadata = { title: "Create your account" };
 
@@ -28,7 +29,7 @@ export default async function SignUpPage({ searchParams }: PageProps<"/signup">)
             <Link href="/privacy" className="underline">
               Privacy Policy
             </Link>
-            . Students under 13 need a parent to create the account.
+            . Merit is for students {MIN_AGE} and older.
           </p>
           <p className="mt-5 text-center text-[15px] text-muted">
             Already have an account?{" "}
@@ -39,6 +40,11 @@ export default async function SignUpPage({ searchParams }: PageProps<"/signup">)
         </>
       }
     >
+      {sp.under13 ? (
+        <p className="mb-5 rounded-2xl bg-warn-soft px-4 py-3 text-[14px] leading-relaxed text-ink" role="alert">
+          {TOO_YOUNG} The account was deleted.
+        </p>
+      ) : null}
       <SignUpForm
         next={next}
         initialType={initialType}

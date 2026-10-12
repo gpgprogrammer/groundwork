@@ -20,6 +20,7 @@ async function signUpTeacher(page: Page, name = "Ms. Rivera") {
   await page.getByLabel("Your name").fill(name);
   await page.getByLabel("Email").fill(unique());
   await page.getByLabel("Password").fill("correct-horse-battery");
+  await page.getByLabel(/I'm 18 or older/).check();
   await page.getByRole("button", { name: "Create teacher account" }).click();
   await page.waitForURL(/\/studio\?welcome=teacher/);
 }

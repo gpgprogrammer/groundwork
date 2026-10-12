@@ -45,6 +45,8 @@ async function signUpAndOnboard(page: Page) {
   await page.getByLabel("Your name").fill("Test Student");
   await page.getByLabel("Email").fill(unique());
   await page.getByLabel("Password").fill("correct-horse-battery");
+  await page.getByLabel("Birth month").selectOption("3");
+  await page.getByLabel("Birth year").selectOption("2009");
   await page.getByRole("button", { name: "Create student account" }).click();
   await page.waitForURL("**/onboarding");
   await page.getByRole("button", { name: /AP Calculus BC/ }).click();

@@ -32,7 +32,7 @@ export function Wordmark({ className, tagline = false, onDark = false }: { class
         </span>
         t
       </span>
-      {tagline ? <span className={`mt-[0.25em] pl-[0.1em] text-[0.46em] font-semibold tracking-[0.2em] ${onDark ? "text-white/75" : "text-[#3b82f6]"}`}>academic tutoring</span> : null}
+      {tagline ? <span className={`mt-[0.25em] pl-[0.1em] text-[0.46em] font-semibold tracking-[0.2em] ${onDark ? "text-white/75" : "text-[#3b82f6]"}`}>learning</span> : null}
     </span>
   );
 }

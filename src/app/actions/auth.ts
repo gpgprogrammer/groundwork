@@ -6,6 +6,8 @@ import { z } from "zod";
 import { clearDemoSession, setDemoSession } from "@/lib/auth/session";
 import { getStore } from "@/lib/data/store";
 import { env, isSupabaseEnabled } from "@/lib/env";
+import { oldEnough, parseBirth, saveBirth } from "@/lib/age";
+import { TOO_YOUNG } from "@/lib/company";
 
 export type AuthState = { error?: string; message?: string; fields?: { name?: string; email?: string } };
 
@@ -34,6 +36,12 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
   if (!parsed.success) return { error: parsed.error.issues[0].message, fields };
   const { name, email, password, accountType } = parsed.data;
   const teacher = accountType === "teacher";
+  // Students give a birth month and year; under-13s are turned away before an account exists.
+  // Teachers and tutors confirm they're adults.
+  const birth = teacher ? null : parseBirth(form.get("birthMonth"), form.get("birthYear"));
+  if (!teacher && !birth) return { error: "Choose your birth month and year.", fields };
+  if (birth && !oldEnough(birth)) return { error: TOO_YOUNG };
+  if (teacher && form.get("adult") !== "on") return { error: "Teacher and tutor accounts are for adults. Check the box to confirm you're 18 or older.", fields };
   // Teachers set up their studio profile; students pick their courses.
   const firstStop = teacher ? "/studio?welcome=teacher" : "/onboarding";
 
@@ -46,12 +54,14 @@ export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
       options: { data: { name, account_type: accountType }, emailRedirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(firstStop)}` },
     });
     if (error) return { error: error.message, fields };
+    if (birth && data.user) await saveBirth(data.user.id, birth);
     if (!data.session) return { message: `Check ${email} for a confirmation link to finish creating your account.` };
   } else {
     const { localCreateUser, localFindUserByEmail } = await import("@/lib/data/demo-store");
     if (await localFindUserByEmail(email)) return { error: "An account with that email already exists. Sign in instead.", fields };
     const user = await localCreateUser(name, email, password, accountType);
     await (await getStore()).ensureProfile({ id: user.id, email: user.email, name: user.name });
+    if (birth) await saveBirth(user.id, birth);
     await setDemoSession(user.id);
   }
   const next = safeNext(form.get("next"), "");

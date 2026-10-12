@@ -49,7 +49,7 @@ export function HeroKicker({ children }: { children: ReactNode }) {
 const DEFAULT_FAQS: [string, string][] = [
   [
     "What is Merit?",
-    "Merit is where high schoolers learn every AP course and the SAT: the best lesson for every topic, an AI study partner, a learning plan for your classes, exam sprints, and real tutors when you want one.",
+    "Merit is where high schoolers learn their classes, every AP course, and the SAT: ranked lessons for every topic, an AI study partner, a learning plan that follows your class calendar, and Exam Sprints before big tests. It's free for students.",
   ],
   [
     "Where do the lessons come from?",
@@ -57,7 +57,7 @@ const DEFAULT_FAQS: [string, string][] = [
   ],
   [
     "How does calendar sync work?",
-    "Paste the private iCal link from Google Calendar, Canvas, Schoology, Apple Calendar, or Outlook, or upload an .ics file. Merit matches quizzes and tests to topics and lines up the right videos for each one in your learning plan.",
+    "Paste the private calendar link from Canvas, Schoology, Blackbaud, Google Calendar, Apple Calendar, or Outlook, or upload a file. Merit matches quizzes and tests to topics and lines up lessons for each one in your learning plan, days before it happens.",
   ],
   [
     "What's free and what's paid?",
@@ -65,7 +65,8 @@ const DEFAULT_FAQS: [string, string][] = [
       ? `Courses, lessons, tutor search, and the AI study partner are free. Merit Plus (learning plan, calendar sync, progress) has a free ${PLUS.trialDays}-day trial, then ${usd(PLUS.monthly)}/month. An Exam Sprint is ${usd(SPRINT.price)} once.`
       : "Everything on Merit is free: courses, lessons, Merit AI, your learning plan, calendar sync, progress, and Exam Sprint. The only thing you pay for is a tutor, if you choose to book one.",
   ],
-  ["Which courses are covered?", "Every AP course offered to high school students, from Calculus and Biology to Art History and Japanese, plus SAT Math and SAT Reading and Writing."],
+  ["Which courses are covered?", "High school classes like Algebra 1, Geometry, and Algebra 2 (regular and honors), every AP course from Calculus and Biology to Art History and Japanese, and SAT Math and Reading and Writing. More high school classes are added as their lessons come in."],
+  ["How is Merit free? Why .org?", "Merit is free for students and funded by tutoring: tutors and tutoring services pay Merit a share of sessions students book through Merit, never students. Merit is a company, not a nonprofit; the .org is about the mission, free learning for every student."],
 ];
 
 export function Faq({ items = DEFAULT_FAQS }: { items?: [string, string][] }) {

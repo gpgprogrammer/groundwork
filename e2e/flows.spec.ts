@@ -57,6 +57,8 @@ async function signUpAndOnboard(page: Page, opts: { calendar?: boolean; trial?: 
   await page.getByLabel("Your name").fill("Test Student");
   await page.getByLabel("Email").fill(unique());
   await page.getByLabel("Password").fill("correct-horse-battery");
+  await page.getByLabel("Birth month").selectOption("3");
+  await page.getByLabel("Birth year").selectOption("2009");
   await page.getByRole("button", { name: "Create student account" }).click();
   await page.waitForURL("**/onboarding");
   await page.getByRole("button", { name: /AP Calculus BC/ }).click();
@@ -79,6 +81,7 @@ async function signUpTeacher(page: Page) {
   await page.getByLabel("Your name").fill("Test Teacher");
   await page.getByLabel("Email").fill(unique());
   await page.getByLabel("Password").fill("correct-horse-battery");
+  await page.getByLabel(/I'm 18 or older/).check();
   await page.getByRole("button", { name: "Create teacher account" }).click();
   await page.waitForURL(/\/studio\?welcome=teacher/);
 }
@@ -547,6 +550,7 @@ test("a teacher account skips student setup and lands in the teacher studio", as
   await page.getByLabel("Your name").fill("Test Teacher");
   await page.getByLabel("Email").fill(unique());
   await page.getByLabel("Password").fill("correct-horse-battery");
+  await page.getByLabel(/I'm 18 or older/).check();
   await page.getByRole("button", { name: "Create teacher account" }).click();
   await page.waitForURL(/\/studio\?welcome=teacher/);
   await expect(page.getByText("Your teacher account is ready")).toBeVisible();
