@@ -1,5 +1,6 @@
 import "server-only";
 import { probeModel } from "@/lib/ai/model";
+import { routingEnabled, tierModel } from "@/lib/ai/router";
 import { createHash } from "node:crypto";
 import { generateText } from "ai";
 import { hasPlus } from "@/lib/billing/access";
@@ -21,7 +22,15 @@ export async function aiAvailable() {
   // A failed check is remembered for 10 minutes, so features that can work without AI don't keep waiting on it.
   if (status && now - status.at < (status.ok ? 30 : 10) * 60000) return status.ok;
   try {
-    await generateText({ model: probeModel(), prompt: "Reply with OK.", maxOutputTokens: 5, abortSignal: AbortSignal.timeout(4000) });
+    // With OpenRouter routing on, check the light tier there; otherwise the single configured model.
+    const light = routingEnabled() ? tierModel("light") : null;
+    await generateText({
+      model: light?.model ?? probeModel(),
+      ...(light?.providerOptions ? { providerOptions: light.providerOptions } : {}),
+      prompt: "Reply with OK.",
+      maxOutputTokens: 5,
+      abortSignal: AbortSignal.timeout(4000),
+    });
     status = { ok: true, at: now };
   } catch (err) {
     status = { ok: false, at: now, reason: err instanceof Error ? err.message.slice(0, 200) : String(err) };

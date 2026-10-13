@@ -1,5 +1,7 @@
 import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, isStepCount, streamText, toUIMessageStream, type UIMessage } from "ai";
-import { chatModel } from "@/lib/ai/model";
+import { recordAnswer } from "@/lib/ai/costs";
+import { anonUser, BASELINE_MODEL, estimateCost, routeQuestion, tierModel } from "@/lib/ai/router";
+import { TIERS, type Tier } from "@/lib/ai/router-rules";
 import { getCatalog } from "@/lib/catalog";
 import { instructions } from "@/lib/ai/context";
 import { aiAvailable, spendMessage } from "@/lib/ai/runtime";
@@ -10,6 +12,20 @@ import { PAID_PLANS } from "@/lib/billing/plans";
 import { hasPlus } from "@/lib/billing/trial";
 
 export const maxDuration = 60;
+
+/** Each answer carries the tier that wrote it, so the next question knows the conversation's level. */
+type AnswerMeta = { tier?: Tier };
+
+function previousTier(messages: UIMessage[]): Tier | null {
+  const last = [...messages].reverse().find((m) => m.role === "assistant");
+  const tier = (last?.metadata as AnswerMeta | undefined)?.tier;
+  return tier && TIERS.includes(tier) ? tier : null;
+}
+
+function lastAssistantText(messages: UIMessage[]) {
+  const m = [...messages].reverse().find((x) => x.role === "assistant");
+  return (m?.parts ?? []).map((p) => (p.type === "text" ? p.text : "")).join(" ").trim();
+}
 
 function lastUserText(messages: UIMessage[]) {
   const m = [...messages].reverse().find((x) => x.role === "user");
@@ -64,17 +80,41 @@ export async function POST(req: Request) {
         writer.write({ type: "finish" });
         return;
       }
+      // Route to the cheapest tier that will answer well (lib/ai/router.ts).
+      const user = anonUser(viewer?.user.id ?? `ip:${ip}`);
+      const route = await routeQuestion({ question, previousTier: previousTier(messages), context: lastAssistantText(messages), user });
+      const tier = tierModel(route.tier, user);
       const result = streamText({
-        model: chatModel(),
+        model: tier.model,
         instructions: instructions(catalog, viewer, body.path),
         messages: await convertToModelMessages(messages),
         tools: buildTools(catalog, viewer),
         stopWhen: isStepCount(5),
-        maxOutputTokens: 1600,
+        maxOutputTokens: tier.maxOutputTokens,
+        ...(tier.providerOptions ? { providerOptions: tier.providerOptions } : {}),
+        onFinish: async ({ totalUsage, providerMetadata, response }) => {
+          if (route.via === "off") return;
+          const inputTokens = totalUsage.inputTokens ?? 0;
+          const outputTokens = totalUsage.outputTokens ?? 0;
+          const model = response.modelId || tier.modelId;
+          // OpenRouter reports what it actually charged, including fallbacks and cache discounts.
+          const reported = (providerMetadata?.openrouter as { usage?: { cost?: number } } | undefined)?.usage?.cost;
+          await recordAnswer({
+            tier: route.tier,
+            via: route.via,
+            model,
+            inputTokens,
+            outputTokens,
+            cachedTokens: totalUsage.inputTokenDetails?.cacheReadTokens ?? 0,
+            cost: typeof reported === "number" ? reported : estimateCost(model, inputTokens, outputTokens),
+            baseline: estimateCost(BASELINE_MODEL, inputTokens, outputTokens),
+          });
+        },
       });
       writer.merge(
         toUIMessageStream({
           stream: result.stream,
+          messageMetadata: ({ part }): AnswerMeta | undefined => (part.type === "start" ? { tier: route.tier } : undefined),
           onError: (err) => {
             console.error("[ai] chat failed", err);
             return "Sorry, something went wrong on our side. Try again in a moment.";

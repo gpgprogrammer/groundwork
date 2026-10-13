@@ -1,5 +1,5 @@
 import "server-only";
-import { contentModel } from "@/lib/ai/model";
+import { taskModel } from "@/lib/ai/router";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 import { aiAvailable } from "@/lib/ai/runtime";
@@ -196,7 +196,7 @@ export async function candidatesWithAi(text: string, courseHints: string[]): Pro
   if (!text.trim() || !(await aiAvailable())) return null;
   try {
     const { output } = await generateText({
-      model: contentModel(),
+      ...taskModel("standard"),
       maxOutputTokens: 4000,
       output: Output.object({ schema: aiSchema }),
       instructions:
@@ -219,7 +219,7 @@ export async function candidatesFromImages(images: { data: Uint8Array; type: str
   if (!images.length || !(await aiAvailable())) return null;
   try {
     const { output } = await generateText({
-      model: contentModel(),
+      ...taskModel("standard"),
       maxOutputTokens: 6000,
       output: Output.object({ schema: aiSchema }),
       instructions:
