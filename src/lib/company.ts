@@ -13,6 +13,9 @@ export const COMPANY = {
  * The founder's story for the About page, in the founder's own words. Null until it's written;
  * the page then shows a placeholder in the preview.
  */
+/** Placeholders are only shown on previews and local builds; production falls back to neutral wording. */
+export const SHOW_PLACEHOLDERS = process.env.VERCEL_ENV !== "production";
+
 export const FOUNDER_STORY: { name: string; role: string; story: string } | null = null;
 
 /** Minimum age to have a student account (COPPA): younger students are turned away at signup. */

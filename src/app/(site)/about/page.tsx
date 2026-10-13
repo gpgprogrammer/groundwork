@@ -8,7 +8,7 @@ import { IconTile, plural } from "@/components/ui";
 import { getCatalog } from "@/lib/catalog";
 import { PAID_PLANS, TUTOR_FEE } from "@/lib/billing/plans";
 import { CompanyName, Contact, Placeholder } from "@/components/legal";
-import { COMPANY, FOUNDER_STORY } from "@/lib/company";
+import { COMPANY, FOUNDER_STORY, SHOW_PLACEHOLDERS } from "@/lib/company";
 
 export const metadata: Metadata = {
   title: "About Merit",
@@ -142,6 +142,7 @@ export default async function AboutPage() {
             Merit is a company, not a nonprofit. The .org is about the mission: free learning for every student.
           </p>
         </article>
+{FOUNDER_STORY || COMPANY.name || COMPANY.email || SHOW_PLACEHOLDERS ? (
         <article className="rounded-3xl bg-surface p-6 ring-2 ring-line sm:p-8">
           <h2 className="headline text-2xl text-ink">Who&apos;s behind Merit</h2>
           {FOUNDER_STORY ? (
@@ -161,6 +162,7 @@ export default async function AboutPage() {
             {COMPANY.address ? `, ${COMPANY.address}` : null}. Parents, teachers, and schools can reach us without an account: <Contact />.
           </p>
         </article>
+        ) : null}
       </section>
 
       {/* FAQ */}

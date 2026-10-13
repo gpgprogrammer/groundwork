@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { WorldBand } from "@/components/learn-band";
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
-import { COMPANY } from "@/lib/company";
+import { COMPANY, SHOW_PLACEHOLDERS } from "@/lib/company";
 
 const slug = (s: string) =>
   s
@@ -85,14 +85,16 @@ export function Contact() {
         {COMPANY.email}
       </a>
     </>
-  ) : (
+  ) : SHOW_PLACEHOLDERS ? (
     <>
       email <Placeholder>contact email</Placeholder>
     </>
+  ) : (
+    <>contact the Merit team from your account settings</>
   );
 }
 
 /** The legal entity that operates Merit. */
 export function CompanyName() {
-  return COMPANY.name ? <>{COMPANY.name}</> : <Placeholder>company legal name</Placeholder>;
+  return COMPANY.name ? <>{COMPANY.name}</> : SHOW_PLACEHOLDERS ? <Placeholder>company legal name</Placeholder> : <>Merit Learning</>;
 }
