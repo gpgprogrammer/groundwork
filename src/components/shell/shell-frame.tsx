@@ -758,7 +758,7 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
         {!signedIn ? (
           <div>
             <Logo href="/" />
-            <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-muted">High school classes, every AP course, and the SAT, with the best lessons, Merit AI, and a plan for every test.</p>
+            <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-muted">High school classes, every AP course, and the SAT, with ranked lessons, Merit AI, and a plan for every test. Free for students.</p>
           </div>
         ) : null}
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">

@@ -183,7 +183,8 @@ test("tutor lists themselves, a student finds them, requests a session, and revi
   await tutorPage.getByLabel(/Headline/).fill("AP Chemistry teacher, 9 years in the classroom");
   await tutorPage.getByLabel("About you").fill("I break chemistry down into the few ideas that explain everything else. Equilibrium and kinetics are my specialty.");
   await tutorPage.locator('label:has(input[value="ap-chemistry"])').click();
-  await tutorPage.getByLabel("In person").check();
+  // In-person tutoring is off until background checks exist; listings are online.
+  await expect(tutorPage.getByText(/In person \(coming later\)/)).toBeVisible();
   await tutorPage.getByRole("textbox", { name: "City" }).fill("Atlanta");
   await tutorPage.getByLabel("State / region").fill("GA");
   await tutorPage.getByLabel(/Rate/).fill("55");
@@ -195,11 +196,7 @@ test("tutor lists themselves, a student finds them, requests a session, and revi
   const student = await browser.newPage();
   await signUpAndOnboard(student);
   await student.goto("/tutors?course=ap-chemistry");
-  await student.getByLabel("City").fill("Atlanta");
-  await student.getByLabel("State or region").fill("GA");
-  await student.getByLabel("ZIP code").fill("30305");
-  await student.getByRole("button", { name: "Set", exact: true }).click();
-  await expect(student.getByRole("heading", { name: /Merit tutors near Atlanta, GA/ })).toBeVisible();
+  await expect(student.getByRole("heading", { name: "Top online tutors" })).toBeVisible();
   await student.locator(`a[href="${tutorUrl}"]`).first().click();
   await student.waitForURL(`**${tutorUrl}`);
   await student.getByText("Send a message instead").click();
@@ -328,11 +325,17 @@ test("a teacher sets up a studio and publishes a study guide on a topic", async 
   await expect(page.locator(`a[href="${guide}"]`)).toBeVisible();
 });
 
-test("Merit Tutors' Videos is available from both Learn and Tutors", async ({ page }) => {
+test("empty shelves stay out of the nav: no Quick lessons or Merit Tutors' Videos", async ({ page }) => {
   for (const path of ["/courses", "/tutors"]) {
     await page.goto(path);
-    await expect(page.getByRole("navigation", { name: "Section" }).getByRole("link", { name: "Merit Tutors' Videos" })).toHaveAttribute("href", "/videos");
+    const nav = page.getByRole("navigation", { name: "Section" });
+    await expect(nav.getByRole("link", { name: "Courses" }).or(nav.getByRole("link", { name: "Find a tutor" })).first()).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Merit Tutors' Videos" })).toHaveCount(0);
+    await expect(nav.getByRole("link", { name: "Quick lessons" })).toHaveCount(0);
   }
+  // Quick lessons are switched off entirely.
+  await page.goto("/shorts");
+  await page.waitForURL("**/lessons");
 });
 
 test("students cannot access Merit video uploads", async ({ page }) => {
@@ -596,18 +599,19 @@ test.describe("landing page", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
   test("signed-out visitors land on the landing page; its paths lead to sign-up and lessons", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Understand what you're studying tonight");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Connect your class calendar");
     // No welcome popup here: the landing page is the invitation.
     await page.waitForTimeout(1200);
     await expect(page.getByRole("dialog")).toHaveCount(0);
-    await expect(page.getByText("The top lessons, ranked by how well they teach")).toBeVisible();
+    await expect(page.getByText("Your class calendar", { exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Connect my calendar/ }).first()).toHaveAttribute("href", /\/signup\?as=student&next=%2Fschedule/);
     await expect(page.getByRole("link", { name: /AP Business with Personal Finance|AP Calculus BC/ }).first()).toBeVisible();
     await expect(page.locator('img[src*="ytimg.com"]').first()).toBeVisible();
     await page.getByRole("link", { name: /Create a teacher account/ }).click();
     await page.waitForURL(/\/signup\?as=teacher/);
     await expect(page.getByRole("radio", { name: /teacher or tutor/ })).toBeChecked();
     await page.goto("/");
-    await page.getByRole("link", { name: "Browse lessons" }).click();
+    await page.getByRole("link", { name: "See the lessons" }).click();
     await page.waitForURL("**/lessons");
   });
 });

@@ -50,6 +50,8 @@ export type RankBreakdown = {
   freshness: number;
   /** Picked by Merit's editors for this topic; pinned above the ranked lessons. */
   pick: boolean;
+  /** The editors' order among their picks (1 = first); 0 when not a pick. */
+  pickOrder: number;
 };
 
 export const EMPTY_SITE_STATS: SiteStats = { opens: 0, saves: 0, helpful: 0, notHelpful: 0 };
@@ -70,7 +72,7 @@ export function helpfulPercent(s: SiteStats) {
 export function rankVideo(
   v: YtVideo,
   s: SiteStats = EMPTY_SITE_STATS,
-  ctx: { course?: Pick<Course, "id" | "exam">; topic?: { title: string; aliases: string[] }; audit?: AuditEntry; pick?: boolean; now?: number } = {},
+  ctx: { course?: Pick<Course, "id" | "exam">; topic?: { title: string; aliases: string[] }; audit?: AuditEntry; pickOrder?: number; now?: number } = {},
 ): RankBreakdown {
   const helpful = helpfulShare(s);
   const relevance = topicFit(v, ctx.audit, ctx.topic);
@@ -89,9 +91,14 @@ export function rankVideo(
     saves,
     length,
     freshness: fresh,
-    pick: Boolean(ctx.pick),
+    pick: Boolean(ctx.pickOrder),
+    pickOrder: ctx.pickOrder ?? 0,
   };
 }
+
+/** Editors' picks first, in their chosen order; 0 when neither or both are equal. */
+export const byPick = (a: Pick<RankBreakdown, "pickOrder">, b: Pick<RankBreakdown, "pickOrder">) =>
+  a.pickOrder && b.pickOrder ? a.pickOrder - b.pickOrder : a.pickOrder ? -1 : b.pickOrder ? 1 : 0;
 
 export const SORTS = {
   best: "Best match",
@@ -121,7 +128,7 @@ export function compareBy<T extends YtVideo & { rank: RankBreakdown }>(sort: Sor
       return (a, b) => b.durationSec - a.durationSec;
     default:
       // Editors' picks first, then the score; only exact ties fall back to YouTube's view count.
-      return (a, b) => Number(b.rank.pick) - Number(a.rank.pick) || b.rank.score - a.rank.score || b.views - a.views;
+      return (a, b) => byPick(a.rank, b.rank) || b.rank.score - a.rank.score || b.views - a.views;
   }
 }
 

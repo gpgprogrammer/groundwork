@@ -20,7 +20,7 @@ test.describe("signup age check (COPPA)", () => {
     await page.getByLabel("Password").fill("correct-horse-battery");
     await page.getByLabel("Birth month").selectOption("1");
     await page.getByLabel("Birth year").selectOption(String(new Date().getFullYear() - 10));
-    await expect(page.getByRole("alert")).toContainText("13 and older");
+    await expect(page.getByRole("alert").filter({ hasText: "13 and older" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Create student account" })).toBeDisabled();
 
     // No account was created.

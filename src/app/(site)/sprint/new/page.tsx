@@ -26,7 +26,7 @@ export default async function NewTestSprintPage({ searchParams }: PageProps<"/sp
           </Link>
           <h1 className="display rise mt-4 text-[40px] sm:text-[52px]">Sprint for a test</h1>
           <p className="rise mt-3 max-w-xl text-[16.5px] leading-relaxed text-white/90" style={{ ["--i" as string]: 1 }}>
-            A day-by-day plan to this test: the best lessons and practice for just the units it covers. Take the free diagnostic first to see where you stand.
+            A day-by-day plan to this test: lessons and practice for just the units it covers. Take the free diagnostic first to see where you stand.
           </p>
         </div>
       </header>

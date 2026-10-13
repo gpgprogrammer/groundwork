@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { cache } from "react";
 import { getStore } from "@/lib/data/store";
-import { EMPTY_SITE_STATS, rankVideo, type RankBreakdown } from "@/lib/ranking";
+import { byPick, EMPTY_SITE_STATS, rankVideo, type RankBreakdown } from "@/lib/ranking";
 import type { Channel, Concept, Contribution, Course, Curriculum, Educator, Library, SiteStats, Topic, Unit, YtVideo } from "@/lib/types";
 import { buildCurriculum } from "./build";
 import { SHORTS_ENABLED } from "@/lib/flags";
@@ -50,7 +50,7 @@ function readJson<T>(file: string, fallback: T): T {
 }
 const audit = readJson<Record<string, AuditEntry>>("video-audit.json", {});
 const picks = readJson<Record<string, string[]>>("picks.json", {});
-const pickedFor = new Map(Object.entries(picks).flatMap(([topicId, ids]) => ids.map((id) => [`${topicId}|${id}`, true] as const)));
+const pickedFor = new Map(Object.entries(picks).flatMap(([topicId, ids]) => ids.map((id, i) => [`${topicId}|${id}`, i + 1] as const)));
 
 let library: Library | null = null;
 export function loadLibrary(): Library {
@@ -84,10 +84,10 @@ export function indexCatalog(lib: Library, stats: Record<string, SiteStats>): In
     .filter((v) => live.has(v.courseId) && (SHORTS_ENABLED || !v.isShort) && (v.addedBy || !isHidden(v, audit[v.id])))
     .map((v) => {
       const site = stats[v.id] ?? EMPTY_SITE_STATS;
-      const pick = Boolean(v.topicId && pickedFor.has(`${v.topicId}|${v.id}`));
-      return { ...v, site, rank: rankVideo(v, site, { course: live.get(v.courseId), topic: v.topicId ? topicById.get(v.topicId) : undefined, audit: audit[v.id], pick }) };
+      const pickOrder = (v.topicId && pickedFor.get(`${v.topicId}|${v.id}`)) || 0;
+      return { ...v, site, rank: rankVideo(v, site, { course: live.get(v.courseId), topic: v.topicId ? topicById.get(v.topicId) : undefined, audit: audit[v.id], pickOrder }) };
     })
-    .sort((a, b) => Number(b.rank.pick) - Number(a.rank.pick) || b.rank.score - a.rank.score || b.views - a.views);
+    .sort((a, b) => byPick(a.rank, b.rank) || b.rank.score - a.rank.score || b.views - a.views);
 
   const byId = <T extends { id: string }>(xs: T[]) => new Map(xs.map((x) => [x.id, x]));
   const courseMap = byId(courses);
