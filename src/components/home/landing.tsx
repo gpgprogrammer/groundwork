@@ -15,20 +15,30 @@ import { PAID_PLANS } from "@/lib/billing/plans";
 import { LessonLink } from "@/components/lesson-player";
 import { CalendarTry } from "@/components/calendar-try";
 
-const QUIZ = { course: "ap-biology", topic: "cellular-respiration" };
 const POPULAR = ["ap-calculus-ab", "ap-biology", "ap-us-history", "sat-math", "ap-psychology", "ap-chemistry"];
 const AI_PROMPTS = ["Explain the chain rule like I'm new to it", "Quiz me on the causes of World War I", "What's on the AP Biology exam?"];
 
+const EXAMPLE = { course: "ap-calculus-bc", topic: "chain-rule" };
+
 /** The signed-out front page: what Merit is, whether it has your course, and how to start. */
 export function Landing({ catalog }: { catalog: IndexedCatalog }) {
+  const course = catalog.course(EXAMPLE.course);
+  const topic = course ? catalog.topicIn(course.id, EXAMPLE.topic) : undefined;
+  const lessons = topic ? catalog.videosForTopic(topic.id).filter((v) => !v.isShort).slice(0, 3) : [];
+  const floating = ["ap-biology", "ap-us-history", "sat-math", "ap-psychology", "ap-chemistry", "ap-spanish-language"].filter((id) => catalog.course(id));
+  const spots: React.CSSProperties[] = [
+    { left: "-6%", top: "8%", rotate: "-8deg" },
+    { right: "-5%", top: "-6%", rotate: "6deg" },
+    { right: "-8%", top: "44%", rotate: "10deg" },
+    { left: "-9%", bottom: "30%", rotate: "-6deg" },
+    { right: "8%", bottom: "-7%", rotate: "4deg" },
+    { left: "22%", top: "-9%", rotate: "-4deg" },
+  ];
   const lessonCount = `${(Math.floor(catalog.videos.length / 1000) * 1000).toLocaleString("en-US")}+`;
   const apCount = catalog.courses.filter((c) => c.exam === "AP").length;
   const classCount = catalog.courses.filter((c) => c.exam === "Class").length;
 
   // Real output of Merit's readiness engine, run on the built-in sample student.
-  const quizCourse = catalog.course(QUIZ.course);
-  const quizTopic = quizCourse ? (catalog.topicIn(quizCourse.id, QUIZ.topic) ?? catalog.topicsForCourse(quizCourse.id)[0]) : undefined;
-  const quizLessons = quizTopic ? catalog.videosForTopic(quizTopic.id).filter((v) => !v.isShort).slice(0, 2) : [];
   const bio = catalog.course("ap-biology");
   const example = bio
     ? readiness(catalog, {
@@ -59,119 +69,79 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:px-8 lg:pb-24 lg:pt-20 grid-cols-[minmax(0,1fr)]">
           <div className="min-w-0">
             <p className="rise inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 font-brand text-[14px] font-extrabold ring-1 ring-inset ring-white/25">
-              <CalendarClock className="size-4" /> Works with {CALENDAR_SYSTEMS.slice(0, 3).join(", ")}, and more
+              <GraduationCap className="size-4" /> High school classes, every AP course, and the SAT
             </p>
             <h1 className="rise display mt-5 text-[46px] sm:text-6xl lg:text-[68px]" style={{ ["--i" as string]: 1 }}>
               Understand what you&apos;re studying tonight.
             </h1>
             <p className="rise mt-5 max-w-lg text-[18px] leading-relaxed text-white/90" style={{ ["--i" as string]: 2 }}>
-              <span className="font-brand font-extrabold text-white">Connect your class calendar and Merit preps you for every quiz before it happens.</span> Lessons for high school classes, every AP course, and the SAT. Free for students.
+              Ranked lessons for every topic, Merit AI when you&apos;re stuck, and a plan for every test. Free for students.
             </p>
-            <div className="rise mt-8 flex flex-wrap items-center gap-3" style={{ ["--i" as string]: 3 }}>
-              <FunnelLink
-                href="/signup?as=student&next=%2Fschedule"
-                funnel="hero-calendar"
-                className="press inline-flex h-14 items-center gap-2 rounded-2xl bg-white px-7 font-brand text-[17px] font-extrabold text-[#15803d] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95"
-              >
-                <CalendarClock className="size-5" /> Connect my calendar
-              </FunnelLink>
-              <a href="#calendar" className="px-2 font-brand text-[15.5px] font-extrabold text-white/90 hover:text-white">
-                How it works
-              </a>
-            </div>
-            <div className="rise mt-8 text-ink" style={{ ["--i" as string]: 4 }}>
-              <p className="mb-2 font-brand text-[14px] font-extrabold text-white/85">Or find your course</p>
+            <div className="rise mt-8 text-ink" style={{ ["--i" as string]: 3 }}>
               <CourseFinder courses={finder} popular={POPULAR} />
             </div>
-          </div>
-
-          <div className="rise relative min-w-0 lg:pl-4" style={{ ["--i" as string]: 2 }}>
-            <CalendarHeroVisual catalog={catalog} />
-          </div>
-        </div>
-      </section>
-
-      {/* Calendar sync, step by step: the hero's promise, explained */}
-      <section id="calendar" className="scroll-mt-24 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--positive)_10%,var(--bg)),var(--bg))]">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-          <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr] grid-cols-[minmax(0,1fr)]">
-            <div className="min-w-0">
-              <p className="inline-flex items-center gap-2 rounded-full bg-positive px-3.5 py-1.5 font-brand text-[14px] font-extrabold text-white">
-                <CalendarClock className="size-4" /> Calendar sync
-              </p>
-              <h2 className="display mt-4 text-[36px] text-ink sm:text-5xl">Connect your school calendar. Merit does the rest.</h2>
-              <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-muted">
-                Merit reads every quiz and test on your class calendar and lines up lessons for each one, days before it&apos;s due. No more guessing what to study.
-              </p>
-              <ol className="mt-7 space-y-3">
-                {[
-                  { title: "Copy your calendar link", body: `From ${CALENDAR_SYSTEMS.slice(0, 4).join(", ")}, or any school calendar.` },
-                  { title: "Paste it into Merit", body: "Or upload the file. It takes about a minute, and it keeps itself up to date." },
-                  { title: "Every quiz gets its lessons", body: "They show up on your home page, in your feed, and in your learning plan." },
-                ].map((s, i) => (
-                  <li key={s.title} className="flex gap-4 rounded-2xl bg-surface p-4 ring-2 ring-line">
-                    <span className="tabular flex size-10 shrink-0 items-center justify-center rounded-xl bg-positive font-brand text-[18px] font-black text-white">{i + 1}</span>
-                    <span className="min-w-0">
-                      <span className="block font-brand text-[16.5px] font-extrabold text-ink">{s.title}</span>
-                      <span className="block text-[14px] leading-relaxed text-muted">{s.body}</span>
-                    </span>
-                  </li>
-                ))}
-              </ol>
-              <div className="mt-7 flex flex-wrap items-center gap-4">
-                <FunnelLink
-                  href="/signup?as=student&next=%2Fschedule"
-                  funnel="calendar-signup"
-                  className="press inline-flex h-14 items-center gap-2 rounded-2xl bg-positive px-7 font-brand text-[17px] font-extrabold text-white [--ledge:var(--positive-press)] hover:brightness-110"
-                >
-                  Connect my calendar <ArrowRight className="size-5" />
-                </FunnelLink>
-                <p className="max-w-xs text-[13px] leading-relaxed text-muted">{PAID_PLANS ? "Part of Merit Plus (try it free) or Exam Sprint." : "Free with your account."}</p>
-              </div>
+            <div className="rise mt-5 flex flex-wrap items-center gap-3" style={{ ["--i" as string]: 4 }}>
+              <FunnelLink
+                href="/signup?as=student"
+                funnel="hero-student"
+                className="press inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-6 font-brand text-[16px] font-extrabold text-[#1d4ed8] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95"
+              >
+                Create a free account
+              </FunnelLink>
+              <FunnelLink
+                href="/lessons"
+                funnel="hero-explore"
+                className="press inline-flex h-12 items-center gap-2 rounded-2xl bg-white/15 px-6 font-brand text-[16px] font-extrabold text-white ring-2 ring-inset ring-white/30 [--ledge:rgb(0_0_0/0.18)] hover:bg-white/25"
+              >
+                Browse lessons <ArrowRight className="size-4" />
+              </FunnelLink>
             </div>
-            {quizCourse && quizTopic && quizLessons.length ? (
-              <div className="relative min-w-0 lg:pl-6">
-                <div aria-hidden className="absolute -left-2 top-8 hidden h-[85%] w-[92%] rotate-[-4deg] rounded-[28px] bg-positive/15 lg:block" />
-                <div className="relative rounded-[28px] bg-surface p-5 shadow-[0_8px_0_0_var(--line)] ring-2 ring-line sm:p-6">
-                  <p className="flex items-center justify-between font-brand text-[13px] font-extrabold text-muted">
-                    On your calendar · Friday <span className="rounded-full bg-bg-subtle px-2.5 py-0.5 text-[11.5px]">Sample</span>
-                  </p>
-                  <p className="mt-2 flex items-center gap-2.5 font-brand text-[19px] font-black leading-snug text-ink">
-                    <CourseIcon id={quizCourse.id} size={32} /> {quizCourse.shortTitle} quiz: {quizTopic.title}
-                    <span className="rounded-md bg-danger-soft px-1.5 py-0.5 text-[11px] font-black uppercase text-danger">Test</span>
-                  </p>
-                  <p className="mt-5 font-brand text-[13px] font-extrabold text-muted">Merit lined up these lessons</p>
-                  <ul className="mt-2 space-y-2">
-                    {quizLessons.map((v) => (
-                      <li key={v.id}>
-                        <LessonLink v={{ id: v.id, title: v.title, channelTitle: v.channelTitle }} className="group flex items-center gap-3 rounded-2xl p-1.5 transition-colors hover:bg-bg-subtle">
-                          <span className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-xl bg-bg-subtle">
-                            <img src={v.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" className="absolute inset-0 size-full object-cover" />
-                            <span className="tabular absolute bottom-1 right-1 rounded-md bg-black/75 px-1 text-[10.5px] font-bold text-white">{formatDuration(v.durationSec)}</span>
-                          </span>
-                          <span className="min-w-0">
-                            <span className="line-clamp-2 text-[14px] font-bold leading-snug text-ink group-hover:underline">{v.title}</span>
-                            <span className="mt-0.5 block truncate text-[12.5px] text-muted">{v.channelTitle}</span>
-                          </span>
-                        </LessonLink>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-4 flex flex-wrap gap-2 border-t-2 border-line pt-4">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-positive-soft px-3 py-1.5 font-brand text-[12.5px] font-extrabold text-positive">
-                      <CalendarCheck className="size-3.5" /> In your learning plan
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-sprint-soft px-3 py-1.5 font-brand text-[12.5px] font-extrabold text-sprint-ink">
-                      <Target className="size-3.5" /> One click to an Exam Sprint
-                    </span>
-                  </div>
+          </div>
+
+          {course && topic && lessons.length ? (
+            <div className="rise relative lg:pl-4" style={{ ["--i" as string]: 2 }}>
+              {floating.map((id, i) => (
+                <span key={id} aria-hidden className="absolute hidden rounded-2xl bg-white/20 p-1 ring-2 ring-white/30 lg:block" style={spots[i]}>
+                  <CourseIcon id={id} size={44} />
+                </span>
+              ))}
+              <div className="relative rounded-[28px] bg-surface p-5 text-ink shadow-[0_8px_0_0_rgb(0_0_0/0.18)] ring-2 ring-white/40 sm:p-6">
+                <Link href={`/courses/${course.slug}/${topic.slug}`} className="group flex items-center gap-3">
+                  <CourseIcon id={course.id} size={44} />
+                  <span className="min-w-0">
+                    <span className="block font-brand text-[13px] font-extrabold text-muted">{course.title}</span>
+                    <span className="block font-brand text-[22px] font-black leading-tight text-ink group-hover:underline">{topic.title}</span>
+                  </span>
+                </Link>
+                <p className="mt-4 font-brand text-[13.5px] font-extrabold text-muted">The top lessons, ranked by how well they teach</p>
+                <ol className="mt-3 space-y-2">
+                  {lessons.map((v, i) => (
+                    <li key={v.id}>
+                      <LessonLink v={{ id: v.id, title: v.title, channelTitle: v.channelTitle, topicTitle: topic.title, topicHref: `/courses/${course.slug}/${topic.slug}` }} className="group flex items-center gap-3 rounded-2xl p-1.5 ring-2 ring-transparent transition-colors hover:bg-bg-subtle hover:ring-line">
+                        <span className="tabular flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2563eb] font-brand text-[13px] font-black text-white">{i + 1}</span>
+                        <span className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-xl bg-bg-subtle sm:w-28">
+                          <img src={v.thumbnail} alt="" referrerPolicy="no-referrer" fetchPriority={i === 0 ? "high" : "auto"} className="absolute inset-0 size-full object-cover" />
+                          <span className="tabular absolute bottom-1 right-1 rounded-md bg-black/75 px-1 text-[10.5px] font-bold text-white">{formatDuration(v.durationSec)}</span>
+                        </span>
+                        <span className="min-w-0">
+                          <span className="line-clamp-2 text-[14px] font-bold leading-snug text-ink">{v.title}</span>
+                          <span className="mt-0.5 block truncate text-[12.5px] text-muted">{v.channelTitle}</span>
+                        </span>
+                      </LessonLink>
+                    </li>
+                  ))}
+                </ol>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link href="/ask" className="press-sm inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#fdeef6] px-3 font-brand text-[13px] font-extrabold text-[#9d174d] [--ledge:#f5c6dd] dark:bg-[#3a1428] dark:text-[#f9a8d4] dark:[--ledge:#5c1f3d]">
+                    <Sparkles className="size-3.5" /> Ask Merit AI
+                  </Link>
+                  <Link href={`/tutors?course=${course.id}`} className="press-sm inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#f3edff] px-3 font-brand text-[13px] font-extrabold text-[#6d28d9] [--ledge:#ddd0fb] dark:bg-[#2a1f45] dark:text-[#c9b5ff] dark:[--ledge:#3d2d63]">
+                    <Users className="size-3.5" /> Find a tutor
+                  </Link>
                 </div>
               </div>
-            ) : null}
-          </div>
-          <CalendarTry className="mt-12 max-w-3xl" />
-          <h3 className="headline mt-16 text-[26px] text-ink">What connecting your calendar does</h3>
-          <CalendarBenefits className="mt-5" />
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -337,6 +307,57 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      {/* Calendar sync, lower on the page: what it does and how to connect */}
+      <section id="calendar" className="scroll-mt-24 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--positive)_10%,var(--bg)),var(--bg))]">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr] grid-cols-[minmax(0,1fr)]">
+            <div className="min-w-0">
+              <p className="inline-flex items-center gap-2 rounded-full bg-positive px-3.5 py-1.5 font-brand text-[14px] font-extrabold text-white">
+                <CalendarClock className="size-4" /> Calendar sync
+              </p>
+              <h2 className="display mt-4 text-[36px] text-ink sm:text-5xl">Connect your school calendar. Merit does the rest.</h2>
+              <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-muted">
+                Merit reads every quiz and test on your class calendar and lines up lessons for each one, days before it&apos;s due. No more guessing what to study.
+              </p>
+              <ol className="mt-7 space-y-3">
+                {[
+                  { title: "Copy your calendar link", body: `From ${CALENDAR_SYSTEMS.slice(0, 4).join(", ")}, or any school calendar.` },
+                  { title: "Paste it into Merit", body: "Or upload the file. It takes about a minute, and it keeps itself up to date." },
+                  { title: "Every quiz gets its lessons", body: "They show up on your home page, in your feed, and in your learning plan." },
+                ].map((s, i) => (
+                  <li key={s.title} className="flex gap-4 rounded-2xl bg-surface p-4 ring-2 ring-line">
+                    <span className="tabular flex size-10 shrink-0 items-center justify-center rounded-xl bg-positive font-brand text-[18px] font-black text-white">{i + 1}</span>
+                    <span className="min-w-0">
+                      <span className="block font-brand text-[16.5px] font-extrabold text-ink">{s.title}</span>
+                      <span className="block text-[14px] leading-relaxed text-muted">{s.body}</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+              <div className="mt-7 flex flex-wrap items-center gap-4">
+                <FunnelLink
+                  href="/signup?as=student&next=%2Fschedule"
+                  funnel="calendar-signup"
+                  className="press inline-flex h-14 items-center gap-2 rounded-2xl bg-positive px-7 font-brand text-[17px] font-extrabold text-white [--ledge:var(--positive-press)] hover:brightness-110"
+                >
+                  Connect my calendar <ArrowRight className="size-5" />
+                </FunnelLink>
+                <p className="max-w-xs text-[13px] leading-relaxed text-muted">{PAID_PLANS ? "Part of Merit Plus (try it free) or Exam Sprint." : "Free with your account."}</p>
+              </div>
+            </div>
+            <div className="relative min-w-0 lg:pl-6">
+              <div aria-hidden className="absolute -left-2 top-8 hidden h-[85%] w-[92%] rotate-[-4deg] rounded-[28px] bg-positive/15 lg:block" />
+              <div className="relative">
+                <CalendarHeroVisual catalog={catalog} />
+              </div>
+            </div>
+          </div>
+          <CalendarTry className="mt-12 max-w-3xl" />
+          <h3 className="headline mt-16 text-[26px] text-ink">What connecting your calendar does</h3>
+          <CalendarBenefits className="mt-5" />
         </div>
       </section>
 

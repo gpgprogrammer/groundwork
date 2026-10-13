@@ -600,19 +600,22 @@ test.describe("landing page", () => {
   test("signed-out visitors land on the landing page; its paths lead to sign-up and lessons", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Understand what you're studying tonight");
-    await expect(page.getByText("Connect your class calendar and Merit preps you for every quiz before it happens.")).toBeVisible();
+    // The first screen is about learning; calendar sync is introduced further down the page.
+    const hero = page.locator("section").first();
+    await expect(hero.getByText(/calendar/i)).toHaveCount(0);
+    await expect(hero.getByText("The top lessons, ranked by how well they teach")).toBeVisible();
     // No welcome popup here: the landing page is the invitation.
     await page.waitForTimeout(1200);
     await expect(page.getByRole("dialog")).toHaveCount(0);
-    await expect(page.getByText("Your class calendar", { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Connect my calendar/ }).first()).toHaveAttribute("href", /\/signup\?as=student&next=%2Fschedule/);
+    await expect(page.locator("#calendar").getByText("Your class calendar", { exact: true })).toBeVisible();
+    await expect(page.locator("#calendar").getByRole("link", { name: /Connect my calendar/ })).toHaveAttribute("href", /\/signup\?as=student&next=%2Fschedule/);
     await expect(page.getByRole("link", { name: /AP Business with Personal Finance|AP Calculus BC/ }).first()).toBeVisible();
     await expect(page.locator('img[src*="ytimg.com"]').first()).toBeVisible();
     await page.getByRole("link", { name: /Create a teacher account/ }).click();
     await page.waitForURL(/\/signup\?as=teacher/);
     await expect(page.getByRole("radio", { name: /teacher or tutor/ })).toBeChecked();
     await page.goto("/");
-    await page.getByRole("link", { name: "See the lessons" }).click();
+    await page.getByRole("link", { name: "Browse lessons" }).first().click();
     await page.waitForURL("**/lessons");
   });
 });

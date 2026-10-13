@@ -8,7 +8,7 @@ import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
   title: { absolute: "Merit Learning: understand what you're studying tonight" },
-  description: "Connect your Canvas, Schoology, or Blackbaud calendar and Merit lines up lessons for every quiz and test, days ahead. Ranked lessons for high school classes, every AP course, and the SAT. Free for students.",
+  description: "Ranked lessons for every topic in high school classes, every AP course, and the SAT, with Merit AI when you're stuck and a plan for every test. Free for students.",
 };
 
 /** Home: the front page for visitors, a personal starting point for students. */

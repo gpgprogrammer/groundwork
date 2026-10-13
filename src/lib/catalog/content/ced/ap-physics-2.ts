@@ -20,6 +20,7 @@ export const physics2: CourseSpec = {
       "ap phys 2"
     ]
   },
+  "unitStart": 9,
   "units": [
     {
       "slug": "thermodynamics",

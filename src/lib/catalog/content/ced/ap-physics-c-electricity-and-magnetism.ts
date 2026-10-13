@@ -22,6 +22,7 @@ export const physicsCEM: CourseSpec = {
       "electricity and magnetism"
     ]
   },
+  "unitStart": 8,
   "units": [
     {
       "slug": "electric-charges-fields-and-gausss-law",

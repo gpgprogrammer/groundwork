@@ -21,6 +21,12 @@ export type UnitSpec = {
 export type CourseSpec = {
   course: Omit<Course, "id">;
   units: UnitSpec[];
+  /**
+   * The College Board's number for the first unit, when it isn't 1: AP Physics 2 continues Physics 1
+   * (Units 9–15) and Physics C: E&M continues Mechanics (Units 8–13), so classes and AP Classroom
+   * use those numbers.
+   */
+  unitStart?: number;
 };
 
 // ── Compact authoring helpers ────────────────────────────────────────────────

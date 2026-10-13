@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Merit Learning: connect your class calendar and Merit preps you for every quiz";
+export const alt = "Merit Learning: understand what you're studying tonight";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -18,7 +18,7 @@ export default function OpenGraphImage() {
           <div style={{ fontSize: 64, fontWeight: 800, letterSpacing: -2 }}>merit</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: 64, fontWeight: 800, letterSpacing: -2.5, lineHeight: 1.05 }}>{"Connect your class calendar. Merit preps you for every quiz."}</div>
+          <div style={{ fontSize: 64, fontWeight: 800, letterSpacing: -2.5, lineHeight: 1.05 }}>{"Understand what you're studying tonight."}</div>
           <div style={{ marginTop: 22, fontSize: 34, opacity: 0.85 }}>Ranked lessons for high school classes, every AP course, and the SAT. Free for students.</div>
         </div>
         <div style={{ display: "flex", fontSize: 28, opacity: 0.8 }}>meritlearning.org</div>

@@ -133,7 +133,16 @@ export function buildCurriculum({ allClasses = process.env.MERIT_ALL_CLASSES ===
     courses.push(course);
     let topicOrder = 0;
     spec.units.forEach((u, ui) => {
-      const unit: Unit = { id: `${course.id}/${u.slug}`, courseId: course.id, slug: u.slug, title: u.title, order: ui + 1, summary: u.summary };
+      // `order` is the College Board's unit number (it usually starts at 1). Titles drop any "Unit 3:"
+      // prefix, since the number is shown on its own.
+      const unit: Unit = {
+        id: `${course.id}/${u.slug}`,
+        courseId: course.id,
+        slug: u.slug,
+        title: u.title.replace(/^(Unit|Unidad)\s+\d+\s*:\s*/i, ""),
+        order: ui + (spec.unitStart ?? 1),
+        summary: u.summary,
+      };
       units.push(unit);
       u.concepts.forEach((c, ci) => {
         const concept: Concept = {
