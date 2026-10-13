@@ -6,6 +6,9 @@ import { money } from "@/components/booking-ui";
 import { PageHeader, SegmentedLinks, cn } from "@/components/ui";
 import { getViewer } from "@/lib/viewer";
 import { loadAnalytics } from "./data";
+import { costHistory } from "@/lib/ai/costs";
+import { routingEnabled, TIER_CONFIG } from "@/lib/ai/router";
+import { TIERS } from "@/lib/ai/router-rules";
 import { LiveRefresh } from "./live-refresh";
 
 export const metadata: Metadata = { title: "Analytics", robots: { index: false } };
@@ -36,8 +39,22 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
   if (!viewer?.isAdmin) notFound();
   const sp = await searchParams;
   const days = RANGES.find((r) => String(r.d) === sp.range)?.d ?? 7;
-  const a = await loadAnalytics(days);
+  const [a, aiDays] = await Promise.all([loadAnalytics(days), costHistory(days)]);
   const t = a.traffic;
+  // Merit AI spend by tier for the range (recorded per answer by /api/ask when OpenRouter routing is on).
+  const ai = TIERS.map((tier) => {
+    const rows = aiDays.map((d) => d.tiers[tier]).filter((x) => x !== undefined);
+    return {
+      tier,
+      answers: rows.reduce((n, r) => n + r.answers, 0),
+      cost: rows.reduce((n, r) => n + r.cost, 0),
+      baseline: rows.reduce((n, r) => n + r.baseline, 0),
+      byRule: rows.reduce((n, r) => n + r.byRule, 0),
+    };
+  });
+  const aiAnswers = ai.reduce((n, r) => n + r.answers, 0);
+  const aiCost = ai.reduce((n, r) => n + r.cost, 0);
+  const aiBaseline = ai.reduce((n, r) => n + r.baseline, 0);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-24 pt-8 sm:px-6 sm:pt-10 lg:px-8">
@@ -94,6 +111,21 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
         <Stat label="Merit AI questions" value={num(t.aiQuestions)} hint={`${num(t.aiAskers)} people asked`} />
         <Stat label="Calendars connected" value={num(t.calendarConnects)} hint={`${num(a.calendars)} students have a calendar`} />
         <Stat label="Exam Sprints started" value={num(a.revenue.sprintsStarted)} />
+      </Group>
+
+      <Group title="Merit AI cost">
+        <Stat label="Answers routed" value={num(aiAnswers)} hint={routingEnabled() ? `${num(ai.reduce((n, r) => n + r.byRule, 0))} placed by rules, the rest by the classifier` : "Routing is off: set OPENROUTER_API_KEY"} />
+        <Stat label="Spent" value={usd(aiCost)} hint={aiAnswers ? `${usd(aiCost / aiAnswers)} per answer` : undefined} />
+        <Stat label="If every answer used the expert" value={usd(aiBaseline)} hint={`${TIER_CONFIG.expert.models[0]} at list price`} />
+        <Stat label="Saved by routing" value={aiBaseline ? pct(1 - aiCost / aiBaseline) : "–"} hint={aiBaseline ? usd(aiBaseline - aiCost) : undefined} />
+        {ai.map((r) => (
+          <Stat
+            key={r.tier}
+            label={`${TIER_CONFIG[r.tier].label}: ${TIER_CONFIG[r.tier].models[0]}`}
+            value={aiAnswers ? pct(r.answers / aiAnswers) : "–"}
+            hint={`${num(r.answers)} answers · ${usd(r.cost)}`}
+          />
+        ))}
       </Group>
 
       <Group title="Money">
@@ -170,6 +202,9 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
     </div>
   );
 }
+
+/** Dollars with enough precision for fractions of a cent. */
+const usd = (n: number) => (n === 0 ? "$0" : n < 0.01 ? `$${n.toFixed(4)}` : n < 10 ? `$${n.toFixed(3)}` : `$${n.toFixed(2)}`);
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
