@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { getViewer } from "@/lib/viewer";
+import { trackServer } from "@/lib/analytics";
 
 async function viewerOr401() {
   const viewer = await getViewer();
@@ -26,6 +27,21 @@ export async function toggleSave(videoId: string): Promise<{ saved: boolean } | 
   const saved = await (await getStore()).toggleSave(viewer.user.id, videoId);
   revalidatePath("/library");
   return { saved };
+}
+
+/** A lesson started playing on Merit: same bookkeeping as the old YouTube redirect (history and analytics). */
+export async function openLesson(videoId: string): Promise<void> {
+  if (!/^[A-Za-z0-9_-]{6,20}$/.test(videoId)) return;
+  const [viewer, catalog] = await Promise.all([getViewer(), getCatalog()]);
+  if (!catalog.video(videoId)) return;
+  if (viewer) {
+    try {
+      await (await getStore()).recordOpen(viewer.user.id, videoId);
+    } catch (err) {
+      console.error("[lesson] failed to record open", err);
+    }
+  }
+  await trackServer("video_open", { u: viewer?.user.id ?? null, x: videoId });
 }
 
 export async function vote(videoId: string, value: 1 | -1 | 0): Promise<{ ok: true } | { error: "auth" }> {

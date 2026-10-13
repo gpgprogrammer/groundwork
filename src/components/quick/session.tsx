@@ -10,6 +10,7 @@ import type { Question } from "@/lib/types";
 import { OpenAskButton } from "../ask/quick-ask";
 import { CalendarNudge } from "../calendar-nudge";
 import { buttonClass, cn, formatDuration } from "../ui";
+import { LessonLink } from "../lesson-player";
 
 type Lesson = { id: string; title: string; thumbnail: string; durationSec: number; channelTitle: string };
 type Props = {
@@ -171,11 +172,7 @@ export function QuickSession({ topic, course, topicHref, lessons, next, alreadyM
             </p>
           ) : null}
           {lessons[0] ? (
-            <a
-              href={`/go/${lessons[0].id}`}
-              target="_blank"
-              rel="noopener"
-              onClick={() => setOpened(true)}
+            <LessonLink v={{ id: lessons[0].id, title: lessons[0].title, channelTitle: lessons[0].channelTitle }} onPlay={() => setOpened(true)}
               className="press group mt-6 block overflow-hidden rounded-3xl bg-surface ring-2 ring-line [--ledge:var(--line)] sm:flex"
             >
               <span className="relative block aspect-video shrink-0 bg-bg-subtle sm:w-[46%]">
@@ -195,7 +192,7 @@ export function QuickSession({ topic, course, topicHref, lessons, next, alreadyM
                   Open lesson <ExternalLink className="size-4" />
                 </span>
               </span>
-            </a>
+            </LessonLink>
           ) : null}
           {lessons.length > 1 ? (
             <div className="mt-6">
@@ -203,7 +200,7 @@ export function QuickSession({ topic, course, topicHref, lessons, next, alreadyM
               <ul className="mt-2 grid gap-2 sm:grid-cols-2">
                 {lessons.slice(1).map((v) => (
                   <li key={v.id}>
-                    <a href={`/go/${v.id}`} target="_blank" rel="noopener" onClick={() => setOpened(true)} className="group flex items-center gap-3 rounded-2xl p-1.5 ring-2 ring-transparent transition-colors hover:bg-bg-subtle hover:ring-line">
+                    <LessonLink v={{ id: v.id, title: v.title, channelTitle: v.channelTitle }} onPlay={() => setOpened(true)} className="group flex items-center gap-3 rounded-2xl p-1.5 ring-2 ring-transparent transition-colors hover:bg-bg-subtle hover:ring-line">
                       <span className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-xl bg-bg-subtle">
                         <img src={v.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" className="absolute inset-0 size-full object-cover" />
                         <span className="tabular absolute bottom-1 right-1 rounded-md bg-black/75 px-1 text-[10.5px] font-bold text-white">{formatDuration(v.durationSec)}</span>
@@ -212,7 +209,7 @@ export function QuickSession({ topic, course, topicHref, lessons, next, alreadyM
                         <span className="line-clamp-2 text-[14px] font-bold leading-snug text-ink group-hover:underline">{v.title}</span>
                         <span className="mt-0.5 block truncate text-[12.5px] text-muted">{v.channelTitle}</span>
                       </span>
-                    </a>
+                    </LessonLink>
                   </li>
                 ))}
               </ul>

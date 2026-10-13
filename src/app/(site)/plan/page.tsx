@@ -44,7 +44,7 @@ export default async function PlanPage() {
               <div className="rotate-[1.5deg] rounded-3xl bg-surface p-4 text-ink shadow-[0_8px_0_0_rgb(0_0_0/0.18)] ring-2 ring-white/40">
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-brand text-[15px] font-extrabold">A learning plan</p>
-                  <span className="rounded-full bg-bg-subtle px-2.5 py-1 font-brand text-[11.5px] font-extrabold text-muted">Example</span>
+                  <span className="rounded-full bg-bg-subtle px-2.5 py-1 font-brand text-[11.5px] font-extrabold text-muted">Sample</span>
                 </div>
                 <ul className="mt-3 space-y-2">
                   {sample.slice(0, 3).map((g) => (
@@ -76,7 +76,7 @@ export default async function PlanPage() {
             <section className="mt-12" aria-label="Example learning plan">
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="headline text-[24px] text-ink">What a learning plan looks like</h2>
-                <span className="rounded-full bg-positive-soft px-3 py-1 font-brand text-[12.5px] font-extrabold text-positive">Example · AP Bio + Calc BC</span>
+                <span className="rounded-full bg-positive-soft px-3 py-1 font-brand text-[12.5px] font-extrabold text-positive">Sample · AP Bio + Calc BC</span>
               </div>
               <p className="mt-1 text-[14.5px] text-muted">A Calc quiz this week and a Bio unit test coming up. Your plan lines up the best videos for both.</p>
               <div className="relative mt-5">

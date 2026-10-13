@@ -18,8 +18,20 @@ import { getViewer, type Viewer } from "@/lib/viewer";
 import { CourseSearch } from "@/components/course-search";
 
 export async function generateMetadata({ params }: PageProps<"/courses/[course]">): Promise<Metadata> {
-  const course = (await getCatalog()).course((await params).course);
-  return course ? { title: course.title, description: course.description } : {};
+  const catalog = await getCatalog();
+  const course = catalog.course((await params).course);
+  if (!course) return {};
+  const units = catalog.unitsForCourse(course.id).length;
+  const topics = catalog.topicsForCourse(course.id).length;
+  const description = `${course.description} ${plural(units, "unit")}, ${plural(topics, "topic")}, with lessons ranked by how well they teach.`;
+  const url = `/courses/${course.slug}`;
+  return {
+    title: course.title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: `${course.title} · Merit Learning`, description, url, type: "website", siteName: "Merit Learning" },
+    twitter: { card: "summary_large_image", title: course.title, description },
+  };
 }
 
 export default async function CoursePage({ params, searchParams }: PageProps<"/courses/[course]">) {
@@ -226,7 +238,7 @@ function Outline({ course, catalog, viewer, nextTopicId, openUnit }: { course: C
                         <span className="block text-[15.5px] font-bold text-ink">{t.title}</span>
                         {upNext ? <span className="font-brand text-[12.5px] font-extrabold text-[var(--c)]">Up next</span> : null}
                       </span>
-                      <span className="tabular shrink-0 text-[13px] font-semibold text-muted">{count ? plural(count, "lesson") : "Lessons from this unit"}</span>
+                      <span className="tabular shrink-0 text-[13px] font-semibold text-muted">{count >= 5 ? plural(count, "lesson") : count ? "Coverage growing" : "Lessons from this unit"}</span>
                       <ArrowRight className="size-4 shrink-0 text-faint transition-transform group-hover/row:translate-x-0.5" />
                     </Link>
                   </li>

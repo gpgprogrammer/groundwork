@@ -10,6 +10,7 @@ import { courseProgress, nextTopicInCourse, startedCourse, topicStatus, whenLabe
 import { upcomingTests } from "@/lib/schedule-model";
 import type { Viewer } from "@/lib/viewer";
 import { greetingName } from "@/lib/names";
+import { LessonLink } from "@/components/lesson-player";
 
 /** Home for a signed-in student: your course worlds, your learning plan, and what's coming. */
 export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalog: IndexedCatalog }) {
@@ -152,7 +153,7 @@ export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalo
               <ul className="space-y-2 bg-white/10 p-3">
                 {planVideos.map(({ v, topic }) => (
                   <li key={v.id}>
-                    <a href={`/go/${v.id}`} target="_blank" rel="noopener" className="flex items-center gap-3 rounded-2xl bg-white p-2 text-[#0f1729] transition-transform active:scale-[0.98]">
+                    <LessonLink v={{ id: v.id, title: v.title, channelTitle: v.channelTitle }} className="flex items-center gap-3 rounded-2xl bg-white p-2 text-[#0f1729] transition-transform active:scale-[0.98]">
                       <span className="relative aspect-video w-20 shrink-0 overflow-hidden rounded-xl bg-[#f2f4f7]">
                         <img src={v.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" className="absolute inset-0 size-full object-cover" />
                       </span>
@@ -160,7 +161,7 @@ export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalo
                         <span className="line-clamp-2 text-[13.5px] font-bold leading-snug">{v.title}</span>
                         <span className="block truncate text-[12px] text-[#5b6475]">{topic}</span>
                       </span>
-                    </a>
+                    </LessonLink>
                   </li>
                 ))}
               </ul>

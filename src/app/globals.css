@@ -257,6 +257,31 @@
     opacity: 0;
   }
 }
+
+/* Calendar → lessons hero: each quiz lights up, then its lessons slide into the queue. */
+@keyframes queue-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px) scale(0.98);
+  }
+}
+@keyframes event-ping {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--positive) 0%, transparent);
+  }
+  35% {
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--positive) 28%, transparent);
+  }
+}
+.queue-in {
+  animation: queue-in 520ms var(--ease-snappy) backwards;
+  animation-delay: calc(400ms + var(--s, 0) * 700ms);
+}
+.event-ping {
+  animation: event-ping 900ms var(--ease-snappy) backwards;
+  animation-delay: calc(250ms + var(--s, 0) * 700ms);
+}
 .fade {
   animation: fade 180ms var(--ease-snappy) backwards;
 }
@@ -348,8 +373,12 @@
   .dialog-in,
   .slide-in,
   .toast-in,
-  .check-pop {
+  .check-pop,
+  .queue-in {
     animation: fade 120ms linear both;
+  }
+  .event-ping {
+    animation: none;
   }
   .skeleton {
     animation: none;

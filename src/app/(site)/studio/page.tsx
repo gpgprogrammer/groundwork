@@ -230,7 +230,7 @@ function StudioLanding() {
             <div className="rotate-[1.5deg] rounded-3xl bg-surface p-4 text-ink shadow-[0_8px_0_0_rgb(0_0_0/0.18)] ring-2 ring-white/40 sm:p-5">
               <div className="flex items-center justify-between gap-2 text-[12.5px] text-muted">
                 <span>AP Calculus BC · The chain rule</span>
-                <span className="rounded-full bg-bg-subtle px-2 py-0.5 text-[11px] font-semibold">Example</span>
+                <span className="rounded-full bg-bg-subtle px-2 py-0.5 text-[11px] font-semibold">Sample</span>
               </div>
               <div className="thumb relative mt-3 aspect-video overflow-hidden rounded-xl" style={{ ["--h" as string]: 255 }}>
                 <div className="thumb-grid absolute inset-0" />

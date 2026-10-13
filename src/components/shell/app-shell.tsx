@@ -7,6 +7,7 @@ import { Tracker } from "../tracker";
 import { WelcomePrompt } from "../welcome-prompt";
 import { schedulePromoFor } from "@/lib/schedule-promo";
 import { ViewerMarksProvider } from "../viewer-marks";
+import { LessonPlayerProvider } from "../lesson-player";
 import { ShellFrame, type ShellData } from "./shell-frame";
 
 /** YouTube-style chrome: top bar with search, collapsible sidebar, content area. */
@@ -39,7 +40,9 @@ export async function AppShell({ children }: { children: ReactNode }) {
     <ViewerMarksProvider
       value={{ signedIn: Boolean(viewer), saved: Object.keys(viewer?.state.saves ?? {}), votes: viewer?.state.votes ?? {} }}
     >
-      <ShellFrame data={data}>{children}</ShellFrame>
+      <LessonPlayerProvider>
+        <ShellFrame data={data}>{children}</ShellFrame>
+      </LessonPlayerProvider>
       <Tracker uid={viewer?.user.id ?? null} />
       {!viewer ? <WelcomePrompt /> : null}
       {promo ? <SchedulePromo showAt={promo.showAt} trialDaysLeft={promo.trialDaysLeft} /> : null}

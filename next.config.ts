@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // The video library, its audit, and editors' picks are read from disk at runtime; ship them with every function.
-  outputFileTracingIncludes: { "/**": ["./src/data/youtube.json", "./src/data/video-audit.json", "./src/data/picks.json"] },
+  outputFileTracingIncludes: { "/**": ["./src/data/youtube.json", "./src/data/video-audit.json", "./src/data/picks.json", "./src/data/explainers.json"] },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "i.ytimg.com" },

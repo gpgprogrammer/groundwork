@@ -9,6 +9,7 @@ import type { FeedVideo } from "@/lib/feed";
 import { courseColor } from "./course-icon";
 import { cn, formatDuration, formatViews } from "./ui";
 import { useViewerMarks } from "./viewer-marks";
+import { LessonLink } from "./lesson-player";
 
 export function ChannelAvatar({ title, src, size = 36 }: { title: string; src: string | null; size?: number }) {
   const [failed, setFailed] = useState(false);
@@ -86,24 +87,24 @@ export function TopicTag({ v, className }: { v: Pick<FeedVideo, "courseId" | "co
 
 export const videoHref = (v: Pick<FeedVideo, "id">) => `/go/${v.id}`;
 
-/** Lesson tile. Opens the video on YouTube in a new tab. */
+/** Lesson tile. Plays the lesson on Merit. */
 export function VideoCard({ v }: { v: FeedVideo }) {
   return (
     <div className="group relative flex min-w-0 flex-col rounded-3xl bg-surface p-2 ring-2 ring-line transition-[box-shadow] duration-200 hover:shadow-[0_5px_0_0_var(--line-strong)] hover:ring-line-strong">
-      <a href={videoHref(v)} target="_blank" rel="noopener" className="block" aria-label={`${v.title} (opens on YouTube)`}>
+      <LessonLink v={v} className="block" aria-label={v.title}>
         <Thumb v={v} />
-      </a>
+      </LessonLink>
       <div className="relative flex flex-1 flex-col px-2 pb-2 pt-3">
         {v.reason ? (
           <p className="truncate text-[12.5px] font-bold text-accent-ink">{v.reason}</p>
         ) : (
           <TopicTag v={v} className="self-start" />
         )}
-        <a href={videoHref(v)} target="_blank" rel="noopener" className="mt-2 pr-8">
+        <LessonLink v={v} className="mt-2 pr-8">
           <h3 className="line-clamp-2 text-[15.5px] font-bold leading-snug text-ink" title={v.title}>
             {v.title}
           </h3>
-        </a>
+        </LessonLink>
         <div className="mt-auto pt-3">
           <Link href={`/channel/${v.channelId}`} className="flex items-center gap-2 text-[13px] font-medium text-ink-2 hover:text-ink">
             <ChannelAvatar title={v.channelTitle} src={v.channelThumb} size={22} />
@@ -131,15 +132,15 @@ export function VideoRow({ v, rank, extra }: { v: FeedVideo; rank?: number; extr
       {rank ? (
         <span className="tabular absolute -left-2 -top-2 z-10 flex size-8 items-center justify-center rounded-full bg-ink font-brand text-[14px] font-black text-bg ring-4 ring-bg">{rank}</span>
       ) : null}
-      <a href={videoHref(v)} target="_blank" rel="noopener" className="w-36 shrink-0 sm:w-[240px] lg:w-[300px]" aria-label={`${v.title} (opens on YouTube)`}>
+      <LessonLink v={v} className="w-36 shrink-0 sm:w-[240px] lg:w-[300px]" aria-label={v.title}>
         <Thumb v={v} />
-      </a>
+      </LessonLink>
       <div className="min-w-0 flex-1 py-1 pr-9">
-        <a href={videoHref(v)} target="_blank" rel="noopener">
+        <LessonLink v={v}>
           <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-ink sm:text-[17px]" title={v.title}>
             {v.title}
           </h3>
-        </a>
+        </LessonLink>
         <p className="tabular mt-1 text-[12.5px] text-muted">
           {formatViews(v.views)} views on YouTube
         </p>
@@ -171,7 +172,7 @@ export function VideoRow({ v, rank, extra }: { v: FeedVideo; rank?: number; extr
 /** Vertical card for quick lessons (YouTube Shorts). */
 export function ShortCard({ v }: { v: FeedVideo }) {
   return (
-    <a href={videoHref(v)} target="_blank" rel="noopener" className="group block min-w-0 rounded-3xl bg-surface p-1.5 ring-2 ring-line transition-[box-shadow] duration-200 hover:shadow-[0_5px_0_0_var(--line-strong)]">
+    <LessonLink v={v} className="group block min-w-0 rounded-3xl bg-surface p-1.5 ring-2 ring-line transition-[box-shadow] duration-200 hover:shadow-[0_5px_0_0_var(--line-strong)]">
       <div className="relative aspect-[9/16] overflow-hidden rounded-[18px] bg-bg-subtle">
         <img src={v.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" className="absolute inset-0 size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
       </div>
@@ -179,7 +180,7 @@ export function ShortCard({ v }: { v: FeedVideo }) {
         <h3 className="mt-2 line-clamp-2 text-[14px] font-bold leading-snug text-ink">{v.title}</h3>
         <p className="tabular mt-0.5 text-[12.5px] text-muted">{formatViews(v.views)} views on YouTube</p>
       </div>
-    </a>
+    </LessonLink>
   );
 }
 
@@ -309,7 +310,7 @@ function MenuLink({ href, icon, children }: { href: string; icon: ReactNode; chi
 /** Compact lesson row for plans, schedules, and Sprint tasks: small thumbnail, title, channel. Opens on YouTube. */
 export function LessonMini({ v }: { v: Pick<FeedVideo, "id" | "title" | "thumbnail" | "durationSec" | "channelTitle"> }) {
   return (
-    <a href={videoHref(v)} target="_blank" rel="noopener" className="group flex items-center gap-3 rounded-2xl p-1.5 transition-colors hover:bg-bg-subtle" aria-label={`${v.title} (opens on YouTube)`}>
+    <LessonLink v={v} className="group flex items-center gap-3 rounded-2xl p-1.5 transition-colors hover:bg-bg-subtle" aria-label={v.title}>
       <span className="relative w-28 shrink-0 overflow-hidden rounded-xl bg-bg-subtle ring-1 ring-inset ring-black/5">
         <img src={v.thumbnail} alt="" className="aspect-video w-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
         <span className="tabular absolute bottom-1 right-1 rounded-md bg-black/75 px-1 text-[10.5px] font-semibold text-white">{formatDuration(v.durationSec)}</span>
@@ -318,6 +319,6 @@ export function LessonMini({ v }: { v: Pick<FeedVideo, "id" | "title" | "thumbna
         <span className="line-clamp-2 text-[13.5px] font-semibold leading-snug text-ink group-hover:underline">{v.title}</span>
         <span className="mt-0.5 block truncate text-[12px] text-muted">{v.channelTitle}</span>
       </span>
-    </a>
+    </LessonLink>
   );
 }

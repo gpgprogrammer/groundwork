@@ -9,6 +9,7 @@ import { REPORT_REASONS } from "@/lib/report-reasons";
 import { removeObjects } from "@/lib/uploads";
 import type { Contribution, Educator, Report, ReportKind } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
+import { getCatalog } from "@/lib/catalog";
 
 async function admin() {
   const viewer = await getViewer();
@@ -40,7 +41,7 @@ export async function rejectUpload(id: string) {
 // ── Reports ──────────────────────────────────────────────────────────────────
 
 const reportSchema = z.object({
-  kind: z.enum(["upload", "tutor", "educator", "guide"]),
+  kind: z.enum(["upload", "tutor", "educator", "guide", "lesson"]),
   targetId: z.string().min(1).max(80),
   reason: z.enum(REPORT_REASONS),
   details: z.string().trim().max(1000),
@@ -55,6 +56,14 @@ async function describe(kind: ReportKind, id: string): Promise<{ href: string; t
   if (kind === "educator") {
     const e = await store.getDoc<Educator>("educators", id);
     return e ? { href: `/educators/${e.id}`, title: `Teacher: ${e.name}` } : null;
+  }
+  if (kind === "lesson") {
+    const catalog = await getCatalog();
+    const v = catalog.video(id);
+    if (!v) return null;
+    const topic = v.topicId ? catalog.topic(v.topicId) : undefined;
+    const course = catalog.course(v.courseId);
+    return { href: topic && course ? `/courses/${course.slug}/${topic.slug}?play=${v.id}` : `/go/${v.id}`, title: `Lesson: ${v.title}` };
   }
   const c = await store.getDoc<Contribution>("contributions", id);
   if (!c || c.status === "removed") return null;
@@ -95,6 +104,8 @@ export async function resolveReport(id: string, action: "remove" | "dismiss") {
   if (!r) return;
   if (action === "remove") {
     if (r.kind === "upload") await rejectUpload(r.targetId);
+    // A YouTube lesson that shouldn't be on Merit (an ad, off-topic, not a lesson) is hidden everywhere.
+    else if (r.kind === "lesson") await store.putDoc("hiddenLessons", r.targetId, { id: r.targetId, reason: r.reason, at: new Date().toISOString() });
     else if (r.kind === "guide") {
       const c = await store.getDoc<Contribution>("contributions", r.targetId);
       if (c) await store.putDoc("contributions", c.id, { ...c, status: "removed" });

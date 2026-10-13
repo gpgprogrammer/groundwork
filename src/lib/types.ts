@@ -399,7 +399,7 @@ export type Lead = {
   reportedAt: string | null;
 };
 
-export type ReportKind = "upload" | "tutor" | "educator" | "guide";
+export type ReportKind = "upload" | "tutor" | "educator" | "guide" | "lesson";
 export type Report = {
   id: string;
   kind: ReportKind;

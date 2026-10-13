@@ -23,6 +23,7 @@ import { refreshStaleSources } from "@/lib/schedule-refresh";
 import { visibleEvents } from "@/lib/schedule-model";
 import type { ScheduleEvent } from "@/lib/types";
 import { getViewer, type Viewer } from "@/lib/viewer";
+import { CalendarTry } from "@/components/calendar-try";
 
 export const metadata: Metadata = { title: "My schedule" };
 
@@ -398,6 +399,7 @@ function SchedulePreview({ catalog, viewer }: { catalog: IndexedCatalog; viewer:
         ) : null}
       </PlanHero>
       <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 lg:px-8">
+        {!viewer ? <CalendarTry className="mb-10 max-w-3xl" /> : null}
         <CalendarBenefits />
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <h2 className="headline text-[24px] text-ink">A week on My schedule</h2>

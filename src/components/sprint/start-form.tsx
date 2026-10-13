@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { useActionState, useState } from "react";
 import { createSprint, type CreateState } from "@/app/actions/sprint";
 import { StudyTimeInput } from "../study-time-input";
+import { TryQuestions } from "./try-questions";
 import { selectClass, inputClass } from "../form";
 import { buttonClass } from "../ui";
 
@@ -36,6 +37,7 @@ export function SprintStartForm({ courses, initialCourse, signedIn }: { courses:
         <a href={`/signup?next=${encodeURIComponent(`/sprint${courseId ? `?course=${courseId}` : ""}`)}`} className={buttonClass("sprint", "lg", "w-full")}>
           Start the free diagnostic <ArrowRight className="size-4" />
         </a>
+        <TryQuestions key={courseId} courseId={courseId} />
         <p className="text-center text-[12.5px] text-muted">Free account, no card. Takes 20 seconds.</p>
       </div>
     );

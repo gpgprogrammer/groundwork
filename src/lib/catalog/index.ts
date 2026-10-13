@@ -172,13 +172,24 @@ export const getCatalog = cache(async () => {
   let stats: Record<string, SiteStats> = {};
   let contributions: Contribution[] = [];
   let educators: Educator[] = [];
+  let hidden: { id: string }[] = [];
   try {
     const store = await getStore();
-    [stats, contributions, educators] = await Promise.all([store.siteStats(), store.listDocs<Contribution>("contributions"), store.listDocs<Educator>("educators")]);
+    [stats, contributions, educators, hidden] = await Promise.all([
+      store.siteStats(),
+      store.listDocs<Contribution>("contributions"),
+      store.listDocs<Educator>("educators"),
+      // Lessons admins took down after a student's report.
+      store.listDocs<{ id: string }>("hiddenLessons"),
+    ]);
   } catch (err) {
     console.error("[catalog] live data unavailable", err);
   }
-  const lib = await withRefreshed(loadLibrary());
+  let lib = await withRefreshed(loadLibrary());
+  if (hidden.length) {
+    const gone = new Set(hidden.map((h) => h.id));
+    lib = { ...lib, videos: lib.videos.filter((v) => !gone.has(v.id)) };
+  }
   return indexCatalog(contributions.length ? withContributions(lib, contributions, educators) : lib, stats);
 });
 

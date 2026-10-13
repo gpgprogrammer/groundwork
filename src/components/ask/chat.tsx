@@ -8,8 +8,10 @@ import { useEffect, useRef, useState } from "react";
 import type { LessonCard, QuizCard } from "@/lib/ai/tools";
 import { PAID_PLANS } from "@/lib/billing/plans";
 import { LogoMark } from "../logo";
+import { useViewerMarks } from "../viewer-marks";
 import { cn, formatViews } from "../ui";
 import { Markdown } from "./markdown";
+import { LessonLink } from "../lesson-player";
 
 const STORE_KEY = "merit:ask";
 
@@ -22,7 +24,8 @@ function errorText(err: Error | undefined) {
   return err.message && err.message.length < 200 ? err.message : "Something went wrong. Try again.";
 }
 
-export function Chat({ compact = false, suggestions, placeholder = "Ask anything about AP or SAT…", autoFocus }: { compact?: boolean; suggestions: string[]; placeholder?: string; autoFocus?: boolean }) {
+export function Chat({ compact = false, suggestions, placeholder = "Ask anything about your classes…", autoFocus }: { compact?: boolean; suggestions: string[]; placeholder?: string; autoFocus?: boolean }) {
+  const { signedIn } = useViewerMarks();
   const { messages, sendMessage, status, stop, error, setMessages, regenerate } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/ask",
@@ -70,7 +73,7 @@ export function Chat({ compact = false, suggestions, placeholder = "Ask anything
               <Sparkles className={compact ? "size-6" : "size-10"} />
             </span>
             {compact ? <p className="headline mt-4 text-[22px] text-ink">What are we studying?</p> : <h1 className="display mt-6 text-[36px] text-ink sm:text-5xl">What are we studying?</h1>}
-            <p className={cn("mt-1 text-muted", compact ? "text-[13px]" : "text-[15px]")}>Explanations, practice questions, and the best lesson for any AP or SAT topic.</p>
+            <p className={cn("mt-1 text-muted", compact ? "text-[13px]" : "text-[15px]")}>Explanations, practice questions, and the right lesson for any topic in your classes, AP courses, or the SAT.{signedIn ? null : " Try it now, no account needed."}</p>
             <div className={cn("mt-6 grid gap-2", compact ? "" : "w-full max-w-2xl sm:grid-cols-2")}>
               {suggestions.map((s) => (
                 <button key={s} onClick={() => send(s)} className="press rounded-2xl bg-surface px-4 py-3.5 text-left text-[14.5px] font-bold text-ink ring-2 ring-inset ring-line [--ledge:var(--line)] hover:bg-[#fdeef6] hover:ring-[#f9a8d4] dark:hover:bg-[#3d1830]">
@@ -260,7 +263,7 @@ function Lessons({ lessons, compact }: { lessons: LessonCard[]; compact: boolean
   return (
     <div className={cn("grid gap-2", !compact && "sm:grid-cols-2")}>
       {lessons.map((l) => (
-        <a key={l.id} href={`/go/${l.id}`} target="_blank" rel="noopener" className="group flex gap-3 rounded-2xl bg-surface p-2 ring-2 ring-line transition-[box-shadow] hover:shadow-soft">
+        <LessonLink v={{ id: l.id, title: l.title, channelTitle: l.channel, topicTitle: l.topic, topicHref: l.topicHref }} key={l.id} className="group flex gap-3 rounded-2xl bg-surface p-2 ring-2 ring-line transition-[box-shadow] hover:shadow-soft">
           <span className="relative w-28 shrink-0 overflow-hidden rounded-lg bg-bg-subtle">
             <img src={l.thumbnail} alt="" className="aspect-video w-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
             <span className="tabular absolute bottom-1 right-1 rounded bg-black/80 px-1 text-[10.5px] font-medium text-white">{l.minutes} min</span>
@@ -271,7 +274,7 @@ function Lessons({ lessons, compact }: { lessons: LessonCard[]; compact: boolean
               {l.channel} · {formatViews(l.views)} views{l.helpfulPct != null ? ` · ${l.helpfulPct}% of Merit students found it helpful` : ""}
             </span>
           </span>
-        </a>
+        </LessonLink>
       ))}
     </div>
   );

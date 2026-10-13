@@ -200,7 +200,7 @@ export default async function SprintHome({ searchParams }: PageProps<"/sprint">)
           <div className={cn(panel, "p-6")}>
             <div className="flex items-center justify-between">
               <p className="font-brand text-[16px] font-extrabold text-ink">AP Biology readiness</p>
-              <span className="rounded-full bg-bg-subtle px-2.5 py-0.5 font-brand text-[11.5px] font-extrabold text-muted">Example</span>
+              <span className="rounded-full bg-bg-subtle px-2.5 py-0.5 font-brand text-[11.5px] font-extrabold text-muted">Sample</span>
             </div>
             <div className="mt-5">
               <ReadinessBars units={example} compact />

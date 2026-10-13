@@ -22,11 +22,73 @@ import { ExamCta } from "@/components/upgrade";
 import { daysUntil, examDateFor } from "@/lib/exams";
 import { sessionMinutes } from "@/lib/quick";
 import { getViewer } from "@/lib/viewer";
+import { AutoPlay, LessonLink } from "@/components/lesson-player";
+import { explainerFor } from "@/lib/explainers";
+
+/** Below this many lessons a topic says "Coverage growing" instead of showing a small count. */
+const THIN = 5;
 
 export async function generateMetadata({ params }: PageProps<"/courses/[course]/[topic]">): Promise<Metadata> {
-  const { course, topic: slug } = await params;
-  const topic = (await getCatalog()).topicIn(course, slug);
-  return topic ? { title: topic.title, description: topic.summary } : {};
+  const { course: courseSlug, topic: slug } = await params;
+  const catalog = await getCatalog();
+  const course = catalog.course(courseSlug);
+  const topic = course ? catalog.topicIn(course.id, slug) : undefined;
+  if (!course || !topic) return {};
+  const count = catalog.videosForTopic(topic.id).filter((v) => !v.isShort).length;
+  const title = `${topic.title} · ${course.shortTitle}`;
+  const description = `${topic.summary}${count >= 5 ? ` ${plural(count, "lesson")} ranked by how well they teach.` : ""}`;
+  const url = `/courses/${course.slug}/${topic.slug}`;
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title, description, url, type: "article", siteName: "Merit Learning" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
+
+const iso8601 = (sec: number) => `PT${Math.floor(sec / 3600) ? `${Math.floor(sec / 3600)}H` : ""}${Math.floor((sec % 3600) / 60)}M${Math.round(sec % 60)}S`;
+
+/** Structured data for search engines: where this topic sits, and its ranked lessons as videos. */
+function TopicJsonLd({ course, unitTitle, topic, lessons }: { course: { title: string; slug: string }; unitTitle: string; topic: { title: string; slug: string; summary: string }; lessons: { id: string; title: string; description: string; thumbnail: string; publishedAt: string; durationSec: number; channelTitle: string }[] }) {
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://meritlearning.org";
+  const url = `${base}/courses/${course.slug}/${topic.slug}`;
+  const data = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Courses", item: `${base}/courses` },
+        { "@type": "ListItem", position: 2, name: course.title, item: `${base}/courses/${course.slug}` },
+        { "@type": "ListItem", position: 3, name: topic.title, item: url },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: `${topic.title} lessons, ranked`,
+      description: topic.summary,
+      about: { "@type": "Thing", name: topic.title, description: `${course.title}, ${unitTitle}` },
+      itemListOrder: "https://schema.org/ItemListOrderDescending",
+      itemListElement: lessons.map((v, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        item: {
+          "@type": "VideoObject",
+          name: v.title,
+          description: v.description || v.title,
+          thumbnailUrl: v.thumbnail,
+          uploadDate: v.publishedAt,
+          duration: iso8601(v.durationSec),
+          embedUrl: `https://www.youtube-nocookie.com/embed/${v.id}`,
+          contentUrl: `https://www.youtube.com/watch?v=${v.id}`,
+          author: { "@type": "Person", name: v.channelTitle },
+        },
+      })),
+    },
+  ];
+  // Escape "<" so a title can never close the script tag.
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }} />;
 }
 
 export default async function TopicPage({ params, searchParams }: PageProps<"/courses/[course]/[topic]">) {
@@ -44,6 +106,9 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
   const page = pageOf(catalog, result, 0, 20);
   const query = new URLSearchParams({ topic: topic.id, sort: result.sort, ...(result.length !== "any" ? { length: result.length } : {}) }).toString();
   const total = catalog.videosForTopic(topic.id).filter((v) => !v.isShort).length;
+  const explainer = explainerFor(topic.sameAs ?? topic.id);
+  // ?play=<id> (from the homepage and shared links) opens that lesson in the player.
+  const autoplay = typeof sp.play === "string" ? catalog.videosForTopic(topic.id).find((v) => v.id === sp.play) : undefined;
 
   const courseTopics = catalog.topicsForCourse(course.id);
   const next = courseTopics.slice(courseTopics.findIndex((t) => t.id === topic.id) + 1).find((t) => catalog.videosForTopic(t.id).length);
@@ -68,6 +133,8 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
 
   return (
     <div className="pb-16" style={{ ["--c" as string]: from, ["--c2" as string]: to }}>
+      <TopicJsonLd course={course} unitTitle={unit.title} topic={topic} lessons={catalog.videosForTopic(topic.id).filter((v) => !v.isShort).slice(0, 10)} />
+      {autoplay ? <AutoPlay v={{ id: autoplay.id, title: autoplay.title, channelTitle: autoplay.channelTitle, topicTitle: topic.title }} /> : null}
       {/* Topic hero in the course's colors */}
       <header className="relative overflow-hidden bg-[linear-gradient(135deg,var(--c),var(--c2))] text-white">
         <div aria-hidden className="pointer-events-none absolute -right-20 -top-28 size-96 rounded-full border-[48px] border-white/[0.08]" />
@@ -115,10 +182,7 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
           {/* What you can do with this topic */}
           <div className="rise mt-3 grid grid-cols-2 gap-2.5 lg:grid-cols-4" style={{ ["--i" as string]: 3 }}>
             {top ? (
-              <a
-                href={`/go/${top.id}`}
-                target="_blank"
-                rel="noopener"
+              <LessonLink v={{ id: top.id, title: top.title, channelTitle: top.channelTitle }}
                 className="press flex items-center gap-3 rounded-2xl bg-white p-2.5 pr-4 text-[color-mix(in_oklab,var(--c2)_85%,black)] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95 col-span-2 lg:col-span-1"
               >
                 <span className="relative w-20 shrink-0 overflow-hidden rounded-xl bg-bg-subtle">
@@ -131,7 +195,7 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
                   <span className="block font-brand text-[15px] font-extrabold leading-tight">Watch the top lesson</span>
                   <span className="block truncate text-[12.5px] font-medium text-muted">{top.channelTitle}</span>
                 </span>
-              </a>
+              </LessonLink>
             ) : null}
             <OpenAskButton className="press flex h-full min-h-14 items-center gap-3 rounded-2xl bg-white/15 px-4 text-left font-brand text-[15px] font-extrabold text-white ring-2 ring-inset ring-white/30 [--ledge:rgb(0_0_0/0.18)] hover:bg-white/25">
               <Sparkles className="size-5 shrink-0" /> Ask Merit AI
@@ -153,6 +217,19 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
           {calendarNudge ? (
             <CalendarNudge variant="strip" signedIn={Boolean(viewer)} title="Quiz coming up?" body="Connect your calendar: Merit preps you for every quiz and test." className="-mt-4 mb-8 xl:hidden" />
           ) : null}
+          {explainer ? (
+            <section className="mb-8 rounded-3xl bg-surface p-5 ring-2 ring-line sm:p-6" aria-labelledby="explainer-h">
+              <h2 id="explainer-h" className="headline text-[20px] text-ink">
+                {topic.title}, explained
+              </h2>
+              <div className="mt-3 max-w-[68ch] space-y-3 text-[15.5px] leading-relaxed text-ink-2">
+                {explainer.map((p, i) => (
+                  <p key={i}>{p}</p>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
           {guides.length ? (
             <section className="mb-8">
               <h2 className="headline flex items-center gap-2 text-[20px] text-ink">
@@ -182,7 +259,18 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
 
           <div className="sticky top-[var(--nav-h)] z-20 -mx-4 flex items-center justify-between gap-3 border-b-2 border-line bg-bg/90 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
             <h2 className="headline text-[18px] text-ink">
-              {plural(total, "lesson")} <span className="hidden font-brand text-[14px] font-bold text-muted sm:inline">ranked by how well they teach</span>
+              {total >= THIN ? (
+                <>
+                  {plural(total, "lesson")} <span className="hidden font-brand text-[14px] font-bold text-muted sm:inline">ranked by how well they teach</span>
+                </>
+              ) : (
+                <>
+                  Coverage growing{" "}
+                  <Link href="/studio/video" className="font-brand text-[14px] font-bold text-accent-ink hover:underline">
+                    Teachers, add a lesson
+                  </Link>
+                </>
+              )}
             </h2>
             <SortControls sort={result.sort} length={result.length} />
           </div>
