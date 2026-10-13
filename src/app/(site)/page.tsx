@@ -7,7 +7,7 @@ import { getCatalog } from "@/lib/catalog";
 import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
-  title: { absolute: "Merit Learning: connect your class calendar, prep for every quiz" },
+  title: { absolute: "Merit Learning: understand what you're studying tonight" },
   description: "Connect your Canvas, Schoology, or Blackbaud calendar and Merit lines up lessons for every quiz and test, days ahead. Ranked lessons for high school classes, every AP course, and the SAT. Free for students.",
 };
 

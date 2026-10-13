@@ -599,7 +599,8 @@ test.describe("landing page", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
   test("signed-out visitors land on the landing page; its paths lead to sign-up and lessons", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Connect your class calendar");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Understand what you're studying tonight");
+    await expect(page.getByText("Connect your class calendar and Merit preps you for every quiz before it happens.")).toBeVisible();
     // No welcome popup here: the landing page is the invitation.
     await page.waitForTimeout(1200);
     await expect(page.getByRole("dialog")).toHaveCount(0);

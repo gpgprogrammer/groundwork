@@ -61,11 +61,11 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
             <p className="rise inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 font-brand text-[14px] font-extrabold ring-1 ring-inset ring-white/25">
               <CalendarClock className="size-4" /> Works with {CALENDAR_SYSTEMS.slice(0, 3).join(", ")}, and more
             </p>
-            <h1 className="rise display mt-5 text-[40px] sm:text-[54px] lg:text-[60px]" style={{ ["--i" as string]: 1 }}>
-              Connect your class calendar. Merit preps you for every quiz before it happens.
+            <h1 className="rise display mt-5 text-[46px] sm:text-6xl lg:text-[68px]" style={{ ["--i" as string]: 1 }}>
+              Understand what you&apos;re studying tonight.
             </h1>
             <p className="rise mt-5 max-w-lg text-[18px] leading-relaxed text-white/90" style={{ ["--i" as string]: 2 }}>
-              Merit reads the quizzes and tests on your school calendar and lines up lessons for each one, days ahead. High school classes, every AP course, and the SAT. Free for students.
+              <span className="font-brand font-extrabold text-white">Connect your class calendar and Merit preps you for every quiz before it happens.</span> Lessons for high school classes, every AP course, and the SAT. Free for students.
             </p>
             <div className="rise mt-8 flex flex-wrap items-center gap-3" style={{ ["--i" as string]: 3 }}>
               <FunnelLink
