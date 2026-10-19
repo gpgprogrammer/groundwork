@@ -112,7 +112,7 @@ export const courseSpecs: (CourseSpec & { sameAsCourse?: string; ownTopics?: Set
  * its topics; until then it exists only for the importer and local previews (MERIT_ALL_CLASSES=1).
  * An honors class launches with its regular class.
  */
-export const LAUNCHED_CLASSES = new Set<string>(["algebra-1", "geometry", "algebra-2", "precalculus", "statistics", "physical-science", "earth-science"]);
+export const LAUNCHED_CLASSES = new Set<string>(["algebra-1", "geometry", "algebra-2", "precalculus", "statistics", "physical-science", "earth-science", "biology", "chemistry", "physics", "environmental-science", "anatomy-and-physiology", "marine-science"]);
 
 const isLaunched = (spec: CourseSpec & { sameAsCourse?: string }) =>
   spec.course.exam !== "Class" || LAUNCHED_CLASSES.has(spec.course.slug) || Boolean(spec.course.honorsOf && LAUNCHED_CLASSES.has(spec.course.honorsOf));
