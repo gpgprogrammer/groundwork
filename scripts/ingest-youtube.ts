@@ -64,7 +64,7 @@ class QuotaError extends Error {}
 async function fetchWithRetry(url: string, tries = 4): Promise<Response> {
   for (let i = 1; ; i++) {
     try {
-      return await fetch(url);
+      return await fetch(url, { signal: AbortSignal.timeout(30_000) });
     } catch (err) {
       if (i >= tries) throw err;
       await new Promise((r) => setTimeout(r, 2000 * i));
