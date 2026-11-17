@@ -7,7 +7,7 @@ const figtree = Figtree({ variable: "--font-figtree", subsets: ["latin", "latin-
 // Rounded display face: the "merit" wordmark and every heading.
 const nunito = Nunito({ variable: "--font-nunito", subsets: ["latin"], weight: ["700", "800", "900"], display: "swap" });
 
-const description = "Understand what you're studying tonight. Ranked lessons for high school classes, every AP course, and the SAT, with Merit AI and a plan for every test. Free for students.";
+const description = "Understand what you're studying tonight. Ranked math lessons from Algebra 1 to AP Calculus and SAT Math, adaptive practice, on-call tutors, and a plan for every test.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.appUrl),

@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { resilientFetch } from "@/lib/supabase/fetch";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -11,8 +12,12 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 export async function proxy(request: NextRequest) {
   if (!supabaseUrl || !supabaseKey) return NextResponse.next();
 
+  // Signed-out visitors have no session to refresh: skip the network round trip entirely.
+  if (!request.cookies.getAll().some((c) => c.name.startsWith("sb-"))) return NextResponse.next();
+
   let response = NextResponse.next({ request });
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    global: { fetch: resilientFetch },
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (list) => {
@@ -22,7 +27,11 @@ export async function proxy(request: NextRequest) {
       },
     },
   });
-  await supabase.auth.getUser();
+  try {
+    await supabase.auth.getUser();
+  } catch {
+    // Auth is unreachable: let the page render (it treats the visitor as signed out) instead of hanging.
+  }
   return response;
 }
 

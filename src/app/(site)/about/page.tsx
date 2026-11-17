@@ -12,7 +12,7 @@ import { COMPANY, FOUNDER_STORY, SHOW_PLACEHOLDERS } from "@/lib/company";
 
 export const metadata: Metadata = {
   title: "About Merit",
-  description: "Merit Learning helps high school students learn their classes, every AP course, and the SAT: ranked lessons, an AI study partner, a learning plan that follows your class calendar, and Exam Sprints. Free for students, funded by tutoring.",
+  description: "Merit Learning helps high school students learn math, from Algebra 1 to AP Calculus and SAT Math: ranked lessons, an AI study partner, a learning plan that follows your class calendar, and Exam Sprints. Free for students, funded by tutoring.",
 };
 
 export default async function AboutPage() {
@@ -37,7 +37,7 @@ export default async function AboutPage() {
             Every student deserves a great teacher and a clear plan.
           </h1>
           <p className="rise mt-5 max-w-2xl text-[17px] leading-relaxed text-white/90 sm:text-[18px]" style={{ ["--i" as string]: 2 }}>
-            Merit brings together lessons for every topic in high school classes, AP courses, and the SAT, ranked by how well they teach, with an AI study partner and a learning plan that follows your class calendar. It&apos;s free for students, and funded by tutoring, never by students.
+            Merit brings together lessons for every topic in high school math, AP math, and SAT Math, ranked by how well they teach, with an AI study partner and a learning plan that follows your class calendar. It&apos;s free for students, and funded by tutoring, never by students.
           </p>
           <div className="rise mt-8 flex flex-wrap items-center gap-3" style={{ ["--i" as string]: 3 }}>
             <Link href="/signup" className={bandCta}>
@@ -61,7 +61,7 @@ export default async function AboutPage() {
               </IconTile>
               <h2 className="headline mt-5 text-2xl text-ink">{plural(catalog.courses.length, "course")}, every topic</h2>
               <p className="mt-2 max-w-md text-[15px] leading-relaxed text-muted">
-                High school and honors classes, every AP course, and the SAT, organized the way they&apos;re taught: {plural(catalog.units.length, "unit")} and {plural(catalog.topics.length, "topic")}, each with the lessons that teach it best.
+                High school and honors math classes, AP math courses, and SAT Math, organized the way they&apos;re taught: {plural(catalog.units.length, "unit")} and {plural(catalog.topics.length, "topic")}, each with the lessons that teach it best.
               </p>
             </div>
             <dl className="grid grid-cols-3 divide-x divide-line rounded-2xl bg-bg-subtle py-4">
@@ -114,7 +114,7 @@ export default async function AboutPage() {
                 </IconTile>
                 <div>
                   <h2 className="font-semibold text-ink">Tutoring help</h2>
-                  <p className="mt-1 text-[14px] leading-relaxed text-muted">Trusted tutoring services and free teachers for your subject, with Merit tutors coming soon.</p>
+                  <p className="mt-1 text-[14px] leading-relaxed text-muted">Book a math tutor, or get an on-call tutor in minutes when something is due tonight.</p>
                 </div>
               </li>
               <li className="flex gap-4">

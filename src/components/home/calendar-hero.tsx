@@ -7,8 +7,8 @@ import type { IndexedCatalog } from "@/lib/catalog";
 /** The sample week shown in the hero: what a student's calendar has, and what Merit lines up for it. */
 const SAMPLE = [
   { day: "Wed", course: "ap-calculus-bc", topic: "chain-rule", label: "quiz" },
-  { day: "Fri", course: "ap-biology", topic: "cellular-respiration", label: "unit test" },
-  { day: "Mon", course: "ap-us-history", topic: null, label: "quiz" },
+  { day: "Fri", course: "algebra-2", topic: "solving-quadratic-equations", label: "unit test" },
+  { day: "Mon", course: "geometry", topic: "parallel-lines-and-transversals", label: "quiz" },
 ] as const;
 
 /**

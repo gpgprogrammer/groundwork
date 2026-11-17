@@ -16,7 +16,7 @@ import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
   title: "Tutors",
-  description: "Trusted tutoring services, free teachers, and online tutors for every high school, AP, and SAT subject.",
+  description: "Math tutors on call right now, and tutors to book for every math class, AP math course, and SAT Math.",
 };
 
 const GROUPS: { kinds: ServiceKind[]; title: string; sub: string; icon: typeof Gift }[] = [
@@ -40,7 +40,7 @@ export default async function TutorsPage({ searchParams }: PageProps<"/tutors">)
   const anyPartner = covered.some((s) => s.partner);
   // Until tutors join, the page leads with outside services instead of empty tutor shelves.
   const hasTutors = ranked.length > 0;
-  const subject = course?.title ?? "every high school, AP, and SAT subject";
+  const subject = course?.title ?? "every math class";
   const place = location ? [location.city, location.region].filter(Boolean).join(", ") || location.zip : null;
   const isTutor = viewer?.state.profile.role === "tutor";
   const zipQs = (extra: Record<string, string> = {}) => new URLSearchParams({ ...(course ? { course: course.id } : {}), ...(location?.zip ? { zip: location.zip } : {}), ...extra }).toString();

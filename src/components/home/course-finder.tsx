@@ -114,7 +114,7 @@ export function CourseFinder({ courses, popular }: { courses: FinderCourse[]; po
         </ul>
       ) : open && q.trim() ? (
         <p className="pop absolute inset-x-0 top-16 z-30 origin-top rounded-2xl bg-surface px-4 py-3 text-sm text-muted shadow-lift ring-2 ring-line">
-          No course matches “{q.trim()}”. Merit covers high school classes, every AP course, and the SAT.
+          No course matches “{q.trim()}”. Merit covers math: Algebra 1 through Precalculus, Statistics, AP Calculus, AP Precalculus, AP Statistics, and SAT Math.
         </p>
       ) : null}
     </div>

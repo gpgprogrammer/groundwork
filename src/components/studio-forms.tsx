@@ -83,7 +83,7 @@ export function EducatorForm({ courses, initial }: { courses: { id: string; titl
       </div>
       <label className="block">
         <span className={labelText}>Headline</span>
-        <input name="headline" defaultValue={initial.headline} required maxLength={100} className={inputClass} placeholder="AP Chemistry teacher, 12 years" />
+        <input name="headline" defaultValue={initial.headline} required maxLength={100} className={inputClass} placeholder="AP Calculus teacher, 12 years" />
       </label>
       <label className="block">
         <span className={labelText}>About you{optional}</span>

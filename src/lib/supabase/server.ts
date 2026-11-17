@@ -3,11 +3,13 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { env } from "@/lib/env";
+import { resilientFetch } from "./fetch";
 
 /** Supabase client bound to the signed-in user's session (RLS applies). */
 export async function createSessionClient() {
   const store = await cookies();
   return createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
+    global: { fetch: resilientFetch },
     cookies: {
       getAll: () => store.getAll(),
       setAll: (list) => {
@@ -23,7 +25,7 @@ export async function createSessionClient() {
 
 /** Anonymous client for public catalog reads (no cookies, cacheable). */
 export function createPublicClient() {
-  return createClient(env.supabaseUrl, env.supabaseAnonKey, { auth: { persistSession: false } });
+  return createClient(env.supabaseUrl, env.supabaseAnonKey, { auth: { persistSession: false }, global: { fetch: resilientFetch } });
 }
 
 /** Service-role client. Server-only: webhooks, role changes, and billing writes. */
@@ -31,5 +33,5 @@ export function createAdminClient() {
   if (!env.supabaseServiceRoleKey) {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for this operation.");
   }
-  return createClient(env.supabaseUrl, env.supabaseServiceRoleKey, { auth: { persistSession: false } });
+  return createClient(env.supabaseUrl, env.supabaseServiceRoleKey, { auth: { persistSession: false }, global: { fetch: resilientFetch } });
 }

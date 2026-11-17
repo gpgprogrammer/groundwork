@@ -6,7 +6,7 @@ import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
   title: "Merit AI",
-  description: "Your study partner for every class, AP course, and the SAT: clear explanations, practice questions, and the best lesson for any topic.",
+  description: "Your math study partner: step-by-step explanations, practice problems, and the best lesson for any topic, from Algebra 1 to AP Calculus.",
 };
 
 export default async function AskPage() {
@@ -17,7 +17,7 @@ export default async function AskPage() {
     if (next) suggestions.push(`Teach me ${next.title} (${catalog.course(id)!.shortTitle})`);
   }
   if (viewer) suggestions.push("What should I study tonight?");
-  suggestions.push("Quiz me on the causes of World War I", "Explain limits and continuity with an example", "What's on the AP Biology exam?", "Find a short video on supply and demand");
+  suggestions.push("Walk me through factoring x² + 5x + 6", "Explain limits and continuity with an example", "What's on the AP Statistics exam?", "Find a short video on the unit circle");
 
   return (
     <div className="flex h-[calc(100dvh-4rem-4rem-env(safe-area-inset-bottom))] flex-col px-4 sm:px-6 md:h-[calc(100dvh-4rem)]">

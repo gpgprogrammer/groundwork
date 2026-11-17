@@ -62,10 +62,10 @@ const DEFAULT_FAQS: [string, string][] = [
   [
     "What's free and what's paid?",
     PAID_PLANS
-      ? `Courses, lessons, tutor search, and the AI study partner are free. Merit Plus (learning plan, calendar sync, progress) has a free ${PLUS.trialDays}-day trial, then ${usd(PLUS.monthly)}/month. An Exam Sprint is ${usd(SPRINT.price)} once.`
-      : "Everything on Merit is free: courses, lessons, Merit AI, your learning plan, calendar sync, progress, and Exam Sprint. The only thing you pay for is a tutor, if you choose to book one.",
+      ? `Courses, lessons, practice, tutor search, the study guide marketplace, and the AI study partner are free. Merit Plus (learning plan, calendar sync, progress) has a free ${PLUS.trialDays}-day trial, then ${usd(PLUS.monthly)}/month. An Exam Sprint is ${usd(SPRINT.price)} once.`
+      : "Everything on Merit is free: courses, lessons, Merit AI, your learning plan, calendar sync, progress, and Exam Sprint. The only things you pay for are a tutor, if you book one, and paid study guides, if you buy one.",
   ],
-  ["Which courses are covered?", "High school classes like Algebra 1, Geometry, and Algebra 2 (regular and honors), every AP course from Calculus and Biology to Art History and Japanese, and SAT Math and Reading and Writing. More high school classes are added as their lessons come in."],
+  ["Which courses are covered?", "Math only, and all of it: Algebra 1, Geometry, Algebra 2, and Precalculus (regular and honors), Statistics, AP Precalculus, AP Calculus AB and BC, AP Statistics, and SAT Math."],
   ["How is Merit free? Why .org?", "Merit is free for students and funded by tutoring: tutors and tutoring services pay Merit a share of sessions students book through Merit, never students. Merit is a company, not a nonprofit; the .org is about the mission, free learning for every student."],
 ];
 

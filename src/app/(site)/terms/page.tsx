@@ -16,7 +16,7 @@ export default function TermsPage() {
       </Clause>
       <Clause title="The service">
         <p>
-          Merit helps students learn high school classes, AP courses, and the SAT: lessons organized by course and topic, an AI study partner, a learning plan, calendar sync, Exam Sprint test preparation, and ways to find tutors. We do not guarantee grades, exam scores, or other outcomes. Estimated scores are guides, not predictions.
+          Merit helps students learn high school math, AP math courses, and SAT Math: lessons organized by course and topic, an AI study partner, a learning plan, calendar sync, Exam Sprint test preparation, ways to find and book tutors (including on-call tutors), and a marketplace for study guides. We do not guarantee grades, exam scores, or other outcomes. Estimated scores are guides, not predictions.
         </p>
       </Clause>
       <Clause title="Who can use Merit">

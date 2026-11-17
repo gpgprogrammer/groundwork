@@ -26,7 +26,7 @@ const inputClass =
 
 /** What Merit actually does. Every line is a real feature. */
 const VALUE = [
-  { Icon: ListOrdered, title: "Lessons ranked for teaching", body: "High school classes, every AP course, and the SAT, with lessons ranked by how well they teach each topic." },
+  { Icon: ListOrdered, title: "Lessons ranked for teaching", body: "Every math class from Algebra 1 to AP Calculus, plus SAT Math, with lessons ranked by how well they teach each topic." },
   { Icon: CalendarCheck, title: "A learning plan for your classes", body: "Lessons for what you're covering in class, and for every quiz and test on your calendar." },
   { Icon: Sparkles, title: "Merit AI", body: "Explanations, practice questions, and the right lesson for any topic." },
   { Icon: Target, title: "Exam Sprints", body: "A day-by-day plan to exam day, starting with a free diagnostic." },

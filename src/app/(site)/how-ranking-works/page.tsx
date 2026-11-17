@@ -134,8 +134,8 @@ export default function HowRankingWorksPage() {
           Chain Rule
         </Link>{" "}
         or{" "}
-        <Link href="/courses/ap-world-history/champa-rice" className="font-semibold text-accent-ink hover:underline">
-          Champa Rice
+        <Link href="/courses/algebra-2/solving-quadratic-equations" className="font-semibold text-accent-ink hover:underline">
+          Solving Quadratic Equations
         </Link>
         .
       </p>

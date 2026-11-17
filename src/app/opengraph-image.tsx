@@ -19,7 +19,7 @@ export default function OpenGraphImage() {
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 64, fontWeight: 800, letterSpacing: -2.5, lineHeight: 1.05 }}>{"Understand what you're studying tonight."}</div>
-          <div style={{ marginTop: 22, fontSize: 34, opacity: 0.85 }}>Ranked lessons for high school classes, every AP course, and the SAT. Free for students.</div>
+          <div style={{ marginTop: 22, fontSize: 34, opacity: 0.85 }}>Ranked math lessons from Algebra 1 to AP Calculus and SAT Math, with on-call tutors.</div>
         </div>
         <div style={{ display: "flex", fontSize: 28, opacity: 0.8 }}>meritlearning.org</div>
       </div>

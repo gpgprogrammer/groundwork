@@ -50,8 +50,8 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   if (isSupabaseEnabled) {
     const { createSessionClient } = await import("@/lib/supabase/server");
     const supabase = await createSessionClient();
-    const { data } = await supabase.auth.getUser();
-    const u = data.user;
+    // If auth can't be reached, treat the visitor as signed out rather than failing the page.
+    const u = await supabase.auth.getUser().then((r) => r.data.user, () => null);
     if (!u) return null;
     return {
       id: u.id,

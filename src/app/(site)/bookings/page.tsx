@@ -130,7 +130,7 @@ export default async function BookingsPage() {
             <EmptyState
               icon={<CalendarDays className="size-5" />}
               title="No sessions yet."
-              body="Book a Merit tutor for any AP or SAT subject. Your requests and sessions will show up here."
+              body="Book a Merit math tutor, or get an on-call tutor right now. Your requests and sessions will show up here."
               action={
                 <Link href="/tutors" className={violetButton("md")}>
                   <Search className="size-4" aria-hidden /> Find a tutor

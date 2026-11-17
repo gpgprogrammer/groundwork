@@ -23,7 +23,7 @@ async function requireEducator() {
 
 const profileSchema = z.object({
   name: z.string().trim().min(2, "Add the name students will see.").max(60),
-  headline: z.string().trim().min(4, "Add a one-line headline, like “AP Chemistry teacher, 12 years”.").max(100),
+  headline: z.string().trim().min(4, "Add a one-line headline, like “AP Calculus teacher, 12 years”.").max(100),
   school: z.string().trim().max(100),
   bio: z.string().trim().max(1200),
   courseIds: z.array(z.string()).min(1, "Pick at least one course you teach."),

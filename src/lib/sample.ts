@@ -5,7 +5,7 @@ const DAY = 86400000;
 
 /** A clearly labeled example student, for showing signed-out visitors what Plus does. */
 export function sampleState(catalog: IndexedCatalog, now = Date.now()): UserState {
-  const bio = catalog.course("ap-biology");
+  const bio = catalog.course("algebra-2");
   const calc = catalog.course("ap-calculus-bc");
   const courseIds = [bio, calc].filter(Boolean).map((c) => c!.id);
   const bioUnit = bio ? catalog.unitsForCourse(bio.id)[2] : undefined;
@@ -19,7 +19,7 @@ export function sampleState(catalog: IndexedCatalog, now = Date.now()): UserStat
   const events: ScheduleEvent[] = [
     ...(chain ? [{ uid: "s1", title: "Calc BC quiz: Chain Rule", start: at(1, 10), end: null, allDay: false, kind: "test" as const, courseId: calc!.id, topicIds: [chain.id] }] : []),
     ...(bioUnit
-      ? [{ uid: "s2", title: `AP Bio Unit ${bioUnit.order} test`, start: at(3, 9), end: null, allDay: false, kind: "test" as const, courseId: bio!.id, topicIds: bioTopics.map((t) => t.id) }]
+      ? [{ uid: "s2", title: `Algebra 2 Unit ${bioUnit.order} test`, start: at(3, 9), end: null, allDay: false, kind: "test" as const, courseId: bio!.id, topicIds: bioTopics.map((t) => t.id) }]
       : []),
   ];
   return {

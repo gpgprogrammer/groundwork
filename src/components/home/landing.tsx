@@ -15,8 +15,8 @@ import { PAID_PLANS } from "@/lib/billing/plans";
 import { LessonLink } from "@/components/lesson-player";
 import { CalendarTry } from "@/components/calendar-try";
 
-const POPULAR = ["ap-calculus-ab", "ap-biology", "ap-us-history", "sat-math", "ap-psychology", "ap-chemistry"];
-const AI_PROMPTS = ["Explain the chain rule like I'm new to it", "Quiz me on the causes of World War I", "What's on the AP Biology exam?"];
+const POPULAR = ["algebra-1", "geometry", "algebra-2", "ap-calculus-ab", "ap-statistics", "sat-math"];
+const AI_PROMPTS = ["Explain the chain rule like I'm new to it", "Walk me through completing the square, step by step", "What's on the AP Statistics exam?"];
 
 const EXAMPLE = { course: "ap-calculus-bc", topic: "chain-rule" };
 
@@ -25,7 +25,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
   const course = catalog.course(EXAMPLE.course);
   const topic = course ? catalog.topicIn(course.id, EXAMPLE.topic) : undefined;
   const lessons = topic ? catalog.videosForTopic(topic.id).filter((v) => !v.isShort).slice(0, 3) : [];
-  const floating = ["ap-biology", "ap-us-history", "sat-math", "ap-psychology", "ap-chemistry", "ap-spanish-language"].filter((id) => catalog.course(id));
+  const floating = ["algebra-1", "geometry", "sat-math", "ap-statistics", "algebra-2", "ap-precalculus"].filter((id) => catalog.course(id));
   const spots: React.CSSProperties[] = [
     { left: "-6%", top: "8%", rotate: "-8deg" },
     { right: "-5%", top: "-6%", rotate: "6deg" },
@@ -39,7 +39,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
   const classCount = catalog.courses.filter((c) => c.exam === "Class").length;
 
   // Real output of Merit's readiness engine, run on the built-in sample student.
-  const bio = catalog.course("ap-biology");
+  const bio = catalog.course("ap-calculus-ab");
   const example = bio
     ? readiness(catalog, {
         id: "x",
@@ -55,7 +55,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
         confidence: Object.fromEntries(catalog.unitsForCourse(bio.id).map((u, i) => [u.id, [4, 3, 2, 4, 1, 3, 2, 5][i % 8]])),
       }).slice(0, 4)
     : [];
-  const thumbs = catalog.videos.filter((v) => !v.isShort && v.courseId === "ap-us-history").slice(0, 4);
+  const thumbs = catalog.videos.filter((v) => !v.isShort && v.courseId === "algebra-2").slice(0, 4);
 
   const finder = catalog.courses.map((c) => ({ id: c.id, slug: c.slug, title: c.title, shortTitle: c.shortTitle, category: c.category }));
   const groups = CATEGORIES.map((g) => ({ g, items: catalog.courses.filter((c) => c.category === g) })).filter((x) => x.items.length);
@@ -69,13 +69,13 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:px-8 lg:pb-24 lg:pt-20 grid-cols-[minmax(0,1fr)]">
           <div className="min-w-0">
             <p className="rise inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 font-brand text-[14px] font-extrabold ring-1 ring-inset ring-white/25">
-              <GraduationCap className="size-4" /> High school classes, every AP course, and the SAT
+              <GraduationCap className="size-4" /> Math, from Algebra 1 to AP Calculus and the SAT
             </p>
             <h1 className="rise display mt-5 text-[46px] sm:text-6xl lg:text-[68px]" style={{ ["--i" as string]: 1 }}>
               Understand what you&apos;re studying tonight.
             </h1>
             <p className="rise mt-5 max-w-lg text-[18px] leading-relaxed text-white/90" style={{ ["--i" as string]: 2 }}>
-              Ranked lessons for every topic, Merit AI when you&apos;re stuck, and a plan for every test. Free for students.
+              Ranked lessons for every math topic, practice that finds your weak spots, tutors on call when you&apos;re stuck, and a plan for every test.
             </p>
             <div className="rise mt-8 text-ink" style={{ ["--i" as string]: 3 }}>
               <CourseFinder courses={finder} popular={POPULAR} />
@@ -148,9 +148,9 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
       {/* Does it support my course? */}
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="max-w-2xl">
-          <h2 className="display text-[36px] text-ink sm:text-5xl">Your classes, every AP course, and the SAT.</h2>
+          <h2 className="display text-[36px] text-ink sm:text-5xl">Every math class, from Algebra 1 to AP Calculus.</h2>
           <p className="mt-4 text-[17px] leading-relaxed text-muted">
-            <span className="tabular font-bold text-ink">{classCount}</span> high school and honors classes, <span className="tabular font-bold text-ink">{apCount}</span> AP courses, and SAT Math and Reading and Writing, organized the way they&apos;re taught:{" "}
+            <span className="tabular font-bold text-ink">{classCount}</span> high school and honors math classes, <span className="tabular font-bold text-ink">{apCount}</span> AP math courses, and SAT Math, organized the way they&apos;re taught:{" "}
             <span className="tabular font-bold text-ink">{catalog.units.length.toLocaleString()}</span> units, <span className="tabular font-bold text-ink">{catalog.topics.length.toLocaleString()}</span> topics, and{" "}
             <span className="tabular font-bold text-ink">{lessonCount}</span> lessons.
           </p>
@@ -191,7 +191,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
               <BookOpenCheck className="size-8" />
               <h3 className="display mt-4 text-[30px]">A ranked lesson for every topic.</h3>
               <p className="mt-2 max-w-md text-[16px] leading-relaxed text-white/90">
-                Lessons from the teachers students already trust, sorted into the exact topic they teach and ranked by how well they teach it.
+                Math lessons from the teachers students already trust, sorted into the exact topic they teach and ranked by how well they teach it.
               </p>
             </div>
             {thumbs.length ? (
@@ -216,7 +216,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
             <div className="relative">
               <Sparkles className="size-8" />
               <h3 className="display mt-4 text-[30px]">Stuck at 11pm? Ask Merit AI.</h3>
-              <p className="mt-2 text-[16px] leading-relaxed text-white/90">Explanations, practice questions, and the right lesson for any topic in your classes, AP courses, or the SAT.</p>
+              <p className="mt-2 text-[16px] leading-relaxed text-white/90">Step-by-step explanations, practice problems, and the right lesson for any math topic.</p>
             </div>
             <ul className="relative space-y-2">
               {AI_PROMPTS.map((p) => (
@@ -242,7 +242,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
             {example.length ? (
               <div className="relative rounded-2xl bg-white p-4 text-[#0f1729] sm:p-5 lg:max-w-2xl">
                 <p className="mb-3 flex items-center justify-between font-brand text-[13px] font-extrabold">
-                  AP Biology readiness <span className="text-[#5b6475]">Sample</span>
+                  AP Calculus AB readiness <span className="text-[#5b6475]">Sample</span>
                 </p>
                 <ul className="space-y-2.5">
                   {example.map((u) => (
@@ -270,16 +270,16 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
           <Link href="/tutors" className="press group flex items-center gap-4 rounded-[28px] bg-[#7c3aed] p-5 text-white [--ledge:#5b21b6] sm:p-6">
             <Users className="size-8 shrink-0" />
             <span className="min-w-0 flex-1">
-              <span className="block font-brand text-[18px] font-black">Real tutors, when you want a person</span>
-              <span className="block text-[14px] text-white/85">Trusted tutoring services and free teachers for your exact course.</span>
+              <span className="block font-brand text-[18px] font-black">On-call math tutors, right now</span>
+              <span className="block text-[14px] text-white/85">Due tonight and stuck? Get a tutor in minutes, or book one for later.</span>
             </span>
             <ArrowRight className="size-5 shrink-0 transition-transform group-hover:translate-x-0.5" />
           </Link>
-          <Link href="/videos" className="press group flex items-center gap-4 rounded-[28px] bg-surface p-5 ring-2 ring-line [--ledge:var(--line)] sm:p-6">
+          <Link href="/guides" className="press group flex items-center gap-4 rounded-[28px] bg-surface p-5 ring-2 ring-line [--ledge:var(--line)] sm:p-6">
             <MonitorPlay className="size-8 shrink-0 text-accent-ink" />
             <span className="min-w-0 flex-1">
-              <span className="block font-brand text-[18px] font-black text-ink">Merit Tutors&apos; Videos</span>
-              <span className="block text-[14px] text-muted">Lessons recorded by the tutors and teachers on Merit, only on Merit.</span>
+              <span className="block font-brand text-[18px] font-black text-ink">Study guide marketplace</span>
+              <span className="block text-[14px] text-muted">Math study guides made by students and tutors. Free or for sale.</span>
             </span>
             <ArrowRight className="size-5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" />
           </Link>
@@ -366,9 +366,9 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
         <h2 className="display text-[36px] text-ink sm:text-5xl">Made for everyone behind a score.</h2>
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {[
-            { key: "student", Icon: GraduationCap, tint: "bg-accent-soft text-accent-ink", title: "Students", body: "Ranked lessons for every topic, a plan that follows your class calendar, Merit AI, and Exam Sprints before big tests.", cta: "Create a free account", href: "/signup?as=student" },
-            { key: "teacher", Icon: Presentation, tint: "bg-[#f3edff] text-[#6d28d9] dark:bg-[#2a1f45] dark:text-[#c9b5ff]", title: "Teachers and tutors", body: "Publish your own videos and study guides, and get booked for tutoring by students on Merit.", cta: "Create a teacher account", href: "/signup?as=teacher" },
-            { key: "parent", Icon: HeartHandshake, tint: "bg-sprint-soft text-sprint-ink", title: "Parents", body: PAID_PLANS ? "Gift Merit Plus or an Exam Sprint, or find a tutor for any class, AP course, or the SAT." : "Everything on Merit is free for your student. When they want a person, find a tutor for any class, AP course, or the SAT.", cta: "Options for parents", href: "/pricing/parents" },
+            { key: "student", Icon: GraduationCap, tint: "bg-accent-soft text-accent-ink", title: "Students", body: "Ranked lessons for every math topic, practice that adapts to you, a plan that follows your class calendar, and on-call tutors.", cta: "Create a free account", href: "/signup?as=student" },
+            { key: "teacher", Icon: Presentation, tint: "bg-[#f3edff] text-[#6d28d9] dark:bg-[#2a1f45] dark:text-[#c9b5ff]", title: "Teachers and tutors", body: "Sell your math study guides, get booked for tutoring, and go on call to help students who need it right now.", cta: "Create a teacher account", href: "/signup?as=teacher" },
+            { key: "parent", Icon: HeartHandshake, tint: "bg-sprint-soft text-sprint-ink", title: "Parents", body: PAID_PLANS ? "Gift Merit Plus or an Exam Sprint, or find a math tutor for any class, AP course, or SAT Math." : "Everything on Merit is free for your student. When they want a person, find a math tutor for any class, AP course, or SAT Math.", cta: "Options for parents", href: "/pricing/parents" },
           ].map((f) => (
             <div key={f.key} className="flex flex-col rounded-[28px] bg-surface p-6 ring-2 ring-line sm:p-7">
               <span className={`flex size-14 items-center justify-center rounded-2xl ${f.tint}`}>
@@ -401,7 +401,7 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
         <div className="relative overflow-hidden rounded-[32px] bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)] px-6 py-14 text-center text-white shadow-[0_8px_0_0_#1a45b5] sm:px-12 sm:py-20">
           <div aria-hidden className="pointer-events-none absolute -left-20 -top-20 size-72 rounded-full border-[40px] border-white/[0.08]" />
           <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-16 size-80 rounded-full border-[44px] border-white/[0.08]" />
-          <h2 className="display relative text-[38px] sm:text-6xl">Tonight&apos;s homework, understood.</h2>
+          <h2 className="display relative text-[38px] sm:text-6xl">Tonight&apos;s math homework, understood.</h2>
           <p className="relative mt-3 text-[17px] text-white/85">Free to start, no card needed.</p>
           <FunnelLink
             href="/signup?as=student"

@@ -2,6 +2,10 @@
 export type Exam = "AP" | "SAT" | "Class";
 
 export const CATEGORIES = [
+  // How the math-only site groups its courses (see MATH_COURSES in catalog/build.ts).
+  "High school math",
+  "AP math",
+  "SAT Math",
   "Math & Computer Science",
   "Sciences",
   "History & Social Sciences",

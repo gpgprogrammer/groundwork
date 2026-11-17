@@ -405,7 +405,7 @@ function SchedulePreview({ catalog, viewer }: { catalog: IndexedCatalog; viewer:
           <h2 className="headline text-[24px] text-ink">A week on My schedule</h2>
           <span className="rounded-full bg-positive-soft px-3 py-1 font-brand text-[12.5px] font-extrabold text-positive">Sample week</span>
         </div>
-        <p className="mt-1 text-[14.5px] text-muted">Example: what it looks like for a student taking AP Biology and AP Calculus BC.</p>
+        <p className="mt-1 text-[14.5px] text-muted">Example: what it looks like for a student taking Algebra 2 and AP Calculus BC.</p>
         <div className="max-w-3xl">
           <Timeline days={byDay(events)} catalog={catalog} interactive={false} />
         </div>

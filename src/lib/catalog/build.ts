@@ -114,8 +114,22 @@ export const courseSpecs: (CourseSpec & { sameAsCourse?: string; ownTopics?: Set
  */
 export const LAUNCHED_CLASSES = new Set<string>(["algebra-1", "geometry", "algebra-2", "precalculus", "statistics", "physical-science", "earth-science", "biology", "chemistry", "physics", "environmental-science", "anatomy-and-physiology", "marine-science"]);
 
+/**
+ * Merit is a math site. Every other course (sciences, history, English, languages, arts, CS, SAT
+ * Reading & Writing…) is kept here with its videos in src/data/youtube.json, switched off. Set
+ * MERIT_ALL_SUBJECTS=1 to bring them all back, or add a course slug here to bring back one.
+ */
+export const MATH_COURSES = new Set<string>([
+  "algebra-1", "honors-algebra-1", "geometry", "honors-geometry", "algebra-2", "honors-algebra-2",
+  "precalculus", "honors-precalculus", "statistics",
+  "ap-calculus-ab", "ap-calculus-bc", "ap-precalculus", "ap-statistics", "sat-math",
+]);
+const allSubjects = process.env.MERIT_ALL_SUBJECTS === "1";
+export const isMathCourse = (slug: string) => MATH_COURSES.has(slug);
+
 const isLaunched = (spec: CourseSpec & { sameAsCourse?: string }) =>
-  spec.course.exam !== "Class" || LAUNCHED_CLASSES.has(spec.course.slug) || Boolean(spec.course.honorsOf && LAUNCHED_CLASSES.has(spec.course.honorsOf));
+  (allSubjects || MATH_COURSES.has(spec.course.slug)) &&
+  (spec.course.exam !== "Class" || LAUNCHED_CLASSES.has(spec.course.slug) || Boolean(spec.course.honorsOf && LAUNCHED_CLASSES.has(spec.course.honorsOf)));
 
 /**
  * Flattens the authored course specs into courses, units, concepts, and topics. Unlaunched high school
@@ -128,8 +142,9 @@ export function buildCurriculum({ allClasses = process.env.MERIT_ALL_CLASSES ===
   const topics: Topic[] = [];
 
   for (const spec of courseSpecs) {
-    if (!allClasses && !isLaunched(spec)) continue;
+    if (allClasses ? !(allSubjects || MATH_COURSES.has(spec.course.slug)) : !isLaunched(spec)) continue;
     const course: Course = { ...spec.course, id: spec.course.slug };
+    if (!allSubjects) course.category = course.exam === "Class" ? "High school math" : course.exam === "SAT" ? "SAT Math" : "AP math";
     courses.push(course);
     let topicOrder = 0;
     spec.units.forEach((u, ui) => {

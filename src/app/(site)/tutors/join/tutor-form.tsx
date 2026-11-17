@@ -42,7 +42,7 @@ export function TutorForm({ existing, defaultName, courses, agreed }: Props) {
             <input name="name" required defaultValue={e?.name ?? defaultName} className={inputClass} autoComplete="name" />
           </Field>
           <Field label="Headline" hint="One line students see first">
-            <input name="headline" required maxLength={120} defaultValue={e?.headline} placeholder="AP Chemistry teacher, 8 years; patient with first-timers" className={inputClass} />
+            <input name="headline" required maxLength={120} defaultValue={e?.headline} placeholder="AP Calculus teacher, 8 years; patient with first-timers" className={inputClass} />
           </Field>
           <Field label="About you">
             <textarea name="bio" required rows={6} maxLength={2000} defaultValue={e?.bio} className={cn(inputClass, "h-auto py-2.5 leading-relaxed")} placeholder="How you teach, who you help most, and results your students have had." />
@@ -52,13 +52,13 @@ export function TutorForm({ existing, defaultName, courses, agreed }: Props) {
               <input name="yearsExperience" type="number" min={0} max={60} defaultValue={e?.yearsExperience ?? 0} className={cn(inputClass, "tabular")} inputMode="numeric" />
             </Field>
             <Field label="Credentials" hint="Optional">
-              <input name="credentials" maxLength={300} defaultValue={e?.credentials} placeholder="M.S. Chemistry; AP Reader" className={inputClass} />
+              <input name="credentials" maxLength={300} defaultValue={e?.credentials} placeholder="M.S. Mathematics; AP Reader" className={inputClass} />
             </Field>
           </div>
         </div>
       </Step>
 
-      <Step n={2} title="Subjects you tutor" sub="Pick every course you can help with." i={2}>
+      <Step n={2} title="Math courses you tutor" sub="Pick every course you can help with." i={2}>
         <div className="space-y-5">
           {groups.map((g) => (
             <div key={g}>

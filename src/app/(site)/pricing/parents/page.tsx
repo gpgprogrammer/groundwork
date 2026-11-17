@@ -164,7 +164,7 @@ function FreeParents() {
   const items = [
     { Icon: CalendarCheck, tone: undefined, title: "A learning plan for their classes", body: "The best videos for what they're covering in class, with every quiz and test on their calendar lined up ahead of time, and progress across all their courses." },
     { Icon: Target, tone: "sprint" as const, title: SPRINT.name, body: "For any class test, AP exam, or the SAT: a diagnostic, a day-by-day plan to test day, unlimited practice with explanations, and a readiness dashboard." },
-    { Icon: CircleCheck, tone: undefined, title: "Every course and lesson", body: "High school classes, every AP course, and the SAT, with ranked lessons for every topic and an AI study partner." },
+    { Icon: CircleCheck, tone: undefined, title: "Every course and lesson", body: "High school math, AP math, and SAT Math, with ranked lessons for every topic and an AI study partner." },
   ];
   return (
     <>
