@@ -8,6 +8,7 @@ import { getStore } from "@/lib/data/store";
 import { gradeCheck, gradeSelfCheck, pickCheck, type CheckAnswer } from "@/lib/quick";
 import type { Question } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
+import { hasPractice, isGeneratedId, questionFromId } from "@/lib/mathgen";
 
 async function topicOrThrow(topicId: string) {
   const topic = (await getCatalog()).topic(topicId);
@@ -37,12 +38,14 @@ export async function finishQuickSession(
   const topic = await topicOrThrow(topicId);
   let graded: { passed: boolean; correct: number; total: number };
   if (result.kind === "questions") {
-    const bank = (await (await getStore()).getDoc<{ questions: Question[] }>("qbank", topicId))?.questions ?? [];
-    graded = gradeCheck(bank, result.answers.slice(0, 10));
+    const stored = (await (await getStore()).getDoc<{ questions: Question[] }>("qbank", topicId))?.questions ?? [];
+    // Built-in math problems are rebuilt from their ids, and only count for this topic.
+    const generated = result.answers.map((a) => (isGeneratedId(a.questionId) ? questionFromId(a.questionId) : null)).filter((q): q is NonNullable<typeof q> => Boolean(q && q.topicId === topicId));
+    graded = gradeCheck([...stored, ...generated], result.answers.slice(0, 10));
   } else {
     // Only allowed when there really are no questions for this topic.
     const bank = (await (await getStore()).getDoc<{ questions: Question[] }>("qbank", topicId))?.questions ?? [];
-    if (bank.length) throw new Error("This topic has a question check.");
+    if (bank.length || hasPractice(topicId)) throw new Error("This topic has a question check.");
     graded = gradeSelfCheck(topic.keyPoints.length || 1, result.known);
   }
   if (graded.passed && !viewer.state.mastered[topicId]) {

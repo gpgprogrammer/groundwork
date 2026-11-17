@@ -13,6 +13,7 @@ import { getStore } from "@/lib/data/store";
 import { diagnosticTopics, readiness, topicAccuracy } from "@/lib/sprint";
 import type { FrqAttempt, Question, Sprint, SprintAnswer } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
+import { isGeneratedId, questionFromId } from "@/lib/mathgen";
 
 async function ownSprint(id: string) {
   const viewer = await getViewer();
@@ -131,11 +132,12 @@ export async function recordAnswer(id: string, questionId: string, choice: numbe
   // Look the question up server-side so correctness can't be spoofed.
   const store = await getStore();
   const catalog = await getCatalog();
-  let q: Question | undefined;
-  for (const t of catalog.topicsForCourse(sprint.courseId)) {
-    const bank = await store.getDoc<{ questions: Question[] }>("qbank", t.id);
-    q = bank?.questions.find((x) => x.id === questionId);
-    if (q) break;
+  let q: Question | undefined = isGeneratedId(questionId) ? (questionFromId(questionId) ?? undefined) : undefined;
+  if (q && catalog.topic(q.topicId)?.courseId !== sprint.courseId) q = undefined;
+  if (!q && !isGeneratedId(questionId)) {
+    // Look in every topic bank at once instead of one database call after another.
+    const banks = await Promise.all(catalog.topicsForCourse(sprint.courseId).map((t) => store.getDoc<{ questions: Question[] }>("qbank", t.id)));
+    q = banks.flatMap((b) => b?.questions ?? []).find((x) => x.id === questionId);
   }
   if (!q) throw new Error("Question not found.");
   const answer: SprintAnswer = { questionId, topicId: q.topicId, choice, correct: choice === q.answer, at: new Date().toISOString(), kind };

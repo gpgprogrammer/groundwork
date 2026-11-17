@@ -7,6 +7,7 @@ import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import type { Question } from "@/lib/types";
 import { aiAvailable } from "./runtime";
+import { generateForTopic, hasPractice } from "@/lib/mathgen";
 
 /**
  * Generated study content, cached so each topic's questions and each unit's
@@ -41,6 +42,9 @@ async function describeTopic(topicId: string) {
 export async function questionsForTopic(topicId: string, need = 6): Promise<Question[]> {
   const store = await getStore();
   const bank = await store.getDoc<Bank>("qbank", topicId);
+  // Math topics with a built-in generator get fresh, instant problems (no AI wait), mixed with any
+  // questions Merit AI already wrote for the topic.
+  if (hasPractice(topicId)) return [...generateForTopic(topicId, need), ...(bank?.questions ?? [])];
   if (bank && bank.questions.length >= need) return bank.questions;
   if (!(await aiAvailable())) return bank?.questions ?? [];
 

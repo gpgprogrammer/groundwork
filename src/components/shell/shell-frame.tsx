@@ -62,8 +62,8 @@ const FULL_HEIGHT = /^\/ask$/;
  * and a set of paths it "owns" so the right tab lights up anywhere inside it.
  */
 const SECTIONS = [
-  { key: "learn", label: "Learn", href: "/courses", icon: GraduationCap, tint: "text-accent-ink", on: "bg-accent-soft text-accent-ink", owns: ["/courses", "/lessons", "/shorts", "/videos", "/search", "/channel", "/guides", "/educators", "/library"] },
-  { key: "practice", label: "Practice", href: "/sprint", icon: Target, tint: "text-sprint", on: "bg-sprint-soft text-sprint-ink", owns: ["/sprint", "/master"] },
+  { key: "learn", label: "Learn", href: "/courses", icon: GraduationCap, tint: "text-accent-ink", on: "bg-accent-soft text-accent-ink", owns: ["/courses", "/lessons", "/shorts", "/videos", "/search", "/channel", "/guides", "/study-guides", "/educators", "/library"] },
+  { key: "practice", label: "Practice", href: "/practice", icon: Target, tint: "text-sprint", on: "bg-sprint-soft text-sprint-ink", owns: ["/practice", "/sprint", "/master"] },
   { key: "plan", label: "Plan", href: "/plan", icon: CalendarCheck, tint: "text-positive", on: "bg-positive-soft text-positive", owns: ["/plan", "/schedule", "/progress"] },
   { key: "tutors", label: "Tutors", href: "/tutors", icon: Users, tint: "text-[#7c3aed] dark:text-[#b69cff]", on: "bg-[#f3edff] text-[#6d28d9] dark:bg-[#2a1f45] dark:text-[#c9b5ff]", owns: ["/tutors", "/tutor", "/bookings"] },
   { key: "ask", label: "Ask AI", href: "/ask", icon: Sparkles, tint: "text-[#db2777] dark:text-[#ff8cc6]", on: "bg-[#fdeef6] text-[#be185d] dark:bg-[#3d1830] dark:text-[#ffb3d9]", owns: ["/ask"] },
@@ -76,9 +76,11 @@ const SUBNAV: Record<string, { href: string; label: string }[]> = {
   learn: [
     { href: "/courses", label: "Courses" },
     { href: "/lessons", label: "Lessons" },
+    { href: "/study-guides", label: "Study guides" },
     { href: "/library", label: "Your library" },
   ],
   practice: [
+    { href: "/practice", label: "Practice problems" },
     { href: "/sprint", label: "Exam Sprint" },
     { href: "/master", label: "Quick session" },
   ],
@@ -88,7 +90,9 @@ const SUBNAV: Record<string, { href: string; label: string }[]> = {
     { href: "/progress", label: "Progress" },
   ],
   tutors: [
-    { href: "/tutors", label: "Find a tutor" },
+    { href: "/tutors", label: "All tutoring" },
+    { href: "/tutors/on-call", label: "On call now" },
+    { href: "/tutors/book", label: "Book a tutor" },
     { href: "/bookings", label: "My sessions" },
     { href: "/tutors/join", label: "Tutor on Merit" },
   ],
@@ -571,10 +575,13 @@ function FullNav({ data, pathname }: { data: ShellData; pathname: string }) {
         <NavRow href="/courses" icon={<GraduationCap className="size-[18px]" />} label="Courses" pathname={pathname} />
         <NavRow href="/lessons" icon={<SquarePlay className="size-[18px]" />} label="Lessons" pathname={pathname} />
         <NavRow href="/ask" icon={<Sparkles className="size-[18px]" />} label="Ask Merit AI" pathname={pathname} />
-        <NavRow href="/tutors" icon={<Users className="size-[18px]" />} label="Tutors" pathname={pathname} />
+        <NavRow href="/tutors/on-call" icon={<Users className="size-[18px]" />} label="On-call tutors" pathname={pathname} />
+        <NavRow href="/tutors/book" icon={<CalendarDays className="size-[18px]" />} label="Book a tutor" pathname={pathname} />
+        <NavRow href="/study-guides" icon={<GraduationCap className="size-[18px]" />} label="Study guides" pathname={pathname} />
       </Group>
       <Group title="Study tools">
         <NavRow href="/plan" icon={<CalendarCheck className="size-[18px]" />} label="Learning plan" pathname={pathname} trailing={<PlusTag />} />
+        <NavRow href="/practice" icon={<Target className="size-[18px]" />} label="Practice problems" pathname={pathname} />
         <NavRow href="/sprint" icon={<Target className="size-[18px]" />} label="Exam Sprint" pathname={pathname} />
         <NavRow href="/master" icon={<Zap className="size-[18px]" />} label="Quick session" pathname={pathname} />
         <NavRow href="/schedule" icon={<CalendarDays className="size-[18px]" />} label="My schedule" pathname={pathname} trailing={<PlusTag />} />
@@ -746,10 +753,10 @@ function TabBar({ pathname, onMore }: { pathname: string; onMore: () => void }) 
 
 function SiteFooter({ signedIn }: { signedIn: boolean }) {
   const cols: { title: string; links: [string, string][] }[] = [
-    { title: "Learn", links: [["/courses", "Courses"], ["/lessons", "Lessons"], ["/ask", "Merit AI"]] },
-    { title: "Practice", links: [["/sprint", "Exam Sprint"], ["/master", "Quick session"]] },
+    { title: "Learn", links: [["/courses", "Courses"], ["/lessons", "Lessons"], ["/study-guides", "Study guides"], ["/ask", "Merit AI"]] },
+    { title: "Practice", links: [["/practice", "Practice problems"], ["/sprint", "Exam Sprint"], ["/master", "Quick session"]] },
     { title: "Plan", links: [["/plan", "Learning plan"], ["/schedule", "My schedule"], ["/progress", "Progress"]] },
-    { title: "Tutors", links: [["/tutors", "Find a tutor"], ["/tutors/join", "Become a tutor"], ["/tutors/partners", "Partner with Merit"], ["/studio", "For teachers"]] },
+    { title: "Tutors", links: [["/tutors/on-call", "On-call tutors"], ["/tutors/book", "Book a tutor"], ["/tutors/join", "Become a tutor"], ["/tutors/partners", "Partner with Merit"], ["/studio", "For teachers"]] },
     { title: "Merit", links: [["/about", "About"], ...(PAID_PLANS ? [["/pricing", "Pricing"] as [string, string]] : []), ["/pricing/parents", "For parents"], ["/how-ranking-works", "How ranking works"], ["/privacy", "Privacy"], ["/terms", "Terms"]] },
   ];
   return (
@@ -758,7 +765,7 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
         {!signedIn ? (
           <div>
             <Logo href="/" />
-            <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-muted">High school classes, every AP course, and the SAT, with ranked lessons, Merit AI, and a plan for every test. Free for students.</p>
+            <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-muted">Math from Algebra 1 to AP Calculus and SAT Math: ranked lessons, unlimited practice, on-call tutors, and a plan for every test.</p>
           </div>
         ) : null}
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
