@@ -30,7 +30,7 @@ export function SubjectSelect({ courses, value }: { courses: { id: string; title
       className={cn(selectClass, "h-12 rounded-2xl bg-bg-subtle px-4 font-brand text-[15.5px] font-extrabold ring-2 ring-line focus:ring-[#7c3aed] lg:w-80")}
       aria-label="Subject"
     >
-      <option value="">All subjects</option>
+      <option value="">All math classes</option>
       {groups.map((g) => (
         <optgroup key={g} label={g}>
           {courses

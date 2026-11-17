@@ -363,6 +363,8 @@ export type TutorMeta = {
   /** Weekly availability in the tutor's local time. */
   availability: { day: number; start: string; end: string }[];
   timezone: string;
+  /** On call: ready to take a session right now, until `until`, at this video link. */
+  onCall?: { since: string; until: string; meetUrl: string } | null;
 };
 
 export type Booking = {
@@ -386,6 +388,9 @@ export type Booking = {
   feeSettled: boolean;
   source: PaymentSource | null;
   createdAt: string;
+  /** Set for on-call sessions: they start right away, at this video link. */
+  onCall?: boolean;
+  meetUrl?: string | null;
 };
 
 /** A student Merit referred to a tutor who might book off-platform. Fees apply for 12 months. */

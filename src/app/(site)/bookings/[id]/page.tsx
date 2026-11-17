@@ -43,7 +43,13 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
   const other = isTutor ? b.studentName : (tutor?.name ?? "Tutor");
   const tutorFirst = greetingName(tutor?.name ?? "");
 
+  const joinable = b.meetUrl && b.status === "confirmed";
   const actions = [
+    joinable ? (
+      <a key="join" href={b.meetUrl!} target="_blank" rel="noopener noreferrer" className={buttonClass("positive", "lg", "w-full")}>
+        Join the video session
+      </a>
+    ) : null,
     isTutor && b.status === "requested" ? (
       <form key="confirm" action={updateBooking.bind(null, b.id, "confirm")}>
         <button className={violetButton("lg", "w-full")}>Confirm</button>

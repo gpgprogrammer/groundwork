@@ -1,9 +1,11 @@
-import { BadgeCheck, CalendarClock, CalendarDays, ChevronRight, Hourglass, Inbox, CircleCheckBig, Upload, UserPlus, Wallet } from "lucide-react";
+import { BadgeCheck, CalendarClock, Radio, CalendarDays, ChevronRight, Hourglass, Inbox, CircleCheckBig, Upload, UserPlus, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AvailabilityEditor } from "@/components/booking-client";
+import { AcceptButton, AutoRefresh, Elapsed, OnCallToggle } from "@/components/on-call-client";
+import { isOnCall, listOnCallRequests, ON_CALL_HOURS, openRequestsFor, URGENCY } from "@/lib/on-call";
 import { BookingStatus, DateTile, money, sessionWhen } from "@/components/booking-ui";
 import { RequestStatus } from "@/components/request-status";
 import { heroBtn, heroBtnGhost, WORLD_ON_WHITE, WorldHero } from "@/components/marketing";
@@ -50,6 +52,9 @@ export default async function TutorDashboard() {
     getTutorMeta(mine.id),
     listLeads({ tutorId: mine.id }),
   ]);
+  const onCall = isOnCall(meta) ? meta.onCall! : null;
+  const lastUrl = meta.onCall?.meetUrl ?? bookings.find((b) => b.meetUrl)?.meetUrl ?? "";
+  const incoming = onCall ? openRequestsFor(await listOnCallRequests(), mine.courseIds).filter((r) => r.studentId !== viewer.user.id) : [];
   const openLeads = leads.filter((l) => l.status === "open" || l.status === "reported");
   const t = rankTutors([mine], reviews)[0];
   const money$ = ledger(bookings);
@@ -123,6 +128,34 @@ export default async function TutorDashboard() {
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8 grid-cols-[minmax(0,1fr)]">
         <div className="min-w-0 space-y-10">
+          {onCall ? (
+            <Section title="Students who need help now" count={incoming.length} sub="Requests for your classes from students on a deadline. The first tutor to accept gets the session, and it starts right away at your video link." i={1}>
+              <AutoRefresh seconds={8} />
+              {incoming.length ? (
+                <ul className="space-y-3">
+                  {incoming.map((r) => (
+                    <li key={r.id} className={cn(panel, "p-4 sm:p-5")}>
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <p className="font-brand text-[16px] font-extrabold text-ink">
+                          {r.studentName} · {catalog.course(r.courseId)?.shortTitle}
+                          {r.topicId ? ` · ${catalog.topic(r.topicId)?.title ?? ""}` : ""}
+                        </p>
+                        <span className="text-[12.5px] font-bold text-muted">
+                          {URGENCY[r.urgency]} · {r.minutes} min · waiting <Elapsed since={r.createdAt} />
+                        </span>
+                      </div>
+                      <p className={cn("mt-3 whitespace-pre-line rounded-2xl p-4 text-[15px] leading-relaxed text-ink", V.soft)}>{r.message}</p>
+                      <div className="mt-3">
+                        <AcceptButton id={r.id} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <EmptyState icon={<Radio className="size-5" />} title="You’re on call. No requests yet." body="Keep this page open. New requests for your classes appear here on their own." />
+              )}
+            </Section>
+          ) : null}
           <Section title="Upcoming sessions" count={upcoming.length} i={2}>
             {upcoming.length ? (
               <ul className="space-y-3">
@@ -206,6 +239,20 @@ export default async function TutorDashboard() {
 
         <aside className={cn("min-w-0", !meta.availability.length && "order-first lg:order-none")}>
           <div className="space-y-4">
+            <section className={cn(panel, "rise p-5", onCall && "ring-positive")} style={{ ["--i" as string]: 2 }}>
+              <div className="flex items-start gap-3">
+                <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-2xl", onCall ? "bg-positive text-white" : V.solid)}>
+                  <Radio className="size-5" aria-hidden />
+                </span>
+                <div className="min-w-0">
+                  <h2 className="font-brand text-[18px] font-extrabold text-ink">On call</h2>
+                  <p className="mt-0.5 text-[13px] leading-relaxed text-muted">Take last-minute sessions from students on a deadline. You get every request for your classes and accept the ones you want.</p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <OnCallToggle onCall={onCall} defaultUrl={lastUrl} hours={ON_CALL_HOURS} />
+              </div>
+            </section>
             <section className={cn(panel, "rise p-5")} style={{ ["--i" as string]: 3 }}>
               <div className="flex items-start gap-3">
                 <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-2xl", V.solid)}>
