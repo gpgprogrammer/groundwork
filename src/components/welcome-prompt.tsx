@@ -74,7 +74,7 @@ export function WelcomePrompt() {
             </span>
             <span>
               <span className="block text-[15px] font-semibold">I&apos;m a student</span>
-              <span className="block text-[13px] text-white/85">Study for my classes, AP, and the SAT</span>
+              <span className="block text-[13px] text-white/85">Study math, from Algebra 1 to AP Calculus</span>
             </span>
           </Link>
           <Link href={`/signup?as=teacher${next}`} onClick={close} className="group flex items-center gap-3.5 rounded-2xl bg-surface p-4 text-ink ring-1 ring-inset ring-line-strong transition-[background-color,transform] duration-150 ease-out hover:bg-bg-subtle active:scale-[0.98]">

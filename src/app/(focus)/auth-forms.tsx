@@ -74,7 +74,7 @@ const submitClass =
   "press flex h-[52px] w-full items-center justify-center rounded-2xl bg-accent font-brand text-[16.5px] font-extrabold text-white [--ledge:var(--accent-press)] hover:brightness-110 disabled:pointer-events-none disabled:opacity-50";
 
 const TYPES: { key: AccountType; title: string; note: string; Icon: typeof GraduationCap }[] = [
-  { key: "student", title: "I'm a student", note: "Study for my classes, AP, and the SAT", Icon: GraduationCap },
+  { key: "student", title: "I'm a student", note: "Study math, from Algebra 1 to AP Calculus", Icon: GraduationCap },
   { key: "teacher", title: "I'm a teacher or tutor", note: "Share lessons, videos, and tutoring", Icon: Presentation },
 ];
 
