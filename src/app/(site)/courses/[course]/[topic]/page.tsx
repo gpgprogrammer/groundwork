@@ -13,7 +13,8 @@ import { pageOf, queryFeed } from "@/lib/feed";
 import { topicStatus } from "@/lib/recommend";
 import { topCreators } from "@/lib/tutoring";
 import { ChannelAvatar } from "@/components/video-card";
-import { FileText, Sparkles, Users, Zap } from "lucide-react";
+import { FileText, Sparkles, Target, Users, Zap } from "lucide-react";
+import { hasPractice } from "@/lib/mathgen";
 import { guidesForTopic } from "@/lib/educators";
 import { UploadCard } from "@/components/upload-card";
 import { listUploads, toUploadCards } from "@/lib/uploads";
@@ -178,6 +179,23 @@ export default async function TopicPage({ params, searchParams }: PageProps<"/co
             </span>
             <ArrowRight className="size-5 shrink-0 text-[#5b6475]" />
           </Link>
+
+          {hasPractice(topic.id) ? (
+            <Link
+              href={`/practice/${course.slug}/${topic.slug}`}
+              className="rise press mt-3 flex items-center gap-3.5 rounded-2xl bg-white/15 p-3 pr-5 text-white ring-2 ring-inset ring-white/30 [--ledge:rgb(0_0_0/0.18)] hover:bg-white/25 sm:w-fit"
+              style={{ ["--i" as string]: 3 }}
+            >
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/20">
+                <Target className="size-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-brand text-[16.5px] font-black leading-tight">Practice problems</span>
+                <span className="block text-[13px] font-semibold text-white/80">Unlimited, with step-by-step solutions</span>
+              </span>
+              <ArrowRight className="size-5 shrink-0 text-white/80" />
+            </Link>
+          ) : null}
 
           {/* What you can do with this topic */}
           <div className="rise mt-3 grid grid-cols-2 gap-2.5 lg:grid-cols-4" style={{ ["--i" as string]: 3 }}>

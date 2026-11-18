@@ -10,6 +10,9 @@ export async function createSessionClient() {
   const store = await cookies();
   return createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
     global: { fetch: resilientFetch },
+    // supabase-js retries failed reads with backoff (1s, 2s, 4s). During an outage that turned each
+    // database call into a 7-second wait; resilientFetch already fails fast, so don't retry.
+    db: { retry: false },
     cookies: {
       getAll: () => store.getAll(),
       setAll: (list) => {
@@ -25,7 +28,7 @@ export async function createSessionClient() {
 
 /** Anonymous client for public catalog reads (no cookies, cacheable). */
 export function createPublicClient() {
-  return createClient(env.supabaseUrl, env.supabaseAnonKey, { auth: { persistSession: false }, global: { fetch: resilientFetch } });
+  return createClient(env.supabaseUrl, env.supabaseAnonKey, { auth: { persistSession: false }, global: { fetch: resilientFetch }, db: { retry: false } });
 }
 
 /** Service-role client. Server-only: webhooks, role changes, and billing writes. */
@@ -33,5 +36,5 @@ export function createAdminClient() {
   if (!env.supabaseServiceRoleKey) {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for this operation.");
   }
-  return createClient(env.supabaseUrl, env.supabaseServiceRoleKey, { auth: { persistSession: false }, global: { fetch: resilientFetch } });
+  return createClient(env.supabaseUrl, env.supabaseServiceRoleKey, { auth: { persistSession: false }, global: { fetch: resilientFetch }, db: { retry: false } });
 }
