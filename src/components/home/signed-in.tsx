@@ -33,7 +33,7 @@ export async function SignedInHome({ viewer, catalog }: { viewer: Viewer; catalo
         <div className="relative mx-auto max-w-6xl px-4 pb-10 pt-9 sm:px-6 lg:px-8 lg:pt-12">
           <p className="rise font-brand text-[16px] font-extrabold text-white/85">Welcome back, {first}</p>
           <h1 className="rise display mt-2 max-w-3xl text-[38px] sm:text-6xl" style={{ ["--i" as string]: 1 }}>
-            Understand what you&apos;re studying tonight.
+            Your cheat code for math.
           </h1>
           <div className="rise mt-7 flex flex-wrap gap-2.5" style={{ ["--i" as string]: 2 }}>
             <Link href="/lessons" className="press flex h-12 items-center gap-2 rounded-2xl bg-white px-5 font-brand text-[15.5px] font-extrabold text-[#1d4ed8] [--ledge:rgb(0_0_0/0.22)] hover:brightness-95">

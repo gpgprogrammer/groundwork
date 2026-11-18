@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { canUploadVideos } from "@/lib/auth/permissions";
-import { getCatalog } from "@/lib/catalog";
+import { invalidateCatalog, getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import type { Contribution } from "@/lib/types";
 import { getUpload, MAX_VIDEO_BYTES, objectSize, publicUrlFor, removeObjects, signedUpload, uploaderIdentity, uploadsEnabled } from "@/lib/uploads";
@@ -71,6 +71,7 @@ export async function publishUpload(input: z.infer<typeof publishSchema>): Promi
     views: 0,
   };
   await (await getStore()).putDoc("contributions", c.id, c, viewer.user.id);
+  invalidateCatalog();
   const who = await uploaderIdentity(viewer.user.id);
   revalidatePath("/videos");
   revalidatePath("/studio");
@@ -86,6 +87,7 @@ export async function deleteUpload(id: string) {
   const c = await getUpload(id);
   if (!c || (c.educatorId !== viewer.user.id && !viewer.isAdmin)) return;
   await (await getStore()).putDoc("contributions", id, { ...c, status: "removed" });
+  invalidateCatalog();
   await removeObjects([c.media!.path, ...(c.media!.posterUrl ? [c.media!.path.replace(/\.\w+$/, ".jpg")] : [])]).catch(() => {});
   revalidatePath("/", "layout");
   redirect(c.educatorId === viewer.user.id ? "/studio/upload" : "/videos");
@@ -96,4 +98,5 @@ export async function recordUploadView(id: string) {
   const c = await getUpload(id);
   if (!c) return;
   await (await getStore()).putDoc("contributions", id, { ...c, views: (c.views ?? 0) + 1 });
+  invalidateCatalog();
 }

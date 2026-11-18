@@ -9,7 +9,7 @@ import { REPORT_REASONS } from "@/lib/report-reasons";
 import { removeObjects } from "@/lib/uploads";
 import type { Contribution, Educator, Report, ReportKind } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
-import { getCatalog } from "@/lib/catalog";
+import { invalidateCatalog, getCatalog } from "@/lib/catalog";
 
 async function admin() {
   const viewer = await getViewer();
@@ -25,6 +25,7 @@ export async function approveUpload(id: string) {
   if (!c || c.kind !== "upload" || c.status !== "pending") return;
   // Counted as new from the moment students can see it.
   await store.putDoc("contributions", id, { ...c, status: "published", createdAt: new Date().toISOString() });
+  invalidateCatalog();
   revalidatePath("/", "layout");
 }
 
@@ -34,6 +35,7 @@ export async function rejectUpload(id: string) {
   const c = await store.getDoc<Contribution>("contributions", id);
   if (!c || c.kind !== "upload") return;
   await store.putDoc("contributions", id, { ...c, status: "removed" });
+  invalidateCatalog();
   if (c.media) await removeObjects([c.media.path, c.media.path.replace(/\.\w+$/, ".jpg")]).catch(() => {});
   revalidatePath("/", "layout");
 }
@@ -126,6 +128,7 @@ export async function resolveReport(id: string, action: "remove" | "dismiss") {
       if (data?.user_id) await db.from("profiles").update({ role: "student" }).eq("id", data.user_id);
     }
   }
+  if (action === "remove") invalidateCatalog();
   // Close every open report about the same thing.
   const all = await store.listDocs<Report>("reports");
   for (const x of all.filter((x) => x.targetId === r.targetId && x.status === "open")) {

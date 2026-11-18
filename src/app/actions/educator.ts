@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getCatalog } from "@/lib/catalog";
+import { invalidateCatalog, getCatalog } from "@/lib/catalog";
 import { detectCourse, matchTopics } from "@/lib/catalog/match";
 import { getStore } from "@/lib/data/store";
 import type { Contribution, Educator } from "@/lib/types";
@@ -138,6 +138,7 @@ export async function publishVideo(_: StudioState, form: FormData): Promise<Stud
     },
   };
   await store.putDoc("contributions", c.id, c, educator.id);
+  invalidateCatalog();
   revalidatePath("/", "layout");
   redirect(`/studio?added=video`);
 }
@@ -170,6 +171,7 @@ export async function publishGuide(_: StudioState, form: FormData): Promise<Stud
     body: parsed.data.body,
   };
   await (await getStore()).putDoc("contributions", id, c, educator.id);
+  invalidateCatalog();
   revalidatePath("/", "layout");
   redirect(`/guides/${id}?published=1`);
 }
@@ -181,5 +183,6 @@ export async function removeContribution(id: string) {
   const c = await store.getDoc<Contribution>("contributions", id);
   if (!c || (c.educatorId !== viewer.user.id && !viewer.isAdmin)) return;
   await store.putDoc("contributions", id, { ...c, status: "removed" });
+  invalidateCatalog();
   revalidatePath("/", "layout");
 }

@@ -63,7 +63,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
       size="lg"
       className="pb-24 text-center lg:pb-28 [&_h1]:mx-auto [&_p]:mx-auto"
       kicker={<span className="mx-auto rounded-full bg-white/15 px-3.5 py-1.5 ring-1 ring-inset ring-white/25">Pricing</span>}
-      title="Understand what you're studying tonight."
+      title="Your cheat code for math."
       lede="Every course and lesson is free, forever. Plus picks the best videos for what you're learning in class. Exam Sprint gets you ready for one big exam."
     />
     <div className="mx-auto max-w-[1200px] px-4 pb-20 sm:px-6">

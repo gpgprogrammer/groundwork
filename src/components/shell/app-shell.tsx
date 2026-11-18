@@ -20,11 +20,11 @@ export async function AppShell({ children }: { children: ReactNode }) {
     .slice(0, 7)
     .map(({ c }) => ({ id: c.id, title: c.title, thumbnail: c.thumbnail }));
 
-  const promo = await schedulePromoFor(viewer);
+  const [promo, educator] = await Promise.all([schedulePromoFor(viewer), viewer ? (await getStore()).getDoc("educators", viewer.user.id) : null]);
   const data: ShellData = {
     user: viewer ? { name: viewer.user.name, email: viewer.user.email } : null,
     isTutor: viewer?.state.profile.role === "tutor",
-    isEducator: Boolean(viewer && (await (await getStore()).getDoc("educators", viewer.user.id))),
+    isEducator: Boolean(educator),
     isAdmin: viewer?.isAdmin ?? false,
     plus: viewer?.plus.kind ?? "anonymous",
     hasSchedule: Boolean(viewer?.state.schedule?.sources?.length),

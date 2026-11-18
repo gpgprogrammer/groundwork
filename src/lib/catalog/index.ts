@@ -167,8 +167,36 @@ export function withContributions(lib: Library, contributions: Contribution[], e
   return { ...lib, videos: [...videos.values()], channels: [...channels.values()] };
 }
 
+/**
+ * Ranking ~15,000 lessons and reading engagement from the database took 0.4–1s, and it used to run
+ * on every page view (the site menu needs the catalog). Now one built catalog is shared for a minute;
+ * after that, the next visitor gets the current one instantly while a fresh one is built in the
+ * background. Votes, saves, and teacher-added lessons show up within about a minute.
+ */
+const CATALOG_TTL_MS = 60_000;
+let built: { at: number; catalog: IndexedCatalog } | null = null;
+let building: Promise<IndexedCatalog> | null = null;
+
+function rebuild() {
+  building ??= buildCatalog()
+    .then((catalog) => {
+      built = { at: Date.now(), catalog };
+      return catalog;
+    })
+    .finally(() => {
+      building = null;
+    });
+  return building;
+}
+
 /** The catalog for this request, with live Merit engagement and teacher-added lessons merged in. */
-export const getCatalog = cache(async () => {
+export const getCatalog = cache(async (): Promise<IndexedCatalog> => {
+  if (!built) return rebuild();
+  if (Date.now() - built.at > CATALOG_TTL_MS) rebuild().catch((err) => console.error("[catalog] background rebuild failed", err));
+  return built.catalog;
+});
+
+async function buildCatalog(): Promise<IndexedCatalog> {
   let stats: Record<string, SiteStats> = {};
   let contributions: Contribution[] = [];
   let educators: Educator[] = [];
@@ -191,6 +219,11 @@ export const getCatalog = cache(async () => {
     lib = { ...lib, videos: lib.videos.filter((v) => !gone.has(v.id)) };
   }
   return indexCatalog(contributions.length ? withContributions(lib, contributions, educators) : lib, stats);
-});
+}
+
+/** Drops the shared catalog so the next request rebuilds it (after an admin hides a lesson, a teacher publishes one, …). */
+export function invalidateCatalog() {
+  built = null;
+}
 
 export { curriculum };

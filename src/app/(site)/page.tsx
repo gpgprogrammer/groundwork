@@ -7,7 +7,7 @@ import { getCatalog } from "@/lib/catalog";
 import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
-  title: { absolute: "Merit Learning: understand what you're studying tonight" },
+  title: { absolute: "Merit Learning: your cheat code for math" },
   description: "Ranked lessons for every math topic from Algebra 1 to AP Calculus and SAT Math, adaptive practice, on-call tutors when you're stuck, and a plan for every test.",
 };
 
