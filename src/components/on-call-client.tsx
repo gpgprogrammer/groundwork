@@ -50,6 +50,7 @@ export function OnCallRequestForm({
   urgency,
   lengths,
   disabled,
+  rates,
 }: {
   courses: Opt[];
   topics: Record<string, Opt[]>;
@@ -58,7 +59,11 @@ export function OnCallRequestForm({
   urgency: Record<string, string>;
   lengths: readonly number[];
   disabled?: boolean;
+  /** Lowest and highest on-call rate (per hour) among tutors on call for the chosen class. */
+  rates?: { min: number; max: number } | null;
 }) {
+  const [length, setLength] = useState(lengths[1] ?? lengths[0]);
+  const price = (rate: number) => `$${(Math.round((rate * length * 100) / 60) / 100).toFixed(2).replace(/\.00$/, "")}`;
   const [state, action, pending] = useActionState<OnCallState, FormData>(requestOnCall, {});
   const [course, setCourse] = useState(defaultCourse);
   const router = useRouter();
@@ -110,7 +115,7 @@ export function OnCallRequestForm({
         <div className="grid grid-cols-3 gap-2">
           {lengths.map((m, i) => (
             <label key={m} className="press-sm flex h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-surface text-[14px] font-bold text-ink ring-2 ring-inset ring-line [--ledge:var(--line)] has-[:checked]:bg-[#f3edff] has-[:checked]:ring-[#7c3aed] dark:has-[:checked]:bg-[#2a1f45]">
-              <input type="radio" name="minutes" value={m} defaultChecked={i === 1} className="accent-[#7c3aed]" />
+              <input type="radio" name="minutes" value={m} defaultChecked={i === 1} onChange={() => setLength(m)} className="accent-[#7c3aed]" />
               {m} min
             </label>
           ))}
@@ -119,6 +124,11 @@ export function OnCallRequestForm({
       <Field label="What are you stuck on?">
         <textarea name="message" required minLength={10} rows={4} className={cn(inputClass, "h-auto py-2.5 leading-relaxed")} placeholder="e.g. Problem set on related rates due at midnight. I don't get how to set up #4 and #7." />
       </Field>
+      {rates ? (
+        <p className="tabular rounded-2xl bg-[#f3edff] px-4 py-3 text-[14px] leading-relaxed text-ink dark:bg-[#2a1f45]">
+          <span className="font-bold">Price: {rates.min === rates.max ? price(rates.min) : `${price(rates.min)}–${price(rates.max)}`}</span> for {length} minutes. Each on-call tutor sets their own rate; you pay the rate of the tutor who accepts, and you&apos;ll see it before you join.
+        </p>
+      ) : null}
       <FormMessage error={state.error} />
       <button type="submit" disabled={pending || disabled} className={violetButton("lg", "w-full")}>
         <Zap className="size-4" /> {pending ? "Sending…" : disabled ? "No tutors on call for this class" : "Get a tutor now"}
@@ -127,7 +137,7 @@ export function OnCallRequestForm({
   );
 }
 
-export function OnCallToggle({ onCall, defaultUrl, hours }: { onCall: { until: string } | null; defaultUrl: string; hours: readonly number[] }) {
+export function OnCallToggle({ onCall, defaultUrl, defaultRate, hours, minRate, maxRate }: { onCall: { until: string; rate?: number } | null; defaultUrl: string; defaultRate: number | null; hours: readonly number[]; minRate: number; maxRate: number }) {
   const [state, action, pending] = useActionState<OnCallState, FormData>(setOnCall, {});
   if (onCall) {
     return (
@@ -140,6 +150,7 @@ export function OnCallToggle({ onCall, defaultUrl, hours }: { onCall: { until: s
           </span>
           On call until {new Date(onCall.until).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
         </p>
+        {onCall.rate ? <p className="tabular text-[13.5px] text-muted">Your on-call rate: ${onCall.rate}/hour</p> : null}
         <FormMessage error={state.error} />
         <button disabled={pending} className={buttonClass("outline", "md", "w-full")}>
           Go off call
@@ -151,6 +162,13 @@ export function OnCallToggle({ onCall, defaultUrl, hours }: { onCall: { until: s
     <form action={action} className="space-y-3">
       <Field label="Your video link" hint="Zoom, Google Meet, or Teams">
         <input name="meetUrl" type="url" required defaultValue={defaultUrl} placeholder="https://meet.google.com/abc-defg-hij" className={inputClass} />
+      </Field>
+      <Field label="Your on-call rate" hint="Per hour. Students see it before they ask.">
+        <label className="flex h-11 items-center gap-1 rounded-xl bg-surface px-3 ring-2 ring-line focus-within:ring-[#7c3aed]">
+          <span className="font-bold text-muted">$</span>
+          <input name="rate" type="number" required min={minRate} max={maxRate} step="1" defaultValue={defaultRate ?? undefined} placeholder="50" className="w-full bg-transparent font-bold text-ink outline-none" aria-label="On-call rate in dollars per hour" />
+          <span className="shrink-0 text-[13px] font-semibold text-muted">/ hour</span>
+        </label>
       </Field>
       <Field label="For how long?">
         <select name="hours" defaultValue={2} className={selectClass}>

@@ -9,7 +9,7 @@ import { getTutorMeta, saveBooking, saveTutorMeta } from "@/lib/bookings";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { allTutorMeta } from "@/lib/bookings";
-import { cleanMeetUrl, getOnCallRequest, isOnCall, ON_CALL_HOURS, ON_CALL_LENGTHS, onCallTutors, saveOnCallRequest, stateOf, URGENCY, type OnCallRequest } from "@/lib/on-call";
+import { cleanMeetUrl, getOnCallRequest, isOnCall, MAX_ON_CALL_RATE, MIN_ON_CALL_RATE, ON_CALL_HOURS, ON_CALL_LENGTHS, onCallRate, onCallTutors, saveOnCallRequest, sessionPrice, stateOf, URGENCY, type OnCallRequest } from "@/lib/on-call";
 import { rankTutors } from "@/lib/tutoring";
 import type { Booking } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
@@ -82,7 +82,10 @@ export async function acceptOnCall(id: string): Promise<{ error?: string }> {
   if (!r || stateOf(r) !== "waiting") return { error: "Another tutor already took this one, or it expired." };
   if (!tutor.courseIds.includes(r.courseId)) return { error: "This request is for a class you don't tutor." };
   const now = new Date().toISOString();
-  const amount = Math.round((((tutor.hourlyRate ?? 0) * r.minutes) / 60) * 100) / 100;
+  // On-call sessions use the rate the tutor set when going on call.
+  const rate = onCallRate(meta, tutor.hourlyRate);
+  if (!(rate > 0)) return { error: "Set your on-call rate first." };
+  const amount = sessionPrice(rate, r.minutes);
   const booking: Booking = {
     id: `bk_${randomUUID().slice(0, 12)}`,
     tutorId: tutor.id,
@@ -93,14 +96,14 @@ export async function acceptOnCall(id: string): Promise<{ error?: string }> {
     courseId: r.courseId,
     startsAt: now,
     minutes: r.minutes,
-    hourlyRate: tutor.hourlyRate ?? 0,
+    hourlyRate: rate,
     amount,
     fee: Math.round(amount * (meta.commissionRate || TUTOR_COMMISSION) * 100) / 100,
     message: r.message,
     status: "confirmed",
-    payment: meta.payoutsEnabled && amount > 0 ? "merit" : "direct",
-    paid: amount === 0,
-    feeSettled: amount === 0,
+    payment: meta.payoutsEnabled ? "merit" : "direct",
+    paid: false,
+    feeSettled: false,
     source: null,
     createdAt: now,
     onCall: true,
@@ -118,7 +121,11 @@ export async function acceptOnCall(id: string): Promise<{ error?: string }> {
   redirect(`/bookings/${booking.id}`);
 }
 
-const goSchema = z.object({ hours: z.coerce.number().refine((h) => (ON_CALL_HOURS as readonly number[]).includes(h)), meetUrl: z.string().min(1, "Add your video link.") });
+const goSchema = z.object({
+  hours: z.coerce.number().refine((h) => (ON_CALL_HOURS as readonly number[]).includes(h)),
+  meetUrl: z.string().min(1, "Add your video link."),
+  rate: z.coerce.number({ message: "Set your on-call rate." }).min(MIN_ON_CALL_RATE, `On-call rates start at $${MIN_ON_CALL_RATE}/hour.`).max(MAX_ON_CALL_RATE, `On-call rates can be up to $${MAX_ON_CALL_RATE}/hour.`),
+});
 
 /** Tutor goes on call for a few hours, or comes off call. */
 export async function setOnCall(_: OnCallState, form: FormData): Promise<OnCallState> {
@@ -136,7 +143,7 @@ export async function setOnCall(_: OnCallState, form: FormData): Promise<OnCallS
     const meetUrl = cleanMeetUrl(parsed.data.meetUrl);
     if (!meetUrl) return { error: "Use a full https:// link to your Zoom, Google Meet, or Teams room." };
     const now = Date.now();
-    await saveTutorMeta({ ...meta, onCall: { since: new Date(now).toISOString(), until: new Date(now + parsed.data.hours * 3600000).toISOString(), meetUrl } });
+    await saveTutorMeta({ ...meta, onCall: { since: new Date(now).toISOString(), until: new Date(now + parsed.data.hours * 3600000).toISOString(), meetUrl, rate: Math.round(parsed.data.rate * 100) / 100 } });
   }
   revalidatePath("/tutor");
   revalidatePath("/tutors/on-call");

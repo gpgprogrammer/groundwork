@@ -9,7 +9,7 @@ import { cn, panel, panelLink } from "@/components/ui";
 import { allTutorMeta } from "@/lib/bookings";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
-import { ON_CALL_LENGTHS, onCallTutors, URGENCY, WAIT_MINUTES } from "@/lib/on-call";
+import { ON_CALL_LENGTHS, onCallRate, onCallTutors, URGENCY, WAIT_MINUTES } from "@/lib/on-call";
 import { rankTutors } from "@/lib/tutoring";
 import { getViewer } from "@/lib/viewer";
 
@@ -29,6 +29,8 @@ export default async function OnCallPage({ searchParams }: PageProps<"/tutors/on
   const topic = typeof sp.topic === "string" ? catalog.topic(sp.topic) : undefined;
   const here = onCallTutors(ranked, meta, course.id).filter((t) => t.userId !== viewer?.user.id);
   const anyOnCall = onCallTutors(ranked, meta).length;
+  const hereRates = here.map((t) => onCallRate(meta.get(t.id), t.hourlyRate));
+  const rates = hereRates.length ? { min: Math.min(...hereRates), max: Math.max(...hereRates) } : null;
   const isTutor = Boolean(viewer && tutors.some((t) => t.userId === viewer.user.id));
   const topics = Object.fromEntries(catalog.courses.map((c) => [c.id, catalog.topicsForCourse(c.id).map((t) => ({ id: t.id, title: t.title }))]));
 
@@ -54,7 +56,7 @@ export default async function OnCallPage({ searchParams }: PageProps<"/tutors/on
       <div className="mx-auto grid max-w-6xl gap-8 px-4 pt-10 sm:px-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:px-8">
         <section className={cn(panel, "p-5 sm:p-7")}>
           <h2 className="headline text-[24px] text-ink">Get help now</h2>
-          <p className="mt-1 text-[14px] text-muted">Nobody takes it within {WAIT_MINUTES} minutes? It expires, and you&apos;re never charged for a session that didn&apos;t happen.</p>
+          <p className="mt-1 text-[14px] text-muted">Each on-call tutor sets their own rate, shown below. Nobody takes it within {WAIT_MINUTES} minutes? It expires, and you&apos;re never charged for a session that didn&apos;t happen.</p>
           <div className="mt-5">
             {viewer ? (
               <OnCallRequestForm
@@ -65,6 +67,7 @@ export default async function OnCallPage({ searchParams }: PageProps<"/tutors/on
                 urgency={URGENCY}
                 lengths={ON_CALL_LENGTHS}
                 disabled={!here.length}
+                rates={rates}
               />
             ) : (
               <div className="rounded-2xl bg-bg-subtle p-5">
@@ -100,7 +103,8 @@ export default async function OnCallPage({ searchParams }: PageProps<"/tutors/on
                           </span>
                         </span>
                         <span className="tabular shrink-0 text-right font-brand text-[15px] font-black text-ink">
-                          {t.hourlyRate ? `${money(t.hourlyRate)}/hr` : "Free"}
+                          {money(onCallRate(m, t.hourlyRate))}/hr
+                          <span className="block text-[11.5px] font-bold text-muted">on-call rate</span>
                         </span>
                       </Link>
                     </li>
@@ -138,7 +142,7 @@ export default async function OnCallPage({ searchParams }: PageProps<"/tutors/on
               {[
                 "Pick your class and tell us what's due. One request reaches every tutor on call for it.",
                 "The first tutor ready accepts. Your screen updates on its own with their video link.",
-                "Join, share the problem, and work through it together. You pay the tutor's posted rate for the length you picked.",
+                "Join, share the problem, and work through it together. You pay that tutor's on-call rate for the length you picked.",
               ].map((s, i) => (
                 <li key={s} className="flex gap-3">
                   <span className={cn("tabular flex size-7 shrink-0 items-center justify-center rounded-lg font-brand text-[13px] font-black", V.soft, V.ink)}>{i + 1}</span>
@@ -152,7 +156,7 @@ export default async function OnCallPage({ searchParams }: PageProps<"/tutors/on
             <Radio className={cn("size-6 shrink-0", V.ink)} />
             <span className="min-w-0 flex-1">
               <span className="block font-brand text-[16px] font-extrabold text-ink">{isTutor ? "Go on call from your dashboard" : "Tutor math? Take on-call sessions"}</span>
-              <span className="block text-[13px] text-muted">Pick a couple of hours, add your video link, and accept requests as they come in.</span>
+              <span className="block text-[13px] text-muted">Set your on-call rate, pick a couple of hours, add your video link, and accept requests as they come in.</span>
             </span>
           </Link>
         </div>

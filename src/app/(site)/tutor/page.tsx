@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AvailabilityEditor } from "@/components/booking-client";
 import { AcceptButton, AutoRefresh, Elapsed, OnCallToggle } from "@/components/on-call-client";
-import { isOnCall, listOnCallRequests, ON_CALL_HOURS, openRequestsFor, URGENCY } from "@/lib/on-call";
+import { isOnCall, listOnCallRequests, MAX_ON_CALL_RATE, MIN_ON_CALL_RATE, ON_CALL_HOURS, openRequestsFor, URGENCY } from "@/lib/on-call";
 import { BookingStatus, DateTile, money, sessionWhen } from "@/components/booking-ui";
 import { RequestStatus } from "@/components/request-status";
 import { heroBtn, heroBtnGhost, WORLD_ON_WHITE, WorldHero } from "@/components/marketing";
@@ -246,11 +246,11 @@ export default async function TutorDashboard() {
                 </span>
                 <div className="min-w-0">
                   <h2 className="font-brand text-[18px] font-extrabold text-ink">On call</h2>
-                  <p className="mt-0.5 text-[13px] leading-relaxed text-muted">Take last-minute sessions from students on a deadline. You get every request for your classes and accept the ones you want.</p>
+                  <p className="mt-0.5 text-[13px] leading-relaxed text-muted">Take last-minute sessions from students on a deadline, at your own on-call rate. You get every request for your classes and accept the ones you want.</p>
                 </div>
               </div>
               <div className="mt-4">
-                <OnCallToggle onCall={onCall} defaultUrl={lastUrl} hours={ON_CALL_HOURS} />
+                <OnCallToggle onCall={onCall} defaultUrl={lastUrl} defaultRate={meta.onCall?.rate ?? mine.hourlyRate} hours={ON_CALL_HOURS} minRate={MIN_ON_CALL_RATE} maxRate={MAX_ON_CALL_RATE} />
               </div>
             </section>
             <section className={cn(panel, "rise p-5")} style={{ ["--i" as string]: 3 }}>

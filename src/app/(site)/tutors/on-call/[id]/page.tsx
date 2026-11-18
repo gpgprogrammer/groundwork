@@ -56,7 +56,10 @@ export default async function OnCallRequestPage({ params }: PageProps<"/tutors/o
                 <Check className="size-8" strokeWidth={3} />
               </span>
               <h1 className="headline mt-5 text-[28px] text-ink">{r.tutorName ?? "Your tutor"} is ready for you</h1>
-              <p className="mt-2 text-[15px] text-ink-2">Join the video session now. Have the problem in front of you.</p>
+              <p className="mt-2 text-[15px] text-ink-2">
+                Join the video session now. Have the problem in front of you.
+                {booking ? ` ${r.minutes} minutes at $${booking.hourlyRate}/hour: $${booking.amount.toFixed(2).replace(/\.00$/, "")}.` : ""}
+              </p>
               {booking?.meetUrl ? (
                 <a href={booking.meetUrl} target="_blank" rel="noopener noreferrer" className={buttonClass("positive", "lg", "mt-6 w-full sm:w-auto")}>
                   <Video className="size-5" /> Join the session

@@ -363,8 +363,8 @@ export type TutorMeta = {
   /** Weekly availability in the tutor's local time. */
   availability: { day: number; start: string; end: string }[];
   timezone: string;
-  /** On call: ready to take a session right now, until `until`, at this video link. */
-  onCall?: { since: string; until: string; meetUrl: string } | null;
+  /** On call: ready to take a session right now, until `until`, at this video link, for `rate` USD per hour (set by the tutor; never free). */
+  onCall?: { since: string; until: string; meetUrl: string; rate: number } | null;
 };
 
 export type Booking = {

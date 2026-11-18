@@ -33,6 +33,16 @@ export type OnCallRequest = {
   claimedAt?: string;
 };
 
+/** On-call rates are set by each tutor when they go on call (USD per hour). */
+export const MIN_ON_CALL_RATE = 5;
+export const MAX_ON_CALL_RATE = 300;
+
+/** A tutor's on-call hourly rate (older on-call sessions fall back to their listing rate). */
+export const onCallRate = (meta: Pick<TutorMeta, "onCall"> | undefined, hourlyRate: number | null) => meta?.onCall?.rate || hourlyRate || 0;
+
+/** Price of a session at an hourly rate, rounded to cents. */
+export const sessionPrice = (rate: number, minutes: number) => Math.round(((rate * minutes) / 60) * 100) / 100;
+
 export const isOnCall = (meta: Pick<TutorMeta, "onCall"> | undefined, now = Date.now()) => Boolean(meta?.onCall && new Date(meta.onCall.until).getTime() > now);
 
 /** A waiting request nobody accepted in time. */
@@ -43,7 +53,7 @@ export const stateOf = (r: OnCallRequest, now = Date.now()): RequestState => (is
 
 /** Tutors on call right now who teach this course (or any course when none is given). */
 export function onCallTutors(tutors: TutorWithStats[], meta: Map<string, TutorMeta>, courseId?: string | null, now = Date.now()) {
-  return tutors.filter((t) => t.online && isOnCall(meta.get(t.id), now) && (!courseId || t.courseIds.includes(courseId)));
+  return tutors.filter((t) => t.online && isOnCall(meta.get(t.id), now) && onCallRate(meta.get(t.id), t.hourlyRate) > 0 && (!courseId || t.courseIds.includes(courseId)));
 }
 
 export async function listOnCallRequests() {
