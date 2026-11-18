@@ -56,9 +56,15 @@ let library: Library | null = null;
 export function loadLibrary(): Library {
   if (library && process.env.NODE_ENV === "production") return library;
   try {
-    library = JSON.parse(readFileSync(path.join(process.cwd(), "src", "data", "youtube.json"), "utf8")) as Library;
+    // Just the live courses' videos (written at build time by scripts/build-live-library.ts): a third
+    // of the full library, so a new server starts faster. Falls back to the full library.
+    library = JSON.parse(readFileSync(path.join(process.cwd(), "src", "data", "youtube-live.json"), "utf8")) as Library;
   } catch {
-    library = { generatedAt: null, channels: [], videos: [] };
+    try {
+      library = JSON.parse(readFileSync(path.join(process.cwd(), "src", "data", "youtube.json"), "utf8")) as Library;
+    } catch {
+      library = { generatedAt: null, channels: [], videos: [] };
+    }
   }
   return library;
 }

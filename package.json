@@ -12,7 +12,8 @@
     "ingest": "tsx scripts/ingest-youtube.ts",
     "preview:2": "next dev --hostname 127.0.0.1 --port 3200",
     "test:2": "playwright test -c pw-merit2.config.ts",
-    "shots:2": "node scripts/shots.mjs"
+    "shots:2": "node scripts/shots.mjs",
+    "prebuild": "tsx scripts/build-live-library.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.62",

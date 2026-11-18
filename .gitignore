@@ -51,3 +51,6 @@ next-env.d.ts
 # YouTube API response cache
 /.cache/
 .env.vercel
+
+# built before each build from youtube.json (live courses only)
+src/data/youtube-live.json
