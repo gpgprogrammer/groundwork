@@ -153,6 +153,20 @@ export async function createBookingCheckoutUrl(booking: Booking, meta: TutorMeta
   return session.url;
 }
 
+/** A student buys a study guide from the marketplace. */
+export async function createGuideCheckoutUrl(guide: { id: string; title: string; price: number }, buyer: { id: string; email: string }, origin: string) {
+  const session = await getStripe().checkout.sessions.create({
+    mode: "payment",
+    customer_email: buyer.email,
+    metadata: { guideId: guide.id, userId: buyer.id },
+    line_items: [{ quantity: 1, price_data: { currency: "usd", unit_amount: cents(guide.price), product_data: { name: `Study guide: ${guide.title}`.slice(0, 250) } } }],
+    success_url: `${origin}/study-guides/${guide.id}?checkout=success`,
+    cancel_url: `${origin}/study-guides/${guide.id}`,
+  });
+  if (!session.url) throw new Error("Stripe did not return a Checkout URL.");
+  return session.url;
+}
+
 /** Tutor pays the referral fees owed on sessions paid directly to them. */
 export async function createFeeCheckoutUrl(tutorId: string, bookingIds: string[], total: number, email: string, origin: string) {
   const session = await getStripe().checkout.sessions.create({
@@ -217,6 +231,10 @@ export async function handleStripeEvent(event: Stripe.Event) {
           studentEmail: md.studentEmail ?? "",
           source: "stripe",
         });
+      } else if (md.guideId && md.userId) {
+        const { getGuide, recordPurchase } = await import("@/lib/market");
+        const g = await getGuide(md.guideId);
+        if (g) await recordPurchase(g, md.userId, (s.amount_total ?? 0) / 100, "stripe");
       } else if (md.bookingId) {
         const b = await store.getDoc<Booking>("bookings", md.bookingId);
         if (b) await store.putDoc("bookings", b.id, { ...b, paid: true, feeSettled: true, payment: "merit", source: "stripe" });

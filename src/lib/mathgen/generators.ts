@@ -59,7 +59,8 @@ const twoStep = g("two-step", "Two-step equations", (r) => {
 
 const bothSides = g("both-sides", "Variables on both sides", (r) => {
   const x = r.int(-8, 8);
-  let a = r.nz(-9, 9), c = r.nz(-9, 9);
+  const a = r.nz(-9, 9);
+  let c = r.nz(-9, 9);
   if (a === c) c = a + r.pick([1, 2, -1]);
   if (c === 0) c = 3;
   const b = r.int(-12, 12);

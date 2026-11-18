@@ -2,7 +2,7 @@
 
 import { ArrowRight, Check, Flame, Lightbulb, PlayCircle, RotateCcw, Timer, Trophy, Users, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { recordPractice } from "@/app/actions/practice";
 import { generateForTopic, type GeneratedQuestion } from "@/lib/mathgen";
 import { buttonClass, cn } from "../ui";
@@ -11,6 +11,7 @@ type TopicRef = { id: string; title: string; href: string };
 type Answer = { q: GeneratedQuestion; choice: number; hinted: boolean; seconds: number };
 
 const ROUND = 10;
+const noopSubscribe = () => () => {};
 /** Seconds per problem in a timed drill. */
 const TIMED_SECONDS = 90;
 
@@ -52,8 +53,13 @@ export function PracticeSession({ topics, courseId, timed = false, signedIn }: {
     setLeft(timed ? ROUND * TIMED_SECONDS : 0);
   };
 
-  // Problems are generated in the browser after mount (they're random, so not during server render).
-  useEffect(start, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Problems are random, so they're generated in the browser only (never during the server render).
+  const inBrowser = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  const [started, setStarted] = useState(false);
+  if (inBrowser && !started) {
+    setStarted(true);
+    start();
+  }
 
   useEffect(() => {
     shownAt.current = Date.now();

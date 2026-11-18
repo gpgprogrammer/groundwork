@@ -41,7 +41,7 @@ export async function rejectUpload(id: string) {
 // ── Reports ──────────────────────────────────────────────────────────────────
 
 const reportSchema = z.object({
-  kind: z.enum(["upload", "tutor", "educator", "guide", "lesson"]),
+  kind: z.enum(["upload", "tutor", "educator", "guide", "lesson", "market-guide"]),
   targetId: z.string().min(1).max(80),
   reason: z.enum(REPORT_REASONS),
   details: z.string().trim().max(1000),
@@ -64,6 +64,10 @@ async function describe(kind: ReportKind, id: string): Promise<{ href: string; t
     const topic = v.topicId ? catalog.topic(v.topicId) : undefined;
     const course = catalog.course(v.courseId);
     return { href: topic && course ? `/courses/${course.slug}/${topic.slug}?play=${v.id}` : `/go/${v.id}`, title: `Lesson: ${v.title}` };
+  }
+  if (kind === "market-guide") {
+    const g = await store.getDoc<{ id: string; title: string; status: string }>("marketGuides", id);
+    return g && g.status !== "removed" ? { href: `/study-guides/${g.id}`, title: `Study guide for sale: ${g.title}` } : null;
   }
   const c = await store.getDoc<Contribution>("contributions", id);
   if (!c || c.status === "removed") return null;
@@ -109,6 +113,9 @@ export async function resolveReport(id: string, action: "remove" | "dismiss") {
     else if (r.kind === "guide") {
       const c = await store.getDoc<Contribution>("contributions", r.targetId);
       if (c) await store.putDoc("contributions", c.id, { ...c, status: "removed" });
+    } else if (r.kind === "market-guide") {
+      const g = await store.getDoc<{ status: string }>("marketGuides", r.targetId);
+      if (g) await store.putDoc("marketGuides", r.targetId, { ...g, status: "removed" });
     } else if (r.kind === "educator") {
       await store.deleteDoc("educators", r.targetId);
     } else if (r.kind === "tutor" && isSupabaseEnabled) {

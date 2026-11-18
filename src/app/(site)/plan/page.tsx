@@ -1,4 +1,8 @@
-import { ArrowRight, BookOpenCheck, CalendarDays, ChartColumn, Lock, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, BookOpenCheck, CalendarDays, ChartColumn, Lock, PlayCircle, Radio, Sparkles, Target, Timer, Zap } from "lucide-react";
+import { getStore } from "@/lib/data/store";
+import { hasPractice } from "@/lib/mathgen";
+import { PRACTICE_COLLECTION, type PracticeStats } from "@/lib/practice-stats";
+import { upcomingEvents } from "@/lib/recommend";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CourseIcon } from "@/components/course-icon";
@@ -21,6 +25,7 @@ export const metadata: Metadata = { title: "Learning plan", description: "Videos
 
 const SOURCE: Record<PlanSource, { label: string; cls: string }> = {
   test: { label: "On your calendar", cls: "bg-sprint-soft text-sprint-ink" },
+  weak: { label: "Weak spot", cls: "bg-danger-soft text-danger" },
   class: { label: "In class now", cls: "bg-accent-soft text-accent-ink" },
   next: { label: "Up next", cls: "bg-positive-soft text-positive" },
 };
@@ -76,9 +81,9 @@ export default async function PlanPage() {
             <section className="mt-12" aria-label="Example learning plan">
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="headline text-[24px] text-ink">What a learning plan looks like</h2>
-                <span className="rounded-full bg-positive-soft px-3 py-1 font-brand text-[12.5px] font-extrabold text-positive">Sample · AP Bio + Calc BC</span>
+                <span className="rounded-full bg-positive-soft px-3 py-1 font-brand text-[12.5px] font-extrabold text-positive">Sample · Algebra 2 + Calc BC</span>
               </div>
-              <p className="mt-1 text-[14.5px] text-muted">A Calc quiz this week and a Bio unit test coming up. Your plan lines up the best videos for both.</p>
+              <p className="mt-1 text-[14.5px] text-muted">A Calc quiz this week and an Algebra 2 unit test coming up. Your plan lines up the best videos and practice for both.</p>
               <div className="relative mt-5">
                 <div aria-hidden className="pointer-events-none select-none space-y-6 opacity-60 blur-[2px]">
                   {sample.slice(0, 2).map((g) => (
@@ -111,7 +116,26 @@ export default async function PlanPage() {
     );
   }
 
-  const plan = learningPlan(catalog, viewer.state);
+  const practice = await (await getStore()).getDoc<PracticeStats>(PRACTICE_COLLECTION, viewer.user.id);
+  const plan = learningPlan(catalog, viewer.state, undefined, undefined, practice);
+  // Tonight: the top of the plan as three steps (watch, practice, check), sized to about 45 minutes.
+  const lead = plan[0];
+  const leadVideo = lead?.videos[0];
+  const drillTopics = plan.filter((g) => hasPractice(g.topic.id) && g.course.id === lead?.course.id).slice(0, 4).map((g) => g.topic.id);
+  const nextTest = upcomingEvents(viewer.state, 3).find((e) => e.kind === "test");
+  const testSoon = Boolean(nextTest);
+  const tonight = lead
+    ? [
+        leadVideo ? { icon: PlayCircle, title: `Watch: ${lead.topic.title}`, body: `${leadVideo.title} · ${Math.max(1, Math.round(leadVideo.durationSec / 60))} min`, href: `/courses/${lead.course.slug}/${lead.topic.slug}`, minutes: Math.max(1, Math.round(leadVideo.durationSec / 60)) } : null,
+        drillTopics.length
+          ? { icon: Target, title: drillTopics.length > 1 ? `Practice ${drillTopics.length} plan topics` : `Practice: ${lead.topic.title}`, body: "10 problems with step-by-step solutions", href: drillTopics.length > 1 ? `/practice/${lead.course.slug}/mixed?topics=${drillTopics.join(",")}` : `/practice/${lead.course.slug}/${lead.topic.slug}`, minutes: 15 }
+          : { icon: Zap, title: `Check yourself: ${lead.topic.title}`, body: "A quick session ends with a short check", href: `/master/${lead.course.slug}/${lead.topic.slug}`, minutes: 15 },
+        testSoon && drillTopics.length
+          ? { icon: Timer, title: "Timed test drill", body: `Test conditions before ${nextTest!.title.length > 32 ? `${nextTest!.title.slice(0, 30)}…` : nextTest!.title}`, href: `/practice/${lead.course.slug}/mixed?topics=${drillTopics.join(",")}&timed=1`, minutes: 15 }
+          : null,
+      ].filter((x) => x !== null)
+    : [];
+  const tonightMinutes = tonight.reduce((s, x) => s + x.minutes, 0);
   const count = planVideoCount(plan);
   const classes = fromClasses(plan);
   const courses = viewer.state.profile.courseIds;
@@ -178,6 +202,35 @@ export default async function PlanPage() {
               </div>
             ) : plan.length ? (
               <div className="space-y-10">
+                {tonight.length ? (
+                  <section className="rise overflow-hidden rounded-3xl bg-surface ring-2 ring-positive/40">
+                    <div className="flex flex-wrap items-center justify-between gap-2 bg-positive-soft px-5 py-4">
+                      <h2 className="headline text-[21px] text-ink">Tonight&apos;s game plan</h2>
+                      <span className="tabular rounded-full bg-surface px-3 py-1 font-brand text-[13px] font-extrabold text-positive">About {tonightMinutes} min</span>
+                    </div>
+                    <ol className="divide-y-2 divide-line">
+                      {tonight.map((s, k) => (
+                        <li key={s.href}>
+                          <Link href={s.href} className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-bg-subtle">
+                            <span className="tabular flex size-10 shrink-0 items-center justify-center rounded-xl bg-positive font-brand text-[16px] font-black text-white">{k + 1}</span>
+                            <span className="min-w-0 flex-1">
+                              <span className="flex items-center gap-2 font-brand text-[16px] font-extrabold text-ink">
+                                <s.icon className="size-4 shrink-0 text-positive" /> <span className="truncate">{s.title}</span>
+                              </span>
+                              <span className="block truncate text-[13px] text-muted">{s.body}</span>
+                            </span>
+                            <ArrowRight className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" />
+                          </Link>
+                        </li>
+                      ))}
+                    </ol>
+                    {testSoon ? (
+                      <Link href={`/tutors/on-call?course=${lead!.course.id}`} className="flex items-center gap-3 border-t-2 border-line px-5 py-3.5 text-[14px] font-bold text-[#6d28d9] hover:bg-bg-subtle dark:text-[#c9b5ff]">
+                        <Radio className="size-4" /> Test coming up and still stuck? Get an on-call tutor
+                      </Link>
+                    ) : null}
+                  </section>
+                ) : null}
                 {plan.map((g, i) => (
                   <section key={g.key} className="rise" style={{ ["--i" as string]: Math.min(i, 6) }}>
                     <GroupHeader g={g} link />
@@ -260,9 +313,16 @@ function GroupHeader({ g, link = false }: { g: PlanGroup; link?: boolean }) {
         )}
       </div>
       {link ? (
-        <Link href={`/master/${g.course.slug}/${g.topic.slug}`} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-bg-subtle px-3 font-brand text-[13px] font-extrabold text-ink-2 transition-colors hover:bg-line hover:text-ink">
-          <Sparkles className="size-3.5" /> Quick session
-        </Link>
+        <span className="flex shrink-0 flex-wrap gap-2">
+          {hasPractice(g.topic.id) ? (
+            <Link href={`/practice/${g.course.slug}/${g.topic.slug}`} className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-sprint-soft px-3 font-brand text-[13px] font-extrabold text-sprint-ink transition-colors hover:brightness-95">
+              <Target className="size-3.5" /> Practice
+            </Link>
+          ) : null}
+          <Link href={`/master/${g.course.slug}/${g.topic.slug}`} className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-bg-subtle px-3 font-brand text-[13px] font-extrabold text-ink-2 transition-colors hover:bg-line hover:text-ink">
+            <Sparkles className="size-3.5" /> Quick session
+          </Link>
+        </span>
       ) : null}
     </div>
   );

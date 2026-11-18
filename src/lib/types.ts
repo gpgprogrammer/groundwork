@@ -408,7 +408,7 @@ export type Lead = {
   reportedAt: string | null;
 };
 
-export type ReportKind = "upload" | "tutor" | "educator" | "guide" | "lesson";
+export type ReportKind = "upload" | "tutor" | "educator" | "guide" | "lesson" | "market-guide";
 export type Report = {
   id: string;
   kind: ReportKind;

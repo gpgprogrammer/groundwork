@@ -26,13 +26,12 @@ export default async function BookTutorPage({ searchParams }: PageProps<"/tutors
   const course = typeof sp.course === "string" ? (catalog.course(sp.course) ?? null) : null;
   const sort: Sort = typeof sp.sort === "string" && sp.sort in SORTS ? (sp.sort as Sort) : "soonest";
   const [tutors, reviews, meta, bookings] = await Promise.all([store.listTutors(), store.listReviews(), allTutorMeta(), listBookings()]);
-  const now = Date.now();
   const rows = rankTutors(tutors, reviews)
     .filter((t) => t.online && (!course || t.courseIds.includes(course.id)))
     .map((t) => {
       const m = meta.get(t.id);
-      const next = m ? openSlots(m, bookings.filter((b) => b.tutorId === t.id), 60, 14, now)[0] : undefined;
-      return { t, m, next, onCall: isOnCall(m, now) };
+      const next = m ? openSlots(m, bookings.filter((b) => b.tutorId === t.id), 60, 14)[0] : undefined;
+      return { t, m, next, onCall: isOnCall(m) };
     })
     .filter((r) => r.next || r.onCall);
   rows.sort((a, b) => {

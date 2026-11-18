@@ -2,14 +2,15 @@ import type { IndexedCatalog, RankedVideo } from "@/lib/catalog";
 import { paceLabel } from "@/lib/pace";
 import { nextTopicInCourse, startedCourse, upcomingEvents, whenLabel } from "@/lib/recommend";
 import type { Course, Topic, UserState } from "@/lib/types";
+import { weakSpots, type PracticeStats } from "@/lib/practice-stats";
 
 /**
  * The learning plan (Merit Plus): videos picked from what the student is covering in class.
- * Signals, strongest first: quizzes and tests on their class calendar, the topics they say
- * they're covering now, then the next topic in each course.
+ * Signals, strongest first: quizzes and tests on their class calendar, weak spots from their
+ * practice, the topics they say they're covering now, then the next topic in each course.
  */
 
-export type PlanSource = "test" | "class" | "next";
+export type PlanSource = "test" | "weak" | "class" | "next";
 
 export type PlanGroup = {
   key: string;
@@ -24,7 +25,7 @@ export type PlanGroup = {
 /** Videos in a full plan. */
 export const PLAN_SIZE = 12;
 
-export function learningPlan(catalog: IndexedCatalog, state: UserState, limit = PLAN_SIZE, now = Date.now()): PlanGroup[] {
+export function learningPlan(catalog: IndexedCatalog, state: UserState, limit = PLAN_SIZE, now = Date.now(), practice: PracticeStats | null = null): PlanGroup[] {
   const groups: PlanGroup[] = [];
   const seenTopics = new Set<string>();
   const seenVideos = new Set<string>();
@@ -48,6 +49,11 @@ export function learningPlan(catalog: IndexedCatalog, state: UserState, limit = 
   for (const e of upcomingEvents(state, 21, now)) {
     const reason = `${e.title.length > 40 ? `${e.title.slice(0, 38)}…` : e.title} · ${whenLabel(e.start, now)}`;
     for (const id of e.topicIds) add(id, "test", reason, e.kind === "test" ? 3 : 2);
+  }
+  // Weak spots from practice, in the student's own courses: one lesson each, so they re-learn it before practicing again.
+  for (const w of weakSpots(practice).slice(0, 3)) {
+    const t = catalog.topic(w.topicId);
+    if (t && state.profile.courseIds.includes(t.courseId) && !state.mastered[t.id]) add(w.topicId, "weak", `Weak spot: ${Math.round(w.accuracy * 100)}% in practice`, 2);
   }
   for (const id of state.profile.focusTopicIds) add(id, "class", "In class now", 3);
   if (count < limit) {
