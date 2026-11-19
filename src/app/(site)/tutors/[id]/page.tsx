@@ -172,6 +172,9 @@ export default async function TutorPage({ params, searchParams }: PageProps<"/tu
                     <Link href="/tutors/join" className={violetButton("lg", "w-full")}>
                       Edit listing
                     </Link>
+                    <LinkButton href="/tutor/availability" variant="outline" size="lg" className="w-full">
+                      {meta.availability.length ? "Change your free times" : "Set your free times"}
+                    </LinkButton>
                     <LinkButton href="/tutor" variant="outline" size="lg" className="w-full">
                       Tutor dashboard
                     </LinkButton>

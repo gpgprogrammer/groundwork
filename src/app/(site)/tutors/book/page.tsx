@@ -5,12 +5,13 @@ import { money } from "@/components/booking-ui";
 import { HeroKicker, WorldHero } from "@/components/marketing";
 import { SubjectSelect } from "@/components/tutoring-client";
 import { Initials, RatingLine, V } from "@/components/tutoring-ui";
-import { cn, panel, panelLink, SegmentedLinks } from "@/components/ui";
+import { cn, Notice, panel, panelLink, SegmentedLinks } from "@/components/ui";
 import { allTutorMeta, listBookings, openSlots } from "@/lib/bookings";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { isOnCall } from "@/lib/on-call";
 import { rankTutors } from "@/lib/tutoring";
+import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
   title: "Book a math tutor",
@@ -22,7 +23,7 @@ type Sort = keyof typeof SORTS;
 
 /** Tutors you can schedule on Merit, with each one's next open time. */
 export default async function BookTutorPage({ searchParams }: PageProps<"/tutors/book">) {
-  const [sp, catalog, store] = await Promise.all([searchParams, getCatalog(), getStore()]);
+  const [sp, catalog, store, viewer] = await Promise.all([searchParams, getCatalog(), getStore(), getViewer()]);
   const course = typeof sp.course === "string" ? (catalog.course(sp.course) ?? null) : null;
   const sort: Sort = typeof sp.sort === "string" && sp.sort in SORTS ? (sp.sort as Sort) : "soonest";
   const [tutors, reviews, meta, bookings] = await Promise.all([store.listTutors(), store.listReviews(), allTutorMeta(), listBookings()]);
@@ -41,6 +42,8 @@ export default async function BookTutorPage({ searchParams }: PageProps<"/tutors
     const bt = b.onCall ? 0 : b.next ? new Date(b.next.times[0].iso).getTime() : Infinity;
     return at - bt;
   });
+  const myListing = viewer ? tutors.find((t) => t.userId === viewer.user.id) : undefined;
+  const iAmHidden = Boolean(myListing && (!course || myListing.courseIds.includes(course.id)) && !rows.some((r) => r.t.id === myListing.id));
   const qs = (s: Sort) => new URLSearchParams({ ...(course ? { course: course.id } : {}), sort: s }).toString();
 
   return (
@@ -67,6 +70,16 @@ export default async function BookTutorPage({ searchParams }: PageProps<"/tutors
           </span>
           <ArrowRight className="size-5 shrink-0" />
         </Link>
+
+        {iAmHidden ? (
+          <Notice tone="warn" className="mt-5">
+            You&apos;re not on this list yet because you haven&apos;t marked any open times in the next two weeks.{" "}
+            <Link href="/tutor/availability" className="font-bold underline">
+              Set your free times
+            </Link>{" "}
+            and you&apos;ll show up here.
+          </Notice>
+        ) : null}
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
           <h2 className="headline text-[24px] text-ink">

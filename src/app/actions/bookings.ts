@@ -95,8 +95,10 @@ export async function updateBooking(id: string, action: "confirm" | "decline" | 
 
 const availabilitySchema = z.array(z.object({ day: z.number().int().min(0).max(6), start: z.string().regex(/^\d{2}:\d{2}$/), end: z.string().regex(/^\d{2}:\d{2}$/) }));
 
-/** Saves the tutor's weekly hours and time zone. */
-export async function saveAvailability(json: string, timezone: string) {
+const timeOffSchema = z.array(z.object({ from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }));
+
+/** Saves the tutor's weekly free times, time zone, and days off. */
+export async function saveAvailability(json: string, timezone: string, timeOffJson?: string) {
   const viewer = await getViewer();
   if (!viewer) return { error: "Sign in first." };
   const tutor = (await (await getStore()).listTutors()).find((t) => t.userId === viewer.user.id);
@@ -109,10 +111,28 @@ export async function saveAvailability(json: string, timezone: string) {
   }
   const parsed = availabilitySchema.safeParse(rows);
   if (!parsed.success) return { error: "Check your hours." };
-  const clean = parsed.data.filter((r) => r.start < r.end).slice(0, 28);
+  const clean = parsed.data.filter((r) => r.start < r.end).slice(0, 80);
   const meta = await getTutorMeta(tutor.id);
-  await saveTutorMeta({ ...meta, availability: clean, timezone: validTimeZone(timezone) ? timezone : meta.timezone });
+  let timeOff = meta.timeOff ?? [];
+  if (timeOffJson !== undefined) {
+    let raw: unknown;
+    try {
+      raw = JSON.parse(timeOffJson);
+    } catch {
+      return { error: "Couldn't read your days off." };
+    }
+    const off = timeOffSchema.safeParse(raw);
+    if (!off.success) return { error: "Check the dates you're away." };
+    const today = new Date().toISOString().slice(0, 10);
+    timeOff = off.data
+      .map((o) => (o.to < o.from ? { from: o.to, to: o.from } : o))
+      .filter((o) => o.to >= today)
+      .slice(0, 30);
+  }
+  await saveTutorMeta({ ...meta, availability: clean, timeOff, timezone: validTimeZone(timezone) ? timezone : meta.timezone });
   revalidatePath("/tutor");
+  revalidatePath("/tutor/availability");
+  revalidatePath("/tutors/book");
   revalidatePath(`/tutors/${tutor.id}`);
   return { ok: true };
 }

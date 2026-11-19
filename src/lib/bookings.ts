@@ -68,6 +68,7 @@ export function openSlots(meta: TutorMeta, booked: Booking[], minutes: number, d
     const at = now + i * 86400000;
     const date = fmtDate.format(new Date(at));
     const dow = DOW.indexOf(fmtDow.format(new Date(at)));
+    if ((meta.timeOff ?? []).some((o) => date >= o.from && date <= o.to)) continue;
     const times: DaySlots["times"] = [];
     for (const w of meta.availability.filter((a) => a.day === dow)) {
       for (let t = toMin(w.start); t + minutes <= toMin(w.end); t += 30) {

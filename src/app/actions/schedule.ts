@@ -21,7 +21,7 @@ export type ScheduleResult = { ok: true; added: number; tests: number; label: st
 function emptyResult(label: string, stats: ParseStats): ScheduleResult {
   console.warn("[schedule] import kept nothing", { label, ...stats });
   if (!stats.read) return { ok: false, error: `${label} connected, but the feed had no events in the last two weeks or next six months. In Blackbaud, turn on Assignments and your classes in the calendar filters before copying the feed link.` };
-  return { ok: false, error: `We read ${stats.read} events from ${label}, but none looked like tests or assignments. If this calendar is all schoolwork, check “Everything on this calendar is schoolwork” and connect again.` };
+  return { ok: false, error: `We read ${stats.read} events from ${label}, but none looked like tests or assignments. If this calendar is all schoolwork, check “Everything on this calendar is schoolwork” and connect again. Setting your tutoring hours? Use “Your free times” on the tutor dashboard instead.` };
 }
 export type PreviewResult = { ok: true; candidates: Candidate[]; label: string; kind: "document" | "text"; usedAi: boolean } | { ok: false; error: string };
 

@@ -363,6 +363,8 @@ export type TutorMeta = {
   /** Weekly availability in the tutor's local time. */
   availability: { day: number; start: string; end: string }[];
   timezone: string;
+  /** Dates the tutor isn't taking sessions (vacations, busy days), inclusive, as YYYY-MM-DD in their zone. */
+  timeOff?: { from: string; to: string }[];
   /** On call: ready to take a session right now, until `until`, at this video link, for `rate` USD per hour (set by the tutor; never free). */
   onCall?: { since: string; until: string; meetUrl: string; rate: number } | null;
 };

@@ -1,11 +1,11 @@
 "use client";
 
-import { CalendarCheck, CalendarClock, Plus, Trash2 } from "lucide-react";
-import { useActionState, useState, useTransition } from "react";
-import { createBooking, saveAvailability, type BookingState } from "@/app/actions/bookings";
+import { CalendarCheck, CalendarClock } from "lucide-react";
+import { useActionState, useState } from "react";
+import { createBooking, type BookingState } from "@/app/actions/bookings";
 import type { DaySlots } from "@/lib/bookings";
 import { FormMessage, inputClass, selectClass } from "./form";
-import { cn, Notice } from "./ui";
+import { cn } from "./ui";
 import { greetingName } from "@/lib/names";
 
 const groupLabel = "mb-2 block font-brand text-[13.5px] font-extrabold text-ink";
@@ -180,79 +180,3 @@ export function BookingForm({
   );
 }
 
-const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const rowSelect = selectClass;
-
-export function AvailabilityEditor({ initial, timezone }: { initial: { day: number; start: string; end: string }[]; timezone: string }) {
-  const [rows, setRows] = useState(initial.length ? initial : [{ day: 1, start: "16:00", end: "19:00" }]);
-  const [tz] = useState(timezone);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [pending, start] = useTransition();
-  const times = Array.from({ length: 33 }, (_, i) => `${String(6 + Math.floor(i / 2)).padStart(2, "0")}:${i % 2 ? "30" : "00"}`);
-  return (
-    <div className="space-y-3">
-      <ul className="space-y-2">
-        {rows.map((r, i) => (
-          <li key={i} className="grid grid-cols-[1fr_auto] gap-2 rounded-2xl bg-[#f3edff] p-2.5 ring-2 ring-[#7c3aed]/15 dark:bg-[#2a1f45]">
-            <select aria-label="Day" value={r.day} onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, day: Number(e.target.value) } : x)))} className={rowSelect}>
-              {DAYS.map((d, j) => (
-                <option key={d} value={j}>
-                  {d}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => setRows(rows.filter((_, j) => j !== i))}
-              className="flex size-11 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface hover:text-danger"
-              aria-label="Remove"
-            >
-              <Trash2 className="size-4" />
-            </button>
-            <div className="col-span-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-              <select aria-label="From" value={r.start} onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)))} className={cn(rowSelect, "tabular")}>
-                {times.map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
-              </select>
-              <span className="font-brand text-sm font-extrabold text-muted">to</span>
-              <select aria-label="To" value={r.end} onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)))} className={cn(rowSelect, "tabular")}>
-                {times.map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
-              </select>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <button
-        type="button"
-        onClick={() => setRows([...rows, { day: ((rows.at(-1)?.day ?? 0) + 1) % 7, start: "16:00", end: "19:00" }])}
-        className="press-sm inline-flex h-10 items-center gap-1.5 rounded-2xl bg-surface px-4 font-brand text-sm font-extrabold text-[#6d28d9] ring-2 ring-inset ring-line [--ledge:var(--line)] hover:bg-bg-subtle dark:text-[#c9b5ff]"
-      >
-        <Plus className="size-4" aria-hidden /> Add hours
-      </button>
-      <p className="text-[12.5px] text-muted">Time zone: {initial.length ? tz.replace(/_/g, " ") : "your device's time zone"}</p>
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() =>
-          start(async () => {
-            let zone = tz;
-            if (!initial.length) {
-              try {
-                zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-              } catch {}
-            }
-            const r = await saveAvailability(JSON.stringify(rows), zone);
-            setMsg("error" in r && r.error ? { ok: false, text: r.error } : { ok: true, text: "Saved. Students can book these hours now." });
-          })
-        }
-        className={violetCta}
-      >
-        {pending ? "Saving…" : "Save hours"}
-      </button>
-      {msg ? <Notice tone={msg.ok ? "success" : "error"}>{msg.text}</Notice> : null}
-    </div>
-  );
-}

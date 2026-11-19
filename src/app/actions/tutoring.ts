@@ -105,6 +105,8 @@ export async function saveTutorProfile(_: FormState, form: FormData): Promise<Fo
   const meta = await getTutorMeta(tutor.id);
   if (!meta.agreedAt) await saveTutorMeta({ ...meta, agreedAt: new Date().toISOString() });
   revalidatePath("/", "layout");
+  // New tutors go straight to setting their free times; that is what puts them on Book a tutor.
+  if (!meta.availability.length) redirect("/tutor/availability?welcome=1");
   redirect(`/tutors/${tutor.id}?saved=1`);
 }
 

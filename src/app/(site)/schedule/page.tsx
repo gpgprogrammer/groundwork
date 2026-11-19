@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarDays, CalendarPlus, Check, ChevronDown, EyeOff, Link2, Lock, Sparkles, Target, Trash2, Unlink } from "lucide-react";
+import { ArrowRight, CalendarClock, CalendarDays, CalendarPlus, Check, ChevronDown, EyeOff, Link2, Lock, Sparkles, Target, Trash2, Unlink } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { clearMatch, hideEvent, removeSource } from "@/app/actions/schedule";
@@ -16,6 +16,7 @@ import { LessonMini } from "@/components/video-card";
 import { calendarAccess } from "@/lib/billing/access";
 import { PAID_PLANS, PLUS, SPRINT, usd } from "@/lib/billing/plans";
 import { getCatalog, type IndexedCatalog } from "@/lib/catalog";
+import { getStore } from "@/lib/data/store";
 import { focusCourses } from "@/lib/focus";
 import { futureEvents, whenLabel } from "@/lib/recommend";
 import { sampleState } from "@/lib/sample";
@@ -84,6 +85,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   const upcoming = futureEvents(visibleEvents(schedule)).slice(0, 60);
   const hiddenCount = schedule?.hidden.length ?? 0;
   const days = byDay(upcoming);
+  const isTutor = (await (await getStore()).listTutors()).some((t) => t.userId === viewer.user.id);
 
   if (!schedule?.sources.length) {
     return (
@@ -104,6 +106,16 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
           </p>
         </PlanHero>
         <div className="mx-auto max-w-4xl px-4 pt-8 sm:px-6">
+          {isTutor ? (
+            <Link href="/tutor/availability" className="rise mb-6 flex items-center gap-4 rounded-3xl bg-[#7c3aed] p-5 text-white shadow-[0_4px_0_0_#5b21b6] hover:brightness-110">
+              <CalendarClock className="size-7 shrink-0" aria-hidden />
+              <span className="min-w-0 flex-1">
+                <span className="block font-brand text-[17px] font-black">Tutoring? Set your free times instead</span>
+                <span className="block text-[14px] text-white/85">This page is for students&apos; school calendars (tests and assignments). To show up on Book a tutor, just mark the times you&apos;re free each week.</span>
+              </span>
+              <ArrowRight className="size-5 shrink-0" aria-hidden />
+            </Link>
+          ) : null}
           <section className="rise rounded-3xl bg-surface p-4 ring-2 ring-line sm:p-7" style={{ ["--i" as string]: 3 }}>
             <ScheduleSetup googleEnabled={googleCalendarEnabled} />
           </section>

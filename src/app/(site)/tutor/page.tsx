@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { AvailabilityEditor } from "@/components/booking-client";
 import { AcceptButton, AutoRefresh, Elapsed, OnCallToggle } from "@/components/on-call-client";
 import { isOnCall, listOnCallRequests, MAX_ON_CALL_RATE, MIN_ON_CALL_RATE, ON_CALL_HOURS, openRequestsFor, URGENCY } from "@/lib/on-call";
 import { BookingStatus, DateTile, money, sessionWhen } from "@/components/booking-ui";
@@ -20,6 +19,12 @@ import { rankTutors } from "@/lib/tutoring";
 import { requireViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Tutor dashboard" };
+
+/** "16:30" → "4:30 pm". */
+function clock12(t: string) {
+  const [h, m] = t.split(":").map(Number);
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h < 12 ? "am" : "pm"}`;
+}
 
 function upcomingOf<T extends { status: string; startsAt: string }>(bookings: T[], now = Date.now()) {
   return bookings.filter((b) => (b.status === "requested" || b.status === "confirmed") && new Date(b.startsAt).getTime() > now - 3 * 3600000).reverse();
@@ -122,7 +127,11 @@ export default async function TutorDashboard() {
 
       {!meta.availability.length ? (
         <Notice tone="warn" className="mt-5">
-          Add your weekly hours below so students can book you directly.
+          Students can&apos;t book you yet.{" "}
+          <Link href="/tutor/availability" className="font-bold underline">
+            Mark the times you&apos;re free
+          </Link>{" "}
+          and you&apos;ll show up on Book a tutor.
         </Notice>
       ) : null}
 
@@ -259,13 +268,28 @@ export default async function TutorDashboard() {
                   <CalendarClock className="size-5" aria-hidden />
                 </span>
                 <div className="min-w-0">
-                  <h2 className="font-brand text-[18px] font-extrabold text-ink">Weekly hours</h2>
-                  <p className="mt-0.5 text-[13px] leading-relaxed text-muted">Students can book any open 30-minute start time in these windows, with at least 12 hours&apos; notice.</p>
+                  <h2 className="font-brand text-[18px] font-extrabold text-ink">Your free times</h2>
+                  <p className="mt-0.5 text-[13px] leading-relaxed text-muted">Students book open times you mark here, with at least 12 hours&apos; notice. You confirm each request.</p>
                 </div>
               </div>
-              <div className="mt-4">
-                <AvailabilityEditor initial={meta.availability} timezone={meta.timezone} />
-              </div>
+              {meta.availability.length ? (
+                <ul className="tabular mt-4 space-y-1 text-[13.5px] text-ink-2">
+                  {[1, 2, 3, 4, 5, 6, 0]
+                    .map((d) => [d, meta.availability.filter((w) => w.day === d)] as const)
+                    .filter(([, w]) => w.length)
+                    .map(([d, w]) => (
+                      <li key={d} className="flex gap-2">
+                        <span className="w-10 shrink-0 font-bold text-ink">{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]}</span>
+                        <span>{w.map((x) => `${clock12(x.start)}–${clock12(x.end)}`).join(", ")}</span>
+                      </li>
+                    ))}
+                </ul>
+              ) : (
+                <p className="mt-4 text-[13.5px] font-semibold text-ink-2">You haven&apos;t marked any free times yet, so you don&apos;t show up on Book a tutor.</p>
+              )}
+              <Link href="/tutor/availability" className={cn(V.btn, "press mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl px-5 font-brand text-[15px] font-extrabold")}>
+                <CalendarClock className="size-4" aria-hidden /> {meta.availability.length ? "Change free times" : "Set your free times"}
+              </Link>
             </section>
             <Link href="/tutor/payouts" className={cn(panelLink, "group flex items-center gap-3.5 p-5")}>
               <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-positive text-white">
