@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Clause, CompanyName, Contact, LegalPage } from "@/components/legal";
 import { AI_LIMITS } from "@/lib/ai/limits";
-import { TUTOR_FEE } from "@/lib/billing/plans";
+import { PARTNER_FEE, TUTOR_FEE } from "@/lib/billing/plans";
 import { MIN_AGE } from "@/lib/company";
 
 export const metadata: Metadata = { title: "Terms of Service", description: "Terms for using Merit Learning." };
@@ -30,7 +30,7 @@ export default function TermsPage() {
         </p>
       </Clause>
       <Clause title="How Merit is funded">
-        <p>Merit is funded by tutoring, not by students. {TUTOR_FEE}</p>
+        <p>Merit is funded by tutoring, not by students. {TUTOR_FEE} {PARTNER_FEE}</p>
         <p>Merit never accepts payment for how lessons, teachers, or tutors are ranked.</p>
       </Clause>
       <Clause title="Tutors">

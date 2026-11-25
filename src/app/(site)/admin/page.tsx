@@ -216,7 +216,7 @@ export default async function AdminPage() {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted">No applications yet. (The public partner page has been removed.)</p>
+          <p className="text-sm text-muted">No applications yet. Share /tutors/partners with tutoring businesses.</p>
         )}
       </Section>
 

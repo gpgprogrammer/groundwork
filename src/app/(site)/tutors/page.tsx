@@ -1,15 +1,16 @@
-import { ArrowRight, CalendarDays, CirclePlay, GraduationCap, MapPin, MonitorSmartphone, Radio } from "lucide-react";
+import { ArrowRight, CalendarDays, CirclePlay, GraduationCap, Handshake, MapPin, MonitorSmartphone, Radio } from "lucide-react";
 import { onCallTutors } from "@/lib/on-call";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { readLocation } from "@/app/actions/tutoring";
 import { LocationForm, SubjectSelect } from "@/components/tutoring-client";
-import { heroBtn, HeroKicker, WORLD_ON_WHITE, WorldHero } from "@/components/marketing";
+import { heroBtn, heroBtnGhost, HeroKicker, WORLD_ON_WHITE, WorldHero } from "@/components/marketing";
 import { CreatorCard, TutorCard, V, VerifiedNote } from "@/components/tutoring-ui";
 import { cn } from "@/components/ui";
 import { allTutorMeta } from "@/lib/bookings";
 import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
+import { allServices } from "@/lib/partners";
 import { rankTutors, topCreators, tutorsNear, tutorsOnline } from "@/lib/tutoring";
 import { TUTOR_FEE } from "@/lib/billing/plans";
 import { getViewer } from "@/lib/viewer";
@@ -22,7 +23,8 @@ export const metadata: Metadata = {
 export default async function TutorsPage({ searchParams }: PageProps<"/tutors">) {
   const [sp, catalog, viewer, location, store] = await Promise.all([searchParams, getCatalog(), getViewer(), readLocation(), getStore()]);
   const course = typeof sp.course === "string" ? (catalog.course(sp.course) ?? null) : null;
-  const [tutors, reviews, meta] = await Promise.all([store.listTutors(), store.listReviews(), allTutorMeta()]);
+  const [tutors, reviews, meta, services] = await Promise.all([store.listTutors(), store.listReviews(), allTutorMeta(), allServices()]);
+  const covered = services.filter((s) => s.covers(course));
   const ranked = rankTutors(tutors, reviews);
   const near = tutorsNear(ranked, location, course?.id).slice(0, 6);
   const online = tutorsOnline(ranked, course?.id).slice(0, 9);
@@ -35,6 +37,7 @@ export default async function TutorsPage({ searchParams }: PageProps<"/tutors">)
 
   const stats = [
     ...(hasTutors ? [{ n: ranked.length, label: ranked.length === 1 ? "Merit tutor" : "Merit tutors" }] : []),
+    { n: covered.length, label: "tutoring services" },
     { n: creators.length, label: "free teachers" },
   ];
 
@@ -136,7 +139,7 @@ export default async function TutorsPage({ searchParams }: PageProps<"/tutors">)
           </ol>
         </Section>
 
-        <div className="mt-14">
+        <div className="mt-14 grid gap-4 md:grid-cols-2">
           <section className="relative flex flex-col justify-between gap-6 overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#7c3aed,#6d28d9)] px-6 py-8 text-white sm:px-8 sm:py-10">
             <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 size-48 rounded-full border-[28px] border-white/10" />
             <div className="relative">
@@ -150,6 +153,19 @@ export default async function TutorsPage({ searchParams }: PageProps<"/tutors">)
             </div>
             <Link href={isTutor ? "/tutor" : "/tutors/join"} className={cn(heroBtn, WORLD_ON_WHITE.violet, "relative w-fit")}>
               {isTutor ? "Open tutor dashboard" : "Become a tutor"} <ArrowRight className="size-4" />
+            </Link>
+          </section>
+          <section className="relative flex flex-col justify-between gap-6 overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#1e1b2e,#2e2748)] px-6 py-8 text-white sm:px-8 sm:py-10">
+            <div aria-hidden className="pointer-events-none absolute -bottom-14 -right-10 size-48 rounded-full border-[28px] border-white/[0.07]" />
+            <div className="relative">
+              <span className="flex size-12 items-center justify-center rounded-2xl bg-white/10 ring-2 ring-inset ring-white/20">
+                <Handshake className="size-6" />
+              </span>
+              <h2 className="display mt-4 text-[28px] sm:text-[32px]">Run a tutoring business?</h2>
+              <p className="mt-2 max-w-md text-[15.5px] leading-relaxed text-white/85">Become a Merit partner. Get listed for your subjects and pay only for the students we send you.</p>
+            </div>
+            <Link href="/tutors/partners" className={cn(heroBtnGhost, "relative w-fit")}>
+              Partner with Merit <ArrowRight className="size-4" />
             </Link>
           </section>
         </div>
