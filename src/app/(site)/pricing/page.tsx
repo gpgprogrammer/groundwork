@@ -286,7 +286,7 @@ function FreePricing({ signedIn }: { signedIn: boolean }) {
                 <HeartHandshake className="size-5 text-accent-ink" /> Want a person? Book a tutor.
               </h2>
               <p className="mt-2 text-[15px] leading-relaxed text-ink-2">
-                The only thing you ever pay for on Merit is a tutor you choose to book. Each tutor sets their own rate, and you see it before you book. Merit also lists great free teachers and tutoring services.
+                The only thing you ever pay for on Merit is a tutor you choose to book. Each tutor sets their own rate, and you see it before you book.
               </p>
             </div>
             <Link href="/tutors" className="press font-brand inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-surface px-6 text-[15px] font-extrabold text-ink ring-2 ring-inset ring-line [--ledge:var(--line)] hover:bg-bg-subtle">

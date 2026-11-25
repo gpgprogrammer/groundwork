@@ -215,7 +215,7 @@ export function VerifiedNote() {
   return (
     <p className="flex items-start gap-2 text-xs leading-relaxed text-muted">
       <BadgeCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-      Tutor profiles are self-reported; Merit Verified tutors have been reviewed by our team. Reviews come from Merit students. Merit may earn a referral fee when you book through Merit or a partner link. Rankings are never paid for.
+      Tutor profiles are self-reported; Merit Verified tutors have been reviewed by our team. Reviews come from Merit students. Merit earns a share of sessions you book through Merit. Rankings are never paid for.
     </p>
   );
 }

@@ -6,7 +6,7 @@ import { hasPlus } from "@/lib/billing/access";
 import type { IndexedCatalog, RankedVideo } from "@/lib/catalog";
 import { learningPlan } from "@/lib/learning-plan";
 import { search } from "@/lib/search";
-import { SERVICES, topCreators } from "@/lib/tutoring";
+import { topCreators } from "@/lib/tutoring";
 import type { Topic } from "@/lib/types";
 import type { Viewer } from "@/lib/viewer";
 import { PAID_PLANS } from "@/lib/billing/plans";
@@ -114,12 +114,13 @@ export function buildTools(catalog: IndexedCatalog, viewer: Viewer | null) {
     }),
 
     findTutors: tool({
-      description: "Find help beyond lessons: top free teachers for a course and tutoring services. Use when the student asks for a tutor or more help.",
+      description: "Find help beyond lessons: Merit tutors and top free teachers for a course. Use when the student asks for a tutor or more help.",
       inputSchema: z.object({ courseId: z.enum(courseIds).optional() }),
       execute: async ({ courseId }) => ({
         tutorsPage: courseId ? `/tutors?course=${courseId}` : "/tutors",
         topTeachers: topCreators(catalog, courseId ? { courseId } : {}, 5).map((c) => ({ name: c.channel.title, lessons: c.lessons, href: `/channel/${c.channel.id}` })),
-        services: SERVICES.slice(0, 6).map((s) => ({ name: s.name, kind: s.kind })),
+        onCallTutors: "/tutors/on-call",
+        bookATutor: "/tutors/book",
       }),
     }),
 

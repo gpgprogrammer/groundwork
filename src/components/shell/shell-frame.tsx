@@ -756,7 +756,7 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
     { title: "Learn", links: [["/courses", "Courses"], ["/lessons", "Lessons"], ["/study-guides", "Study guides"], ["/ask", "Merit AI"]] },
     { title: "Practice", links: [["/practice", "Practice problems"], ["/sprint", "Exam Sprint"], ["/master", "Quick session"]] },
     { title: "Plan", links: [["/plan", "Learning plan"], ["/schedule", "My schedule"], ["/progress", "Progress"]] },
-    { title: "Tutors", links: [["/tutors/on-call", "On-call tutors"], ["/tutors/book", "Book a tutor"], ["/tutors/join", "Become a tutor"], ["/tutors/partners", "Partner with Merit"], ["/studio", "For teachers"]] },
+    { title: "Tutors", links: [["/tutors/on-call", "On-call tutors"], ["/tutors/book", "Book a tutor"], ["/tutors/join", "Become a tutor"], ["/studio", "For teachers"]] },
     { title: "Merit", links: [["/about", "About"], ...(PAID_PLANS ? [["/pricing", "Pricing"] as [string, string]] : []), ["/pricing/parents", "For parents"], ["/how-ranking-works", "How ranking works"], ["/privacy", "Privacy"], ["/terms", "Terms"]] },
   ];
   return (

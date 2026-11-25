@@ -66,7 +66,7 @@ const DEFAULT_FAQS: [string, string][] = [
       : "Everything on Merit is free: courses, lessons, Merit AI, your learning plan, calendar sync, progress, and Exam Sprint. The only things you pay for are a tutor, if you book one, and paid study guides, if you buy one.",
   ],
   ["Which courses are covered?", "Math only, and all of it: Algebra 1, Geometry, Algebra 2, and Precalculus (regular and honors), Statistics, AP Precalculus, AP Calculus AB and BC, AP Statistics, and SAT Math."],
-  ["How is Merit free? Why .org?", "Merit is free for students and funded by tutoring: tutors and tutoring services pay Merit a share of sessions students book through Merit, never students. Merit is a company, not a nonprofit; the .org is about the mission, free learning for every student."],
+  ["How is Merit free? Why .org?", "Merit is free for students and funded by tutoring: tutors pay Merit a share of sessions students book through Merit, never students. Merit is a company, not a nonprofit; the .org is about the mission, free learning for every student."],
 ];
 
 export function Faq({ items = DEFAULT_FAQS }: { items?: [string, string][] }) {

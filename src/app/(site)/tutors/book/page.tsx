@@ -152,7 +152,7 @@ export default async function BookTutorPage({ searchParams }: PageProps<"/tutors
             <p className="mt-1 text-[14.5px] text-muted">
               Merit tutors are just getting started. See{" "}
               <Link href={`/tutors${course ? `?course=${course.id}` : ""}`} className={cn("font-bold hover:underline", V.ink)}>
-                tutoring services and free teachers
+                on-call tutors
               </Link>{" "}
               meanwhile, or{" "}
               <Link href="/tutors/join" className={cn("font-bold hover:underline", V.ink)}>

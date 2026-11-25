@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Clause, CompanyName, Contact, LegalPage } from "@/components/legal";
 import { AI_LIMITS } from "@/lib/ai/limits";
-import { PARTNER_FEE, TUTOR_FEE } from "@/lib/billing/plans";
+import { TUTOR_FEE } from "@/lib/billing/plans";
 import { MIN_AGE } from "@/lib/company";
 
 export const metadata: Metadata = { title: "Terms of Service", description: "Terms for using Merit Learning." };
@@ -30,14 +30,14 @@ export default function TermsPage() {
         </p>
       </Clause>
       <Clause title="How Merit is funded">
-        <p>Merit is funded by tutoring, not by students. {TUTOR_FEE} {PARTNER_FEE}</p>
-        <p>Outside tutoring services that pay Merit are labeled &quot;Merit Partner&quot; wherever they appear. Merit never accepts payment for how lessons, teachers, tutors, or services are ranked.</p>
+        <p>Merit is funded by tutoring, not by students. {TUTOR_FEE}</p>
+        <p>Merit never accepts payment for how lessons, teachers, or tutors are ranked.</p>
       </Clause>
-      <Clause title="Tutors and tutoring services">
+      <Clause title="Tutors">
         <p>
           Tutors on Merit are independent. They set their own rates, hours, and terms, and are responsible for their sessions. Merit currently lists online tutoring only; in-person tutoring will open only after Merit runs background checks on every in-person tutor. &quot;Merit Verified&quot; means our team reviewed a tutor&apos;s profile; it is not a background check or a guarantee.
         </p>
-        <p>When you pay for a session through Merit, the payment is processed by Stripe and paid out to the tutor after Merit&apos;s 10%. Links to outside tutoring services take you to sites whose own terms apply.</p>
+        <p>When you pay for a session through Merit, the payment is processed by Stripe and paid out to the tutor after Merit&apos;s 10%.</p>
       </Clause>
       <Clause title="Merit AI">
         <p>Merit AI generates explanations, practice questions, study materials, and feedback. It can be wrong. Check important answers against your course materials. Use it to learn, and follow your school&apos;s rules on academic honesty.</p>

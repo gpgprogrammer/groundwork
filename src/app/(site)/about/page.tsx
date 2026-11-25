@@ -136,7 +136,7 @@ export default async function AboutPage() {
         <article className="rounded-3xl bg-surface p-6 ring-2 ring-line sm:p-8">
           <h2 className="headline text-2xl text-ink">Free for students, funded by tutoring</h2>
           <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
-            Everything students use on Merit is free: lessons, Merit AI, the learning plan, calendar sync, and Exam Sprint. Merit earns money only from tutoring. {TUTOR_FEE} Tutoring services that pay Merit are labeled Merit Partner, and nobody can pay to rank higher.
+            Everything students use on Merit is free: lessons, Merit AI, the learning plan, calendar sync, and Exam Sprint. Merit earns money only from tutoring. {TUTOR_FEE} Nobody can pay to rank higher.
           </p>
           <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
             Merit is a company, not a nonprofit. The .org is about the mission: free learning for every student.

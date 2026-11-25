@@ -30,7 +30,7 @@ const VALUE = [
   { Icon: CalendarCheck, title: "A learning plan for your classes", body: "Lessons for what you're covering in class, and for every quiz and test on your calendar." },
   { Icon: Sparkles, title: "Merit AI", body: "Explanations, practice questions, and the right lesson for any topic." },
   { Icon: Target, title: "Exam Sprints", body: "A day-by-day plan to exam day, starting with a free diagnostic." },
-  { Icon: Users, title: "Tutoring help", body: "Trusted tutoring services and free teachers, with Merit tutors coming soon." },
+  { Icon: Users, title: "Tutoring help", body: "Merit tutors on call or booked ahead, near you or online." },
 ] as const;
 
 /**
