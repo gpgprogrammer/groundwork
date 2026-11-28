@@ -28,7 +28,9 @@ export default async function PracticePage({ searchParams }: PageProps<"/practic
   // Mixed review: weak spots in this course first, then a spread of the course's topics.
   const spread = units.flatMap((u) => u.topics[Math.floor(u.topics.length / 2)] ?? []);
   const mixed = [...new Set([...weak.filter((w) => w.topic!.courseId === course.id).map((w) => w.topicId), ...spread.map((t) => t.id)])].slice(0, 6);
-  const ordered = [...mine.map((id) => catalog.course(id)!), ...catalog.courses.filter((c) => !mine.includes(c.id))];
+  // Only courses with generated problems (SAT Reading and Writing has lessons but no generated practice).
+  const practicable = (id: string) => catalog.topicsForCourse(id).some((t) => hasPractice(t.id));
+  const ordered = [...mine.map((id) => catalog.course(id)!), ...catalog.courses.filter((c) => !mine.includes(c.id))].filter((c) => practicable(c.id));
 
   return (
     <div className="pb-20">

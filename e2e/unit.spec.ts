@@ -6,6 +6,10 @@ import { eventsFromIcs } from "../src/lib/ics";
 import { canUploadVideos } from "../src/lib/auth/permissions";
 import { rankVideo, wilsonLowerBound } from "../src/lib/ranking";
 import type { YtVideo } from "../src/lib/types";
+import type { IndexedCatalog } from "../src/lib/catalog";
+import type { AnalyticsEvent } from "../src/lib/analytics";
+import { buildUserActivity, duration, summarizeByUser } from "../src/lib/user-activity";
+import { parseScoreText, percentFromScore, SAT_DOMAINS, satPlan, scoreFromPercent, sectionTargets, type SatPrep } from "../src/lib/sat-prep";
 
 const video = (over: Partial<YtVideo>): YtVideo => ({
   id: "abc123xyz00",
@@ -302,5 +306,125 @@ test.describe("analytics", () => {
     const today = buildReport(ev, { days: 1, now, team: new Set(["admin-1234567"]), members });
     expect(today.now.visitors).toBe(2); // a and b; "late" was yesterday in Eastern time
     expect(buildReport(ev, { days: 7, now, team: new Set(["admin-1234567"]), members, includeTeam: true }).now.visitors).toBe(4);
+  });
+});
+
+test.describe("SAT prep", () => {
+  // A small stand-in catalog: every SAT unit has two topics with one lesson each.
+  const units = SAT_DOMAINS.map((d) => ({ id: `${d.courseId}/${d.id}`, courseId: d.courseId }));
+  const topicsFor = (unitId: string) => {
+    const [courseId, unit] = unitId.split("/");
+    const slugs = unit === "algebra" ? ["linear-equations-in-one-variable", "systems-of-equations"] : [`${unit}-a`, `${unit}-b`];
+    return slugs.map((slug) => ({ id: `${courseId}/${slug}`, slug, title: slug, courseId, unitId }));
+  };
+  const catalog = {
+    course: (id: string) => (id === "sat-math" || id === "sat-reading-writing" ? { id, slug: id } : undefined),
+    topicsForUnit: (id: string) => (units.some((u) => u.id === id) ? topicsFor(id) : []),
+    videosForTopic: (id: string) => [{ id: `v-${id}`, title: `Lesson ${id}`, isShort: false, durationSec: 600 }],
+  } as unknown as IndexedCatalog;
+  const now = new Date("2026-11-28T10:00:00").getTime();
+  const base = (over: Partial<SatPrep> = {}): SatPrep => ({
+    id: "u1",
+    userId: "u1",
+    createdAt: "2026-11-28T10:00:00Z",
+    updatedAt: "2026-11-28T10:00:00Z",
+    testDate: "2027-03-06",
+    target: 1400,
+    minutesPerDay: 60,
+    daysPerWeek: 6,
+    scores: [{ at: "2026-11-28T10:00:00Z", math: 560, rw: 640, source: "practice" }],
+    domains: {},
+    done: {},
+    ...over,
+  });
+
+  test("reads scores and domain counts from score report text", () => {
+    const r = parseScoreText("Total Score 1180  Reading and Writing 600  Math 580  Algebra 9 of 14  Advanced Math 7/14  Standard English Conventions 6 out of 13");
+    expect(r.math).toBe(580);
+    expect(r.rw).toBe(600);
+    expect(r.total).toBe(1180);
+    expect(r.domains.algebra).toEqual({ right: 9, of: 14 });
+    expect(r.domains["advanced-math"]).toEqual({ right: 7, of: 14 });
+    expect(r.domains["standard-english-conventions"]).toEqual({ right: 6, of: 13 });
+    expect(parseScoreText("nothing useful here").found).toEqual([]);
+  });
+
+  test("score conversion is monotonic and round-trips", () => {
+    expect(scoreFromPercent(0)).toBe(200);
+    expect(scoreFromPercent(1)).toBe(800);
+    for (const s of [300, 450, 600, 720]) expect(Math.abs(scoreFromPercent(percentFromScore(s)) - s)).toBeLessThanOrEqual(10);
+  });
+
+  test("targets put more of the gap on the section with more room", () => {
+    const t = sectionTargets(base());
+    expect(t.math + t.rw).toBeGreaterThanOrEqual(1390);
+    expect(t.math - 560).toBeGreaterThan(t.rw - 640);
+  });
+
+  test("the plan runs to test day, rests, schedules Saturday practice tests, and favors weak domains", () => {
+    const plan = satPlan(base({ domains: { "geometry-trig": 0.2 } }), catalog, null, now);
+    expect(plan[0].date).toBe("2026-11-28");
+    expect(plan.at(-1)!.date).toBe("2027-03-06");
+    expect(plan.at(-1)!.tasks[0].kind).toBe("checklist");
+    expect(plan.some((d) => d.phase === "rest")).toBe(true);
+    const tests = plan.filter((d) => d.tasks.some((t) => t.kind === "test"));
+    expect(tests.length).toBeGreaterThanOrEqual(5);
+    for (const d of tests) expect(new Date(`${d.date}T12:00:00`).getDay()).toBe(6);
+    const ids = plan.flatMap((d) => d.tasks.map((t) => t.id));
+    expect(new Set(ids).size).toBe(ids.length);
+    const time = (id: string) => plan.flatMap((d) => d.tasks).filter((t) => t.domain === id).reduce((s, t) => s + t.minutes, 0);
+    expect(time("geometry-trig")).toBeGreaterThan(time("craft-and-structure"));
+  });
+
+  test("with no score yet, day 1 is a full practice test", () => {
+    const plan = satPlan(base({ scores: [] }), catalog, null, now);
+    expect(plan[0].tasks[0].kind).toBe("test");
+  });
+});
+
+test.describe("per-user activity", () => {
+  const ev = (over: Partial<AnalyticsEvent>): AnalyticsEvent => ({ t: "view", at: "2026-11-27T15:00:00.000Z", v: "vid-1", u: "user-1", dev: "desktop", ...over });
+  const events: AnalyticsEvent[] = [
+    // Visited before signing up (same browser, no account yet).
+    ev({ t: "view", at: "2026-11-25T14:00:00.000Z", u: null, path: "/", ref: "instagram.com" }),
+    ev({ t: "time", at: "2026-11-25T14:02:00.000Z", u: null, path: "/", s: 120 }),
+    // A signed-in visit: two pages with time and actions.
+    ev({ t: "view", at: "2026-11-27T15:00:00.000Z", path: "/practice" }),
+    ev({ t: "act", at: "2026-11-27T15:00:30.000Z", path: "/practice", x: "click", d: "Mixed review → /practice/algebra-1/mixed" }),
+    ev({ t: "time", at: "2026-11-27T15:01:00.000Z", path: "/practice", s: 60 }),
+    ev({ t: "view", at: "2026-11-27T15:01:01.000Z", path: "/practice/algebra-1/mixed" }),
+    ev({ t: "time", at: "2026-11-27T15:02:01.000Z", path: "/practice/algebra-1/mixed", s: 60 }),
+    ev({ t: "act", at: "2026-11-27T15:09:00.000Z", path: "/practice/algebra-1/mixed", x: "practice_round", d: "Slope: 8/10 right" }),
+    ev({ t: "time", at: "2026-11-27T15:10:00.000Z", path: "/practice/algebra-1/mixed", s: 480 }),
+    // Another account on another browser: not theirs.
+    ev({ t: "view", at: "2026-11-27T16:00:00.000Z", v: "vid-2", u: "user-2", path: "/" }),
+  ];
+
+  test("splits visits, attributes time and actions to pages, and links pre-signup visits", () => {
+    const mine = events.filter((e) => e.u === "user-1" || (!e.u && e.v === "vid-1"));
+    const a = buildUserActivity(mine, { now: Date.parse("2026-11-28T12:00:00Z") });
+    expect(a.sessionCount).toBe(2);
+    expect(a.seconds).toBe(720);
+    expect(a.pageViews).toBe(3);
+    expect(a.firstSource).toBe("Instagram");
+    const latest = a.sessions[0];
+    expect(latest.signedIn).toBe(true);
+    expect(latest.steps.map((s) => [s.path, s.seconds])).toEqual([
+      ["/practice", 60],
+      ["/practice/algebra-1/mixed", 540],
+    ]);
+    expect(latest.steps[0].actions[0].text).toContain("Mixed review");
+    expect(latest.steps[1].actions[0].text).toBe("Finished a practice round: Slope: 8/10 right");
+    expect(a.sessions[1].signedIn).toBe(false);
+    expect(a.features.find((f) => f.key === "Practice rounds")?.n).toBe(1);
+    expect(a.daily.at(-2)!.seconds).toBe(600);
+  });
+
+  test("summarizes each account, counting browsing from before they signed in", () => {
+    const sum = summarizeByUser(events);
+    expect(sum.get("user-1")).toMatchObject({ seconds: 720, views: 3, lastActive: "2026-11-27T15:10:00.000Z" });
+    expect(sum.get("user-2")?.views).toBe(1);
+    expect(duration(45)).toBe("45 sec");
+    expect(duration(3900)).toBe("1 hr 5 min");
   });
 });

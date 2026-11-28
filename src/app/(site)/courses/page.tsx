@@ -25,5 +25,5 @@ export default async function CoursesPage() {
       progress: prog ? prog.done / prog.total : null,
     };
   });
-  return <CoursesBrowser courses={tiles} categories={[...CATEGORIES]} signedIn={Boolean(viewer)} />;
+  return <CoursesBrowser courses={tiles} categories={CATEGORIES.filter((g) => catalog.courses.some((c) => c.category === g))} signedIn={Boolean(viewer)} />;
 }

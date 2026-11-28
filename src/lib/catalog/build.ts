@@ -123,6 +123,8 @@ export const MATH_COURSES = new Set<string>([
   "algebra-1", "honors-algebra-1", "geometry", "honors-geometry", "algebra-2", "honors-algebra-2",
   "precalculus", "honors-precalculus", "statistics",
   "ap-calculus-ab", "ap-calculus-bc", "ap-precalculus", "ap-statistics", "sat-math",
+  // Reading and Writing is here so SAT Prep can plan the whole test (lessons only; practice comes from the official question bank).
+  "sat-reading-writing",
 ]);
 const allSubjects = process.env.MERIT_ALL_SUBJECTS === "1";
 export const isMathCourse = (slug: string) => MATH_COURSES.has(slug);
@@ -144,7 +146,7 @@ export function buildCurriculum({ allClasses = process.env.MERIT_ALL_CLASSES ===
   for (const spec of courseSpecs) {
     if (allClasses ? !(allSubjects || MATH_COURSES.has(spec.course.slug)) : !isLaunched(spec)) continue;
     const course: Course = { ...spec.course, id: spec.course.slug };
-    if (!allSubjects) course.category = course.exam === "Class" ? "High school math" : course.exam === "SAT" ? "SAT Math" : "AP math";
+    if (!allSubjects) course.category = course.exam === "Class" ? "High school math" : course.exam === "SAT" ? "SAT" : "AP math";
     courses.push(course);
     let topicOrder = 0;
     spec.units.forEach((u, ui) => {

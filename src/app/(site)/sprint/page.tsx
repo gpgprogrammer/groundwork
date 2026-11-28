@@ -94,6 +94,23 @@ export default async function SprintHome({ searchParams }: PageProps<"/sprint">)
       </header>
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <Link
+          href="/sprint/sat"
+          className="press group mt-8 flex flex-col gap-4 rounded-3xl bg-ink p-6 text-bg [--ledge:rgb(0_0_0/0.35)] sm:flex-row sm:items-center sm:p-7"
+        >
+          <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-sprint font-brand text-[17px] font-black text-white">SAT</span>
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-center gap-2 font-brand text-[21px] font-extrabold leading-tight">
+              SAT Prep <span className="rounded-full bg-positive px-2 py-0.5 text-[12px] font-bold text-white">New · free</span>
+            </span>
+            <span className="mt-1 block text-[14.5px] leading-relaxed text-bg/75">
+              Upload your score report or type your breakdown, pick your target score and test date, and get a plan for every day: lessons, practice, official practice tests, and where to go for each.
+            </span>
+          </span>
+          <span className="inline-flex shrink-0 items-center gap-1.5 font-brand text-[15px] font-extrabold text-sprint group-hover:gap-2.5">
+            {viewer ? "Open SAT Prep" : "Build my SAT plan"} <ArrowRight className="size-4" />
+          </span>
+        </Link>
         {sprints.length ? (
           <section className="mt-10">
             <h2 className="headline text-[26px] text-ink">Your Sprints</h2>

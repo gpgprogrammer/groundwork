@@ -83,6 +83,7 @@ const SUBNAV: Record<string, { href: string; label: string }[]> = {
   practice: [
     { href: "/practice", label: "Practice problems" },
     { href: "/sprint", label: "Exam Sprint" },
+    { href: "/sprint/sat", label: "SAT Prep" },
     { href: "/master", label: "Quick session" },
   ],
   plan: [

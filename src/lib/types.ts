@@ -5,7 +5,7 @@ export const CATEGORIES = [
   // How the math-only site groups its courses (see MATH_COURSES in catalog/build.ts).
   "High school math",
   "AP math",
-  "SAT Math",
+  "SAT",
   "Math & Computer Science",
   "Sciences",
   "History & Social Sciences",
@@ -14,7 +14,7 @@ export const CATEGORIES = [
   "Arts",
   "AP Capstone",
   "AP Career Kickstart",
-  "SAT",
+  "SAT Math",
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
 
