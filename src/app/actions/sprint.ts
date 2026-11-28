@@ -12,6 +12,7 @@ import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { diagnosticTopics, readiness, topicAccuracy } from "@/lib/sprint";
 import type { FrqAttempt, Question, Sprint, SprintAnswer } from "@/lib/types";
+import { trackServer } from "@/lib/analytics";
 import { getViewer } from "@/lib/viewer";
 import { isGeneratedId, questionFromId } from "@/lib/mathgen";
 
@@ -67,6 +68,7 @@ export async function createSprint(_: CreateState, form: FormData): Promise<Crea
   };
   await save(sprint);
   sprint = await tryUnlock(sprint);
+  await trackServer("act", { u: viewer.user.id, x: "sprint_created", d: `${catalog.course(sprint.courseId)?.title ?? sprint.courseId}${sprint.title ? `: ${sprint.title}` : ""}, ${sprint.examDate}` });
   redirect(`/sprint/${sprint.id}/diagnostic`);
 }
 
@@ -146,7 +148,8 @@ export async function recordAnswer(id: string, questionId: string, choice: numbe
 }
 
 export async function finishSession(id: string, taskId: string | null) {
-  const { sprint } = await ownSprint(id);
+  const { sprint, viewer } = await ownSprint(id);
+  await trackServer("act", { u: viewer.user.id, x: "sprint_session", d: taskId ? taskId.slice(11) : "session" });
   if (taskId && /^\d{4}-\d{2}-\d{2}:/.test(taskId)) await save({ ...sprint, done: { ...sprint.done, [taskId]: new Date().toISOString() } });
   revalidatePath(`/sprint/${id}`);
 }
@@ -243,6 +246,7 @@ export async function createTestSprint(_: CreateState, form: FormData): Promise<
   };
   await save(sprint);
   sprint = await tryUnlock(sprint);
+  await trackServer("act", { u: viewer.user.id, x: "sprint_created", d: `${catalog.course(sprint.courseId)?.title ?? sprint.courseId}${sprint.title ? `: ${sprint.title}` : ""}, ${sprint.examDate}` });
   redirect(`/sprint/${sprint.id}/diagnostic`);
 }
 

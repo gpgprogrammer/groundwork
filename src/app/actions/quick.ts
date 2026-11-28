@@ -7,6 +7,7 @@ import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { gradeCheck, gradeSelfCheck, pickCheck, type CheckAnswer } from "@/lib/quick";
 import type { Question } from "@/lib/types";
+import { trackServer } from "@/lib/analytics";
 import { getViewer } from "@/lib/viewer";
 import { hasPractice, isGeneratedId, questionFromId } from "@/lib/mathgen";
 
@@ -48,6 +49,7 @@ export async function finishQuickSession(
     if (bank.length || hasPractice(topicId)) throw new Error("This topic has a question check.");
     graded = gradeSelfCheck(topic.keyPoints.length || 1, result.known);
   }
+  await trackServer("act", { u: viewer.user.id, x: "quick_check", d: `${topic.title}: ${graded.correct}/${graded.total}, ${graded.passed ? "passed" : "not yet"}` });
   if (graded.passed && !viewer.state.mastered[topicId]) {
     await (await getStore()).setMastered(viewer.user.id, topicId, true);
     revalidatePath("/", "layout");

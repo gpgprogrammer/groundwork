@@ -26,7 +26,7 @@ export type AdminUser = {
 
 /** Everyone who has signed up, newest first, with what they've set up. Admin only. */
 export async function listAdminUsers(adminEmails: string[]): Promise<AdminUser[]> {
-  if (!isSupabaseEnabled) return [];
+  if (!isSupabaseEnabled) return listLocalUsers(adminEmails);
   const db = createAdminClient();
   const authUsers: { id: string; email?: string; created_at: string; last_sign_in_at?: string | null; email_confirmed_at?: string | null; app_metadata?: { provider?: string; providers?: string[] }; user_metadata?: { name?: string; full_name?: string; account_type?: string } }[] = [];
   for (let page = 1; page < 100; page++) {
@@ -162,4 +162,32 @@ export async function removeAdminUserAccount(input: { actorId: string; targetId:
   ]).catch((cleanupError) => console.error("[admin-users] post-deletion cleanup failed", cleanupError));
 
   return { ok: true };
+}
+
+/** Local preview mode (no database): the accounts in .data/state.json. */
+async function listLocalUsers(adminEmails: string[]): Promise<AdminUser[]> {
+  const { localListUsers } = await import("@/lib/data/demo-store");
+  const catalog = await getCatalog();
+  return (await localListUsers())
+    .map((u) => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      signedUpAt: u.profile?.createdAt ?? new Date(0).toISOString(),
+      lastSignInAt: null,
+      method: "Email",
+      confirmed: true,
+      onboarded: Boolean(u.profile?.onboarded),
+      roles: [u.accountType === "teacher" ? "teacher" : "student", ...(adminEmails.includes(u.email) ? (["admin"] as const) : [])] as AdminUser["roles"],
+      courses: (u.profile?.courseIds ?? []).map((id) => catalog.course(id)?.shortTitle ?? id),
+      plan: "Free" as const,
+      sprint: null,
+      calendar: false,
+    }))
+    .sort((a, b) => b.signedUpAt.localeCompare(a.signedUpAt));
+}
+
+/** One account, for the user detail page. */
+export async function getAdminUser(id: string, adminEmails: string[]) {
+  return (await listAdminUsers(adminEmails)).find((u) => u.id === id) ?? null;
 }

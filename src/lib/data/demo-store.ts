@@ -102,6 +102,12 @@ export async function localFindUserByEmail(email: string) {
   return Object.values(s.users).find((u) => u.email === e) ?? null;
 }
 
+/** Every local account (local preview mode only). */
+export async function localListUsers() {
+  const s = await load();
+  return Object.values(s.users).map((u) => ({ id: u.id, email: u.email, name: u.name, accountType: u.accountType ?? "student", profile: s.profiles[u.id] ?? null }));
+}
+
 export async function localGetUser(id: string) {
   return (await load()).users[id] ?? null;
 }

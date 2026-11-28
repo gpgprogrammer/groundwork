@@ -5,6 +5,7 @@ import { getCatalog } from "@/lib/catalog";
 import { getStore } from "@/lib/data/store";
 import { questionFromId } from "@/lib/mathgen";
 import { addResults, PRACTICE_COLLECTION, type PracticeStats } from "@/lib/practice-stats";
+import { trackServer } from "@/lib/analytics";
 import { getViewer } from "@/lib/viewer";
 
 /**
@@ -14,7 +15,8 @@ import { getViewer } from "@/lib/viewer";
 export async function recordPractice(topicId: string, answers: { questionId: string; choice: number }[]): Promise<{ saved: boolean }> {
   const viewer = await getViewer();
   if (!viewer) return { saved: false };
-  if (!(await getCatalog()).topic(topicId)) return { saved: false };
+  const topic = (await getCatalog()).topic(topicId);
+  if (!topic) return { saved: false };
   const results: boolean[] = [];
   const seen = new Set<string>();
   for (const a of answers.slice(0, 50)) {
@@ -33,6 +35,7 @@ export async function recordPractice(topicId: string, answers: { questionId: str
     console.error("[practice] couldn't save results", err);
     return { saved: false };
   }
+  await trackServer("act", { u: viewer.user.id, x: "practice_round", d: `${topic.title}: ${results.filter(Boolean).length}/${results.length} right` });
   revalidatePath("/practice");
   revalidatePath("/plan");
   return { saved: true };

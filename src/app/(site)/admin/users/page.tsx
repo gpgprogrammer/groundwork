@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { PageHeader, buttonClass, cn } from "@/components/ui";
 import { FILTERS, filterUsers, listAdminUsers, type FilterKey } from "@/lib/admin-users";
 import { env } from "@/lib/env";
+import { recentEvents } from "@/lib/analytics";
+import { duration, summarizeByUser } from "@/lib/user-activity";
 import { getViewer } from "@/lib/viewer";
 import { DeleteUserButton } from "./delete-user-button";
 
@@ -19,7 +21,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.slice(0, 100) : "";
   const filter = (typeof sp.filter === "string" && sp.filter in FILTERS ? sp.filter : "all") as FilterKey;
-  const all = await listAdminUsers(env.adminEmails);
+  const [all, events] = await Promise.all([listAdminUsers(env.adminEmails), recentEvents(180).catch(() => [])]);
+  const activity = summarizeByUser(events);
   const shown = filterUsers(all, q, filter);
   const qs = (f: FilterKey) => `/admin/users?${new URLSearchParams({ ...(q ? { q } : {}), ...(f !== "all" ? { filter: f } : {}) })}`;
 
@@ -30,7 +33,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
         title="Users"
         lede={
           <span className="tabular text-sm">
-            {all.length.toLocaleString()} {all.length === 1 ? "account" : "accounts"} · newest first
+            {all.length.toLocaleString()} {all.length === 1 ? "account" : "accounts"} · newest first · activity from the last 180 days · click an email for everything they did
           </span>
         }
         actions={
@@ -67,10 +70,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
       </nav>
 
       <div className="mt-6 overflow-x-auto rounded-2xl bg-surface ring-2 ring-line">
-        <table className="w-full min-w-[1100px] text-left text-[13.5px]">
+        <table className="w-full min-w-[1300px] text-left text-[13.5px]">
           <thead className="border-b border-line bg-bg-subtle/60 text-[12px] text-muted">
             <tr>
-              {["Email", "Name", "Signed up", "Last sign-in", "Method", "Type", "Courses", "Plan", "Sprint", "Calendar"].map((h) => (
+              {["Email", "Name", "Signed up", "Last active", "Time on Merit", "Days active", "Pages", "Type", "Courses", "Plan", "Sprint", "Calendar"].map((h) => (
                 <th key={h} scope="col" className="whitespace-nowrap px-3 py-2.5 font-semibold first:pl-5 last:pr-5">
                   {h}
                 </th>
@@ -81,7 +84,9 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
             {shown.map((u) => (
               <tr key={u.id} className="align-top transition-colors duration-150 hover:bg-bg-subtle/50 [&>td:first-child]:pl-5 [&>td:last-child]:pr-5">
                 <td className="px-3 py-2.5 font-medium text-ink">
-                  {u.email}
+                  <Link href={`/admin/users/${u.id}`} className="text-accent-ink underline-offset-2 hover:underline">
+                    {u.email}
+                  </Link>
                   {!u.onboarded ? <span className="ml-1.5 inline-flex rounded-full bg-warn-soft px-2 py-px text-[11px] font-semibold text-warn">setup unfinished</span> : null}
                   {u.roles.includes("admin") ? (
                     <span className="mt-1.5 block text-[11.5px] font-semibold text-muted" title="Admin accounts cannot be removed here">
@@ -93,8 +98,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                 </td>
                 <td className="px-3 py-2.5 text-ink-2">{u.name || <span className="text-muted">·</span>}</td>
                 <td className="tabular whitespace-nowrap px-3 py-2.5 text-ink-2">{fmt(u.signedUpAt)}</td>
-                <td className="tabular whitespace-nowrap px-3 py-2.5 text-muted">{fmt(u.lastSignInAt)}</td>
-                <td className="px-3 py-2.5 text-ink-2">{u.method}</td>
+                <td className="tabular whitespace-nowrap px-3 py-2.5 text-ink-2">{activity.get(u.id) ? fmt(activity.get(u.id)!.lastActive) : <span className="text-muted">{u.lastSignInAt ? `Signed in ${fmt(u.lastSignInAt)}` : "Never"}</span>}</td>
+                <td className="tabular whitespace-nowrap px-3 py-2.5 text-ink-2">{activity.get(u.id)?.seconds ? duration(activity.get(u.id)!.seconds) : <span className="text-muted">·</span>}</td>
+                <td className="tabular px-3 py-2.5 text-ink-2">{activity.get(u.id)?.days ?? 0}</td>
+                <td className="tabular px-3 py-2.5 text-ink-2">{activity.get(u.id)?.views ?? 0}</td>
                 <td className="px-3 py-2.5 capitalize text-ink-2">{u.roles.join(", ")}</td>
                 <td className="max-w-[240px] px-3 py-2.5 text-ink-2">{u.courses.length ? u.courses.join(", ") : <span className="text-muted">None</span>}</td>
                 <td className="whitespace-nowrap px-3 py-2.5">

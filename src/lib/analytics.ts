@@ -10,7 +10,7 @@ import { createAdminClient } from "@/lib/supabase/server";
  * third party) with a random visitor id; no IP addresses are kept.
  */
 
-export type EventType = "view" | "engage" | "time" | "video_open" | "upload_play" | "calendar_connect" | "ai_question" | "checkout" | "cta";
+export type EventType = "view" | "engage" | "time" | "video_open" | "upload_play" | "calendar_connect" | "ai_question" | "checkout" | "cta" | "act";
 
 export type AnalyticsEvent = {
   t: EventType;
@@ -29,6 +29,8 @@ export type AnalyticsEvent = {
   src?: string;
   /** Seconds the page was visible and in use ("time" events). */
   s?: number;
+  /** "act" events: what happened, in words (a button label, "Algebra: 8/10"). */
+  d?: string;
   /** 1 when this request arrived without our visitor cookie (a new cookie was issued). */
   nv?: 1;
 };
@@ -50,7 +52,7 @@ export async function saveEvent(e: AnalyticsEvent) {
 }
 
 /** Records a server-side event for the current request. Never throws. */
-export async function trackServer(t: EventType, extra: { u?: string | null; x?: string; path?: string } = {}) {
+export async function trackServer(t: EventType, extra: { u?: string | null; x?: string; d?: string; path?: string } = {}) {
   try {
     const [jar, h] = await Promise.all([cookies(), headers()]);
     const ua = h.get("user-agent") ?? "";
@@ -66,6 +68,7 @@ export async function trackServer(t: EventType, extra: { u?: string | null; x?: 
       u: extra.u ?? null,
       ...(extra.path ? { path: extra.path } : {}),
       ...(extra.x ? { x: extra.x } : {}),
+      ...(extra.d ? { d: extra.d.slice(0, 200) } : {}),
       dev: deviceOf(ua),
       ...(h.get("x-vercel-ip-country") ? { c: h.get("x-vercel-ip-country")! } : {}),
     });
@@ -95,6 +98,45 @@ export async function eventsSince(since: Date, max = 200_000, until?: Date): Pro
     after = data![data!.length - 1].id;
   }
   return out;
+}
+
+/** Events from the last `days` days. */
+export function recentEvents(days: number) {
+  return eventsSince(new Date(Date.now() - days * 86_400_000));
+}
+
+/**
+ * Everything one account did: events while signed in, plus events from any browser (visitor cookie)
+ * they signed in on, including visits from before they signed in. Oldest first.
+ */
+export async function eventsForUser(userId: string, max = 20_000): Promise<AnalyticsEvent[]> {
+  if (!isSupabaseEnabled) {
+    const all = await (await getStore()).listDocs<AnalyticsEvent>("events");
+    const vids = new Set(all.filter((e) => e.u === userId).map((e) => e.v));
+    return all.filter((e) => e.u === userId || (!e.u && vids.has(e.v))).sort((a, b) => a.at.localeCompare(b.at));
+  }
+  const db = createAdminClient();
+  const page = async (filter: (q: ReturnType<typeof base>) => ReturnType<typeof base>) => {
+    const rows: { id: string; data: AnalyticsEvent }[] = [];
+    let after = "";
+    while (rows.length < max) {
+      const { data, error } = await filter(base()).gt("id", after).order("id").limit(1000);
+      if (error) throw new Error(error.message);
+      rows.push(...((data ?? []) as { id: string; data: AnalyticsEvent }[]));
+      if ((data ?? []).length < 1000) break;
+      after = data![data!.length - 1].id;
+    }
+    return rows;
+  };
+  const base = () => db.from("docs").select("id,data").eq("collection", "events");
+  const mine = await page((q) => q.eq("data->>u", userId));
+  const vids = [...new Set(mine.map((r) => r.data.v).filter((v) => v && !v.startsWith("user:")))].slice(0, 50);
+  const before = vids.length ? await page((q) => q.in("data->>v", vids).is("data->>u", null)) : [];
+  const seen = new Set<string>();
+  return [...mine, ...before]
+    .filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true)))
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((r) => r.data);
 }
 
 export type Signup = { id: string; at: string; email: string | null; type: "student" | "teacher" | null; lastSignIn: string | null };

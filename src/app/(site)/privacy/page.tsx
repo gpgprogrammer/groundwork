@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Privacy Policy", description: "How M
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="October 12, 2026">
+    <LegalPage title="Privacy Policy" updated="November 28, 2026">
       <Clause title="Overview">
         <p>
           Merit Learning (&quot;Merit&quot;), operated by <CompanyName />, helps high school students learn math, from Algebra 1 to AP Calculus and SAT Math. Merit is free for students. This policy explains what we collect, why, and the choices you have. We don&apos;t sell personal information and we don&apos;t show ads.
@@ -17,7 +17,7 @@ export default function PrivacyPage() {
           <strong className="text-ink">Account</strong>: your name, email, password (stored hashed) or Google or Apple sign-in, and your birth month and year (to confirm you&apos;re {MIN_AGE} or older). <strong className="text-ink">Learning activity</strong>: courses, lessons you watch, saves, helpful votes, topics you mark understood, learning plan progress, Exam Sprint answers, and messages you send to Merit AI.{" "}
           <strong className="text-ink">Calendar</strong>: if you connect one, the school events on it and the private link you gave us (kept private to your account). <strong className="text-ink">Location</strong>: the city, state, or ZIP you enter to find tutors.{" "}
           <strong className="text-ink">Tutoring</strong>: bookings and messages between students and tutors; session payments are handled by Stripe, and we keep a record of the payment, not your card number. <strong className="text-ink">Uploads</strong>: videos and descriptions teachers and tutors publish, which are public on Merit.{" "}
-          <strong className="text-ink">Usage</strong>: pages you visit on Merit, the device type, the country (from your connection, not stored as an IP address), and the site that referred you, tied to a random ID in a first-party cookie.
+          <strong className="text-ink">Usage</strong>: pages you visit on Merit, how long you spend on each, the buttons and links you click (their labels, never what you type), what you do in features like practice and SAT Prep, the device type, the country (from your connection, not stored as an IP address), and the site that referred you, tied to a random ID in a first-party cookie.
         </p>
       </Clause>
       <Clause title="How we use it">
@@ -41,7 +41,7 @@ export default function PrivacyPage() {
         </p>
       </Clause>
       <Clause title="Cookies and analytics">
-        <p>Merit uses its own cookies to keep you signed in and to count visits (a random visitor ID). Our analytics are first-party: they&apos;re stored in Merit&apos;s own database, not sent to advertising or analytics companies. We don&apos;t store IP addresses for analytics.</p>
+        <p>Merit uses its own cookies to keep you signed in and to count visits (a random visitor ID). Our analytics are first-party: they&apos;re stored in Merit&apos;s own database, not sent to advertising or analytics companies. We don&apos;t store IP addresses for analytics. When you&apos;re signed in, your activity is linked to your account (including earlier visits from the same browser) so Merit&apos;s team can see how people use Merit and make it better. Only Merit admins can see it.</p>
       </Clause>
       <Clause title="YouTube API Services">
         <p>

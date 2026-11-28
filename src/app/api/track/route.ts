@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { deviceOf, isBot, saveEvent, VISITOR_COOKIE, type AnalyticsEvent, type EventType } from "@/lib/analytics";
 import { logError } from "@/lib/error-log";
 
-const TYPES = new Set<EventType>(["view", "engage", "time", "upload_play", "cta"]);
+const TYPES = new Set<EventType>(["view", "engage", "time", "upload_play", "cta", "act"]);
 
 /**
  * Page views, engagement and Merit video plays from the browser (sent with navigator.sendBeacon).
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   const ua = req.headers.get("user-agent") ?? "";
   const res = new NextResponse(null, { status: 204 });
   if (isBot(ua)) return res;
-  let body: { type?: string; path?: string; ref?: string; ref_id?: string; src?: string; s?: number; w?: number; u?: string | null; message?: string; digest?: string; stack?: string } = {};
+  let body: { type?: string; path?: string; ref?: string; ref_id?: string; x?: string; d?: string; src?: string; s?: number; w?: number; u?: string | null; message?: string; digest?: string; stack?: string } = {};
   try {
     body = JSON.parse((await req.text()).slice(0, 4000));
   } catch {
@@ -53,8 +53,11 @@ export async function POST(req: NextRequest) {
     ...(typeof body.path === "string" ? { path: body.path.slice(0, 300).split("?")[0] } : {}),
     ...(type === "time" && typeof body.s === "number" && body.s > 0 ? { s: Math.min(Math.round(body.s), 3600) } : {}),
     ...((type === "upload_play" || type === "cta") && typeof body.ref_id === "string" ? { x: body.ref_id.slice(0, 40) } : {}),
+    ...(type === "act" && typeof body.x === "string" ? { x: body.x.replace(/[^\w-]/g, "").slice(0, 40) } : {}),
+    ...(type === "act" && typeof body.d === "string" && body.d.trim() ? { d: body.d.replace(/\s+/g, " ").trim().slice(0, 160) } : {}),
   };
   if (type === "time" && !e.s) return res;
+  if (type === "act" && !e.x) return res;
   try {
     await saveEvent(e);
   } catch (err) {

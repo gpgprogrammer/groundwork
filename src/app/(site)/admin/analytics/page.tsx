@@ -129,7 +129,11 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
               <tbody className="divide-y divide-line">
                 {a.members.joined.map((m) => (
                   <tr key={m.id} className="transition-colors duration-150 hover:bg-bg-subtle/50">
-                    <td className="max-w-[220px] truncate px-2 py-2 font-medium text-ink">{m.email ?? "–"}</td>
+                    <td className="max-w-[220px] truncate px-2 py-2 font-medium text-ink">
+                      <Link href={`/admin/users/${m.id}`} className="text-accent-ink hover:underline">
+                        {m.email ?? "–"}
+                      </Link>
+                    </td>
                     <td className="px-2 py-2 capitalize text-ink-2">{m.type ?? "–"}</td>
                     <td className="whitespace-nowrap px-2 py-2 text-ink-2">{when(m.at)}</td>
                     <td className="px-2 py-2 text-ink-2">{m.source}</td>
