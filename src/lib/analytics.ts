@@ -10,7 +10,7 @@ import { createAdminClient } from "@/lib/supabase/server";
  * third party) with a random visitor id; no IP addresses are kept.
  */
 
-export type EventType = "view" | "video_open" | "upload_play" | "calendar_connect" | "ai_question" | "checkout" | "cta";
+export type EventType = "view" | "engage" | "time" | "video_open" | "upload_play" | "calendar_connect" | "ai_question" | "checkout" | "cta";
 
 export type AnalyticsEvent = {
   t: EventType;
@@ -25,6 +25,12 @@ export type AnalyticsEvent = {
   c?: string;
   /** What the event is about: a video id, calendar method, product. */
   x?: string;
+  /** Campaign source from ?utm_source= or ?ref= on the landing URL. */
+  src?: string;
+  /** Seconds the page was visible and in use ("time" events). */
+  s?: number;
+  /** 1 when this request arrived without our visitor cookie (a new cookie was issued). */
+  nv?: 1;
 };
 
 export const VISITOR_COOKIE = "mv_vid";
@@ -49,10 +55,14 @@ export async function trackServer(t: EventType, extra: { u?: string | null; x?: 
     const [jar, h] = await Promise.all([cookies(), headers()]);
     const ua = h.get("user-agent") ?? "";
     if (isBot(ua)) return;
+    // Real browsers carry the visitor cookie from the page they clicked on. A request with
+    // neither the cookie nor a signed-in user is a crawler following links, so it isn't counted.
+    const v = jar.get(VISITOR_COOKIE)?.value;
+    if (!v && !extra.u) return;
     await saveEvent({
       t,
       at: new Date().toISOString(),
-      v: jar.get(VISITOR_COOKIE)?.value ?? "server",
+      v: v ?? `user:${extra.u}`,
       u: extra.u ?? null,
       ...(extra.path ? { path: extra.path } : {}),
       ...(extra.x ? { x: extra.x } : {}),
@@ -65,7 +75,7 @@ export async function trackServer(t: EventType, extra: { u?: string | null; x?: 
 }
 
 /** Events since a moment, oldest first. Ids start with the timestamp, so the primary key orders them. */
-export async function eventsSince(since: Date, max = 200_000): Promise<AnalyticsEvent[]> {
+export async function eventsSince(since: Date, max = 200_000, until?: Date): Promise<AnalyticsEvent[]> {
   const from = since.toISOString();
   if (!isSupabaseEnabled) {
     return (await (await getStore()).listDocs<AnalyticsEvent>("events")).filter((e) => e.at >= from).sort((a, b) => a.at.localeCompare(b.at));
@@ -74,7 +84,10 @@ export async function eventsSince(since: Date, max = 200_000): Promise<Analytics
   const page = 1000;
   let after = from;
   while (out.length < max) {
-    const { data, error } = await createAdminClient().from("docs").select("id,data").eq("collection", "events").gte("id", after).order("id").limit(page);
+    // Crawler hits recorded before cookie checks existed (visitor "server") are skipped at the source.
+    let q = createAdminClient().from("docs").select("id,data").eq("collection", "events").gte("id", after).neq("data->>v", "server");
+    if (until) q = q.lt("id", until.toISOString());
+    const { data, error } = await q.order("id").limit(page);
     if (error) throw new Error(error.message);
     const rows = (data ?? []).filter((r) => r.id !== after);
     out.push(...rows.map((r) => r.data as AnalyticsEvent));
@@ -84,14 +97,23 @@ export async function eventsSince(since: Date, max = 200_000): Promise<Analytics
   return out;
 }
 
+export type Signup = { id: string; at: string; email: string | null; type: "student" | "teacher" | null; lastSignIn: string | null };
+
 /** Account sign-ups, from the auth system itself. */
-export async function signupsSince(since: Date) {
-  if (!isSupabaseEnabled) return [] as { at: string; email: string | null }[];
-  const out: { at: string; email: string | null }[] = [];
+export async function signupsSince(since: Date): Promise<Signup[]> {
+  if (!isSupabaseEnabled) return [];
+  const out: Signup[] = [];
   for (let page = 1; page < 100; page++) {
     const { data, error } = await createAdminClient().auth.admin.listUsers({ page, perPage: 1000 });
     if (error) break;
-    out.push(...data.users.filter((u) => u.created_at >= since.toISOString()).map((u) => ({ at: u.created_at, email: u.email ?? null })));
+    out.push(
+      ...data.users
+        .filter((u) => Date.parse(u.created_at) >= since.getTime())
+        .map((u) => {
+          const t = (u.user_metadata as { account_type?: string } | null)?.account_type;
+          return { id: u.id, at: new Date(u.created_at).toISOString(), email: u.email ?? null, type: t === "teacher" ? "teacher" : t === "student" ? "student" : null, lastSignIn: u.last_sign_in_at ?? null } as Signup;
+        }),
+    );
     if (data.users.length < 1000) break;
   }
   return out;

@@ -7,11 +7,11 @@ const figtree = Figtree({ variable: "--font-figtree", subsets: ["latin", "latin-
 // Rounded display face: the "merit" wordmark and every heading.
 const nunito = Nunito({ variable: "--font-nunito", subsets: ["latin"], weight: ["700", "800", "900"], display: "swap" });
 
-const description = "Your cheat code for math. Ranked math lessons from Algebra 1 to AP Calculus and SAT Math, adaptive practice, on-call tutors, and a plan for every test.";
+const description = "Stuck on math? Not for long. Ranked math lessons from Algebra 1 to AP Calculus and SAT Math, adaptive practice, on-call tutors, and a plan for every test.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.appUrl),
-  title: { default: "Merit Learning: your cheat code for math", template: "%s · Merit" },
+  title: { default: "Merit Learning: stuck on math? Not for long", template: "%s · Merit" },
   description,
   applicationName: "Merit Learning",
   openGraph: { title: "Merit Learning", description, type: "website", siteName: "Merit Learning" },

@@ -26,7 +26,7 @@ export function AuthShell({ title, subtitle, children, footer }: { title: ReactN
                 </span>
               ))}
             </div>
-            <p className="display mt-8 text-[38px] leading-[1.02]">Your cheat code for math.</p>
+            <p className="display mt-8 text-[38px] leading-[1.02]">Stuck on math? Not for long.</p>
           </div>
           <ul className="relative mt-10 space-y-5">
             {VALUE.map(({ Icon, title: t, body }) => (

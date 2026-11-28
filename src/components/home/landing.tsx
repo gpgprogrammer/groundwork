@@ -72,10 +72,10 @@ export function Landing({ catalog }: { catalog: IndexedCatalog }) {
               <GraduationCap className="size-4" /> Math, from Algebra 1 to AP Calculus and the SAT
             </p>
             <h1 className="rise display mt-5 text-[46px] sm:text-6xl lg:text-[68px]" style={{ ["--i" as string]: 1 }}>
-              Your cheat code for math.
+              Stuck on math? Not for long.
             </h1>
             <p className="rise mt-5 max-w-lg text-[18px] leading-relaxed text-white/90" style={{ ["--i" as string]: 2 }}>
-              Ranked lessons for every math topic, practice that finds your weak spots, tutors on call when you&apos;re stuck, and a plan for every test.
+              The best lesson for any topic, step-by-step help at 11pm, tutors on call, and practice that finds your weak spots before the test does.
             </p>
             <div className="rise mt-8 text-ink" style={{ ["--i" as string]: 3 }}>
               <CourseFinder courses={finder} popular={POPULAR} />

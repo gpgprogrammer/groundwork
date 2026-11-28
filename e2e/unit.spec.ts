@@ -254,30 +254,53 @@ test.describe("school portal calendars (Blackbaud)", () => {
 });
 
 test.describe("analytics", () => {
-  test("counts visitors, sessions, bounces, and live viewers", async () => {
-    const { trafficReport } = await import("../src/lib/analytics-report");
-    const now = Date.parse("2026-09-24T12:00:00Z");
+  test("counts people, not bots or the team, by Eastern-time day", async () => {
+    const { buildReport } = await import("../src/lib/analytics-report");
+    // Nov 28 2026, 12:00 Eastern.
+    const now = Date.parse("2026-11-28T17:00:00Z");
     const at = (minAgo: number) => new Date(now - minAgo * 60_000).toISOString();
-    const r = trafficReport(
-      [
-        { t: "view", at: at(300), v: "a", u: null, path: "/" },
-        { t: "view", at: at(298), v: "a", u: null, path: "/courses/ap-calculus-bc" },
-        { t: "view", at: at(2), v: "a", u: "user-1234567890", path: "/tutors/t_1" },
-        { t: "view", at: at(60), v: "b", u: null, path: "/", ref: "google.com" },
-        { t: "video_open", at: at(59), v: "b", u: null, x: "vid" },
-        { t: "view", at: at(60 * 24 * 9), v: "old", u: null, path: "/" },
-      ],
-      7,
-      now,
-    );
-    expect(r.visitors).toBe(2);
-    expect(r.views).toBe(4);
-    expect(r.sessions).toBe(3);
-    expect(r.bounceRate).toBeCloseTo(2 / 3);
+    const D = 24 * 60;
+    type E = Parameters<typeof buildReport>[0][number];
+    const ev: E[] = [
+      // a: a person (two pages, then signs up), came from Instagram
+      { t: "view", at: at(300), v: "a", u: null, path: "/", ref: "l.instagram.com" },
+      { t: "view", at: at(298), v: "a", u: null, path: "/courses/ap-calculus-bc" },
+      { t: "view", at: at(2), v: "a", u: "member-1234567", path: "/tutors/t_1" },
+      // b: one page but interacted, then spent 40s
+      { t: "view", at: at(60), v: "b", u: null, path: "/", ref: "google.com" },
+      { t: "engage", at: at(60), v: "b", u: null, path: "/" },
+      { t: "time", at: at(59), v: "b", u: null, path: "/", s: 40 },
+      { t: "video_open", at: at(59), v: "b", u: null, x: "vid" },
+      // bot: one page, no interaction
+      { t: "view", at: at(30), v: "bot1", u: null, path: "/sprint", nv: 1 },
+      { t: "view", at: at(31), v: "bot2", u: null, path: "/sprint", nv: 1 },
+      // team: signed in once as an admin, so their signed-out visits don't count either
+      { t: "view", at: at(10), v: "team", u: null, path: "/" },
+      { t: "view", at: at(9), v: "team", u: "admin-1234567", path: "/admin" },
+      // previous period: one person
+      { t: "view", at: at(D * 8), v: "c", u: null, path: "/" },
+      { t: "engage", at: at(D * 8), v: "c", u: null, path: "/" },
+      // 11:30pm Eastern on Nov 27 is still Nov 27 even though it is Nov 28 in UTC
+      { t: "view", at: "2026-11-28T04:30:00Z", v: "late", u: null, path: "/" },
+      { t: "engage", at: "2026-11-28T04:30:00Z", v: "late", u: null, path: "/" },
+    ];
+    const members = [{ id: "member-1234567", at: at(3), email: "s@x.org", type: "student" as const }, { id: "admin-1234567", at: at(D), email: "a@x.org", type: null }];
+    const r = buildReport(ev, { days: 7, now, team: new Set(["admin-1234567"]), members });
+    expect(r.now.visitors).toBe(3); // a, b, late
+    expect(r.before.visitors).toBe(1);
+    expect(r.now.signups).toBe(1);
+    expect(r.now.activeMembers).toBe(1);
+    expect(r.now.avgTime).toBe(40);
+    expect(r.filtered.botVisitors).toBe(2);
+    expect(r.filtered.teamViews).toBe(2);
+    expect(r.use.lessons).toEqual({ times: 1, people: 1 });
+    expect(r.sources.find((s) => s.key === "Instagram")).toEqual({ key: "Instagram", visitors: 1, signups: 1 });
+    expect(r.series.find((s) => s.key === "2026-11-27")?.visitors).toBe(1);
     expect(r.live).toBe(1);
-    expect(r.videoOpens).toBe(1);
-    expect(r.referrers[0]).toEqual({ key: "google.com", n: 1 });
-    expect(r.courses[0].key).toBe("ap-calculus-bc");
-    expect(r.tutorViews[0].key).toBe("t_1");
+    expect(r.tutorViews.get("t_1")).toBe(1);
+
+    const today = buildReport(ev, { days: 1, now, team: new Set(["admin-1234567"]), members });
+    expect(today.now.visitors).toBe(2); // a and b; "late" was yesterday in Eastern time
+    expect(buildReport(ev, { days: 7, now, team: new Set(["admin-1234567"]), members, includeTeam: true }).now.visitors).toBe(4);
   });
 });

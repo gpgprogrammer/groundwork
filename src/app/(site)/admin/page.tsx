@@ -1,4 +1,7 @@
-import { BarChart3, Users } from "lucide-react";
+import { BarChart3, Clapperboard, Users } from "lucide-react";
+import { loadAnalytics } from "./analytics/data";
+import { change } from "@/lib/analytics-report";
+import { getBridge, isOnline } from "@/lib/studio-bridge";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -41,7 +44,14 @@ export default async function AdminPage() {
     allServices(),
     aiAvailable(),
   ]);
-  const [leads, pendingUploads, reports, errors] = await Promise.all([listLeads(), listPendingUploads().then(toUploadCards), store.listDocs<Report>("reports"), recentErrors(7)]);
+  const [leads, pendingUploads, reports, errors, week, bridge] = await Promise.all([
+    listLeads(),
+    listPendingUploads().then(toUploadCards),
+    store.listDocs<Report>("reports"),
+    recentErrors(7),
+    loadAnalytics(7).catch(() => null),
+    getBridge().catch(() => null),
+  ]);
   const openReports = reports.filter((r) => r.status === "open").sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const followUps = leads.filter((l) => l.status === "reported");
   const referrals = await store.referralCounts([...services.map((s) => s.id), ...tutors.map((t) => t.id)]);
@@ -73,11 +83,39 @@ export default async function AdminPage() {
           <LinkButton href="/admin/users" variant="outline">
             <Users className="size-4" /> Users
           </LinkButton>
+          <LinkButton href="/admin/studio" variant="outline">
+            <Clapperboard className="size-4" /> Reel Studio
+            <span aria-hidden className={cn("size-2 rounded-full", isOnline(bridge) ? "bg-positive" : "bg-faint")} />
+          </LinkButton>
           <LinkButton href="/admin/analytics">
             <BarChart3 className="size-4" /> Open analytics
           </LinkButton>
         </div>
       </header>
+
+      {week ? (
+        <Link href="/admin/analytics" className="rise tabular mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-line ring-2 ring-line transition-[filter] hover:brightness-[0.98] sm:grid-cols-4" style={{ ["--i" as string]: 1 }}>
+          {[
+            { label: "Visitors this week", v: week.report.now.visitors, p: week.report.before.visitors },
+            { label: "New members this week", v: week.report.now.signups, p: week.report.before.signups },
+            { label: "Active members", v: week.report.now.activeMembers, p: week.report.before.activeMembers },
+            { label: "Members in total", v: week.members.total, p: null },
+          ].map((k) => {
+            const d = k.p === null ? null : change(k.v, k.p);
+            return (
+              <span key={k.label} className="block bg-surface p-4">
+                <span className="block text-[12.5px] font-medium text-muted">{k.label}</span>
+                <span className="mt-1 block text-[24px] font-bold leading-tight text-ink">{k.v.toLocaleString("en-US")}</span>
+                {k.p !== null ? (
+                  <span className={cn("mt-0.5 block text-[11.5px] font-semibold", d !== null && d > 0 ? "text-positive" : d !== null && d < 0 ? "text-danger" : "text-muted")}>
+                    {d === null ? `${k.p} the week before` : `${d > 0 ? "▲" : d < 0 ? "▼" : "■"} ${Math.abs(Math.round(d * 100))}% vs the week before`}
+                  </span>
+                ) : null}
+              </span>
+            );
+          })}
+        </Link>
+      ) : null}
 
       <div className="rise tabular mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4" style={{ ["--i" as string]: 1 }}>
         {[
