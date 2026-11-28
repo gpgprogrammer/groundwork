@@ -325,7 +325,7 @@ function Kpi({ label, value, delta, vs, prev, hint }: { label: string; value: st
       <p className="text-[12.5px] font-medium text-muted">{label}</p>
       <p className="mt-1 break-words text-[28px] font-bold leading-tight tracking-tight text-ink">{value}</p>
       <p className={cn("mt-1 text-[12px] font-semibold", up ? "text-positive" : down ? "text-danger" : "text-muted")} title={`${prev} ${vs}`}>
-        {delta === null ? `${prev} ${vs}` : `${up ? "▲" : down ? "▼" : "■"} ${Math.abs(Math.round(delta * 100))}% ${vs}`}
+        {delta === null ? (prev === "–" ? "Nothing to compare with yet" : `${prev} ${vs}`) : `${up ? "▲" : down ? "▼" : "■"} ${Math.abs(Math.round(delta * 100))}% ${vs}`}
       </p>
       {hint ? <p className="mt-1 text-[11.5px] leading-snug text-faint">{hint}</p> : null}
     </div>

@@ -55,7 +55,8 @@ export function QuickAsk() {
   }, []);
 
 
-  if (pathname === "/ask") return null;
+  // Reel Studio fills the page and has its own chat box where this button would sit.
+  if (pathname === "/ask" || pathname.startsWith("/admin/studio")) return null;
   const suggestions = title
     ? [`Explain ${title} simply`, `Quiz me on ${title}`, `What are the most common mistakes on ${title}?`, `Find the best short video on ${title}`]
     : GENERIC;

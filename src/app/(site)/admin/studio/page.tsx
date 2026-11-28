@@ -39,7 +39,7 @@ export default async function StudioPage() {
           src="/admin/studio/app/"
           title="Reel Studio"
           allow="microphone; autoplay"
-          className="mt-4 h-[calc(100dvh-170px)] min-h-[560px] w-full rounded-2xl bg-surface ring-2 ring-line"
+          className="mt-4 h-[calc(100dvh-290px)] min-h-[460px] w-full sm:h-[calc(100dvh-170px)] sm:min-h-[560px] rounded-2xl bg-surface ring-2 ring-line"
         />
       ) : (
         <section className="mt-6 max-w-2xl rounded-2xl bg-surface p-6 ring-2 ring-line">
