@@ -29,7 +29,7 @@ export async function aiAvailable() {
       ...(light?.providerOptions ? { providerOptions: light.providerOptions } : {}),
       prompt: "Reply with OK.",
       maxOutputTokens: 5,
-      abortSignal: AbortSignal.timeout(4000),
+      abortSignal: AbortSignal.timeout(10_000),
     });
     status = { ok: true, at: now };
   } catch (err) {

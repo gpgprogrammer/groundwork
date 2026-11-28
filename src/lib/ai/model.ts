@@ -14,5 +14,6 @@ const anthropicId = (gatewayId: string) => gatewayId.replace(/^anthropic\//, "")
 
 export const chatModel = () => (direct() ? anthropic(anthropicId(env.aiModel)) : env.aiModel);
 export const contentModel = () => (direct() ? anthropic(anthropicId(env.aiContentModel)) : env.aiContentModel);
-export const probeModel = () => (direct() ? anthropic("claude-haiku-4-5") : "anthropic/claude-haiku-4.5");
+/** The health check uses the model that actually answers, so a non-Claude MERIT_AI_MODEL isn't reported as down. */
+export const probeModel = () => (direct() ? anthropic("claude-haiku-4-5") : env.aiModel);
 export const aiProvider = () => (direct() ? "Anthropic API" : "Vercel AI Gateway");
