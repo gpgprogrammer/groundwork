@@ -1,5 +1,5 @@
 /**
- * Merit's sound effects: small, bright, rounded sounds in the spirit of Apple Pay chimes and Duolingo.
+ * Merit's sound effects: soft, warm, low sounds in the spirit of Apple Pay chimes and Duolingo, never shrill.
  * Every sound is synthesized with Web Audio at play time, so there are no audio files to download and
  * nothing plays until the visitor has tapped something (browsers require a gesture first).
  * Visitors can turn sounds off; the choice is kept in localStorage.
@@ -69,15 +69,21 @@ function audio(): AudioContext | null {
     limiter.attack.value = 0.002;
     limiter.release.value = 0.15;
     limiter.connect(ctx.destination);
+    // A gentle low-pass on the whole mix takes the edge off every sound.
+    const soften = ctx.createBiquadFilter();
+    soften.type = "lowpass";
+    soften.frequency.value = 1600;
+    soften.Q.value = 0.5;
+    soften.connect(limiter);
     out = ctx.createGain();
     out.gain.value = 0.8;
-    out.connect(limiter);
+    out.connect(soften);
     // A tiny "room": two short filtered echoes give chimes their shimmer without a reverb file.
     room = ctx.createGain();
     room.gain.value = 1;
     const tone = ctx.createBiquadFilter();
     tone.type = "lowpass";
-    tone.frequency.value = 4200;
+    tone.frequency.value = 1400;
     room.connect(tone);
     for (const [t, g] of [
       [0.067, 0.22],
@@ -125,7 +131,7 @@ function note(c: AudioContext, t0: number, n: Note) {
   const start = t0 + (n.at ?? 0);
   const dur = n.dur ?? 0.2;
   const peak = n.gain ?? 0.1;
-  const attack = n.attack ?? 0.004;
+  const attack = n.attack ?? 0.01;
   const voices: [number, number][] = [[1, 1], ...(n.partials ?? [])];
   const pan = c.createStereoPanner ? c.createStereoPanner() : null;
   if (pan) pan.pan.value = n.pan ?? 0;
@@ -154,87 +160,56 @@ function note(c: AudioContext, t0: number, n: Note) {
   }
 }
 
-/** A short burst of filtered noise: the "air" in a page swish. */
-function swish(c: AudioContext, t0: number, { at = 0, dur = 0.16, gain = 0.05, from = 500, to = 2600 } = {}) {
-  const start = t0 + at;
-  const len = Math.ceil(c.sampleRate * dur);
-  const buf = c.createBuffer(1, len, c.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-  const src = c.createBufferSource();
-  src.buffer = buf;
-  const bp = c.createBiquadFilter();
-  bp.type = "bandpass";
-  bp.Q.value = 1.4;
-  bp.frequency.setValueAtTime(from, start);
-  bp.frequency.exponentialRampToValueAtTime(to, start + dur);
-  const g = c.createGain();
-  g.gain.setValueAtTime(0.0001, start);
-  g.gain.exponentialRampToValueAtTime(gain, start + dur * 0.35);
-  g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-  src.connect(bp).connect(g).connect(out!);
-  src.start(start);
-  src.stop(start + dur + 0.02);
-}
+// Notes (Hz). Everything stays in the warm middle register, below about 700 Hz: nothing bright or piercing.
+const F3 = 174.61, A3 = 220, C4 = 261.63, D4 = 293.66, E4 = 329.63, G4 = 392, A4 = 440, C5 = 523.25;
 
-// Notes (Hz)
-const C5 = 523.25, E5 = 659.25, G5 = 783.99, A5 = 880, B5 = 987.77;
-const C6 = 1046.5, D6 = 1174.66, E6 = 1318.51, G6 = 1567.98, C7 = 2093;
-
-/** A soft glassy bell: Apple-style chime timbre. */
-const BELL: [number, number][] = [
-  [2, 0.28],
-  [3, 0.08],
-  [4.07, 0.05],
-];
+/** A soft mallet: a pure tone with a faint octave that fades almost at once. Round, like a marimba. */
+const MALLET: [number, number][] = [[2, 0.08]];
 
 const SOUNDS: Record<SoundName, (c: AudioContext, t: number) => void> = {
-  tap: (c, t) => note(c, t, { f: 620, to: 380, dur: 0.06, gain: 0.07, attack: 0.002 }),
-  open: (c, t) => note(c, t, { f: 520, to: 860, dur: 0.07, gain: 0.07, attack: 0.002 }),
-  close: (c, t) => note(c, t, { f: 760, to: 440, dur: 0.07, gain: 0.06, attack: 0.002 }),
-  nav: (c, t) => {
-    swish(c, t, { dur: 0.15, gain: 0.035 });
-    note(c, t, { at: 0.03, f: G5, dur: 0.12, gain: 0.04, partials: BELL, wet: 0.4 });
-  },
-  select: (c, t) => note(c, t, { f: B5, dur: 0.12, gain: 0.06, partials: [[2, 0.2]], wet: 0.3 }),
+  // A muted wooden "tock".
+  tap: (c, t) => note(c, t, { f: 330, to: 290, dur: 0.07, gain: 0.035, attack: 0.006 }),
+  open: (c, t) => note(c, t, { f: 300, to: 360, dur: 0.09, gain: 0.032, attack: 0.008 }),
+  close: (c, t) => note(c, t, { f: 360, to: 300, dur: 0.09, gain: 0.03, attack: 0.008 }),
+  nav: (c, t) => note(c, t, { f: G4, dur: 0.22, gain: 0.04, attack: 0.014, partials: MALLET, wet: 0.3 }),
+  select: (c, t) => note(c, t, { f: E4, dur: 0.16, gain: 0.042, attack: 0.01, partials: MALLET, wet: 0.25 }),
   on: (c, t) => {
-    note(c, t, { f: G5, dur: 0.09, gain: 0.07, partials: [[2, 0.2]] });
-    note(c, t, { at: 0.06, f: D6, dur: 0.16, gain: 0.07, partials: [[2, 0.2]], wet: 0.35 });
+    note(c, t, { f: C4, dur: 0.12, gain: 0.045, attack: 0.01, partials: MALLET });
+    note(c, t, { at: 0.07, f: G4, dur: 0.2, gain: 0.045, attack: 0.01, partials: MALLET, wet: 0.25 });
   },
   off: (c, t) => {
-    note(c, t, { f: A5, dur: 0.08, gain: 0.055, type: "triangle" });
-    note(c, t, { at: 0.055, f: E5, dur: 0.12, gain: 0.05, type: "triangle" });
+    note(c, t, { f: G4, dur: 0.1, gain: 0.038, attack: 0.01 });
+    note(c, t, { at: 0.07, f: C4, dur: 0.16, gain: 0.038, attack: 0.01 });
   },
-  // Two bright bell notes a fifth apart, the second ringing out: the "ding-ding" of a payment going through.
+  // Two warm notes rising a fourth, the second ringing softly over a low octave.
   correct: (c, t) => {
-    note(c, t, { f: C6, dur: 0.22, gain: 0.11, partials: BELL, wet: 0.45, pan: -0.08 });
-    note(c, t, { at: 0.085, f: G6, dur: 0.65, gain: 0.12, partials: BELL, wet: 0.55, pan: 0.08 });
-    note(c, t, { at: 0.085, f: C7, dur: 0.35, gain: 0.025, wet: 0.6 });
+    note(c, t, { f: G4, dur: 0.25, gain: 0.065, attack: 0.012, partials: MALLET, wet: 0.35, pan: -0.06 });
+    note(c, t, { at: 0.1, f: C5, dur: 0.75, gain: 0.07, attack: 0.014, partials: MALLET, wet: 0.45, pan: 0.06 });
+    note(c, t, { at: 0.1, f: C4, dur: 0.7, gain: 0.03, attack: 0.03, wet: 0.4 });
   },
   streak: (c, t) => {
-    note(c, t, { f: C6, dur: 0.18, gain: 0.1, partials: BELL, wet: 0.45, pan: -0.12 });
-    note(c, t, { at: 0.07, f: E6, dur: 0.2, gain: 0.1, partials: BELL, wet: 0.45 });
-    note(c, t, { at: 0.14, f: G6, dur: 0.7, gain: 0.115, partials: BELL, wet: 0.55, pan: 0.12 });
-    note(c, t, { at: 0.14, f: C7, dur: 0.45, gain: 0.035, wet: 0.6 });
+    note(c, t, { f: E4, dur: 0.22, gain: 0.06, attack: 0.012, partials: MALLET, wet: 0.35, pan: -0.08 });
+    note(c, t, { at: 0.09, f: G4, dur: 0.25, gain: 0.062, attack: 0.012, partials: MALLET, wet: 0.35 });
+    note(c, t, { at: 0.18, f: C5, dur: 0.8, gain: 0.068, attack: 0.014, partials: MALLET, wet: 0.45, pan: 0.08 });
+    note(c, t, { at: 0.18, f: C4, dur: 0.75, gain: 0.03, attack: 0.03, wet: 0.4 });
   },
-  // A soft, low "bwomp": clearly a miss, never harsh.
+  // A gentle low "hmm": clearly a miss, never harsh.
   wrong: (c, t) => {
-    note(c, t, { f: 330, to: 300, dur: 0.14, gain: 0.11, type: "triangle" });
-    note(c, t, { at: 0.11, f: 262, to: 220, dur: 0.24, gain: 0.1, type: "triangle" });
+    note(c, t, { f: A3, dur: 0.18, gain: 0.06, attack: 0.018 });
+    note(c, t, { at: 0.12, f: F3, dur: 0.3, gain: 0.055, attack: 0.02 });
   },
   done: (c, t) => {
-    note(c, t, { f: E6, dur: 0.14, gain: 0.09, partials: BELL, wet: 0.4 });
-    note(c, t, { at: 0.07, f: A5 * 2, dur: 0.45, gain: 0.1, partials: BELL, wet: 0.5 });
+    note(c, t, { f: D4, dur: 0.18, gain: 0.05, attack: 0.012, partials: MALLET, wet: 0.3 });
+    note(c, t, { at: 0.08, f: A4, dur: 0.5, gain: 0.055, attack: 0.012, partials: MALLET, wet: 0.4 });
   },
-  // A rising arpeggio that lands on a ringing chord.
+  // A slow rising arpeggio that settles on a soft, warm chord.
   complete: (c, t) => {
-    [C5, E5, G5, C6].forEach((f, i) => note(c, t, { at: i * 0.085, f, dur: 0.2, gain: 0.085, partials: BELL, wet: 0.4, pan: -0.15 + i * 0.1 }));
-    [C6, E6, G6].forEach((f, i) => note(c, t, { at: 0.36, f, dur: 1.1, gain: 0.06 - i * 0.008, partials: BELL, wet: 0.6 }));
-    note(c, t, { at: 0.36, f: C7, dur: 0.6, gain: 0.025, wet: 0.7 });
+    [C4, E4, G4, C5].forEach((f, i) => note(c, t, { at: i * 0.11, f, dur: 0.3, gain: 0.05, attack: 0.014, partials: MALLET, wet: 0.35, pan: -0.12 + i * 0.08 }));
+    [C4, E4, G4].forEach((f, i) => note(c, t, { at: 0.46, f, dur: 1.3, gain: 0.032 - i * 0.004, attack: 0.06, wet: 0.5 }));
   },
   finish: (c, t) => {
-    note(c, t, { f: G5, dur: 0.2, gain: 0.08, partials: BELL, wet: 0.4 });
-    note(c, t, { at: 0.11, f: C6, dur: 0.7, gain: 0.08, partials: BELL, wet: 0.5 });
+    note(c, t, { f: E4, dur: 0.25, gain: 0.05, attack: 0.014, partials: MALLET, wet: 0.35 });
+    note(c, t, { at: 0.13, f: G4, dur: 0.7, gain: 0.05, attack: 0.016, partials: MALLET, wet: 0.45 });
   },
 };
 
