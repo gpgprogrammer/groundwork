@@ -17,14 +17,19 @@ function soundFor(el: HTMLElement): SoundName | "nav-link" | null {
   if (ds) return ds as SoundName;
   const role = el.getAttribute("role");
   if (role === "tab" || role === "radio" || role === "option" || el.hasAttribute("aria-selected")) return "select";
-  if (pressed !== null) return pressed === "true" ? "off" : "on";
+  // Buttons in a group (filter chips, segmented controls) behave like tabs; only a lone toggle gets on/off.
+  if (pressed !== null) {
+    const group = el.parentElement?.querySelectorAll(":scope > [aria-pressed], :scope > * > [aria-pressed]").length ?? 0;
+    if (el.hasAttribute("aria-pressed") && group > 1) return "select";
+    return pressed === "true" ? "off" : "on";
+  }
   if (el.hasAttribute("aria-expanded")) return el.getAttribute("aria-expanded") === "true" ? "close" : "open";
   if (el instanceof HTMLAnchorElement) {
     if (el.target === "_blank" || el.hasAttribute("download")) return "tap";
     try {
       const url = new URL(el.href, location.href);
       if (url.origin !== location.origin) return "tap";
-      if (url.pathname === location.pathname && url.search === location.search) return "tap";
+      if (url.pathname === location.pathname) return url.search === location.search ? "tap" : "select";
       return "nav-link";
     } catch {
       return "tap";
@@ -38,6 +43,8 @@ export function SoundEffects() {
   const pathname = usePathname();
   const navAt = useRef(0);
   const lastPath = useRef(pathname);
+  // A link click already played its sound; the page change it causes must not play another, however slow it loads.
+  const pending = useRef(false);
 
   useEffect(() => {
     const unlock = () => unlockSound();
@@ -52,6 +59,7 @@ export function SoundEffects() {
         // Modified clicks open a new tab; this page doesn't change.
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return playSound("tap");
         navAt.current = Date.now();
+        pending.current = true;
         return playSound("nav");
       }
       playSound(s);
@@ -80,7 +88,9 @@ export function SoundEffects() {
   useEffect(() => {
     if (lastPath.current === pathname) return;
     lastPath.current = pathname;
-    if (Date.now() - navAt.current > 1500) playSound("nav");
+    const fromClick = pending.current && Date.now() - navAt.current < 15000;
+    pending.current = false;
+    if (!fromClick) playSound("nav");
   }, [pathname]);
 
   return null;

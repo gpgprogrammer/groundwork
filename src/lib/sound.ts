@@ -167,12 +167,13 @@ const F3 = 174.61, A3 = 220, C4 = 261.63, D4 = 293.66, E4 = 329.63, G4 = 392, A4
 const MALLET: [number, number][] = [[2, 0.08]];
 
 const SOUNDS: Record<SoundName, (c: AudioContext, t: number) => void> = {
-  // A muted wooden "tock".
-  tap: (c, t) => note(c, t, { f: 330, to: 290, dur: 0.07, gain: 0.035, attack: 0.006 }),
+  // Frequent actions (taps, tabs, page switches) get a soft low "thock": more felt than heard, like a haptic.
+  // No pitch to notice and no ring, so it never gets tiring however often it plays.
+  tap: (c, t) => note(c, t, { f: 190, to: 150, dur: 0.045, gain: 0.03, attack: 0.004 }),
   open: (c, t) => note(c, t, { f: 300, to: 360, dur: 0.09, gain: 0.032, attack: 0.008 }),
   close: (c, t) => note(c, t, { f: 360, to: 300, dur: 0.09, gain: 0.03, attack: 0.008 }),
-  nav: (c, t) => note(c, t, { f: G4, dur: 0.22, gain: 0.04, attack: 0.014, partials: MALLET, wet: 0.3 }),
-  select: (c, t) => note(c, t, { f: E4, dur: 0.16, gain: 0.042, attack: 0.01, partials: MALLET, wet: 0.25 }),
+  nav: (c, t) => note(c, t, { f: 210, to: 160, dur: 0.06, gain: 0.04, attack: 0.005 }),
+  select: (c, t) => note(c, t, { f: 230, to: 180, dur: 0.05, gain: 0.036, attack: 0.004 }),
   on: (c, t) => {
     note(c, t, { f: C4, dur: 0.12, gain: 0.045, attack: 0.01, partials: MALLET });
     note(c, t, { at: 0.07, f: G4, dur: 0.2, gain: 0.045, attack: 0.01, partials: MALLET, wet: 0.25 });
