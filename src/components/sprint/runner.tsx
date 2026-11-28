@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { finishSession, loadQuestions, recordAnswer, saveConfidence, type Mode } from "@/app/actions/sprint";
 import type { Question } from "@/lib/types";
+import { playSound } from "@/lib/sound";
 import { buttonClass, cn } from "../ui";
 
 type Unit = { id: string; order: number; title: string };
@@ -282,7 +283,9 @@ export function SprintRunner({
             <div key={`${q.id}-${j}`}>
               <button
                 disabled={answered || pending}
+                data-sound="none"
                 onClick={() => {
+                  playSound(j === q.answer ? "correct" : "wrong");
                   setChoice(j);
                   start(async () => {
                     const r = await recordAnswer(sprintId, q.id, j, mode === "diagnostic" ? "diagnostic" : mode === "checkpoint" ? "checkpoint" : "practice");
@@ -343,7 +346,11 @@ export function SprintRunner({
           <button
             disabled={!answered || pending}
             onClick={() => {
-              if (last) setStage("done");
+              if (last) {
+                const got = results.filter((r) => r.correct).length;
+                playSound(results.length && got / results.length >= 0.7 ? "complete" : "finish");
+                setStage("done");
+              }
               else {
                 setI(i + 1);
                 setChoice(null);

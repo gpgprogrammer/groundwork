@@ -4,6 +4,7 @@ import { ArrowRight, Check, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { tryQuestions, type TryQuestions as Result } from "@/app/actions/try";
+import { playSound } from "@/lib/sound";
 import { cn } from "../ui";
 
 /** Three sample diagnostic questions for visitors, before they make an account. */
@@ -58,7 +59,9 @@ export function TryQuestions({ courseId }: { courseId: string }) {
               <button
                 type="button"
                 disabled={picked !== null}
+                data-sound="none"
                 onClick={() => {
+                  playSound(isAnswer ? "correct" : "wrong");
                   setPicked(k);
                   if (isAnswer) setRight((r) => r + 1);
                 }}

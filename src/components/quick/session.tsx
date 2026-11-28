@@ -9,6 +9,7 @@ import { CHECK_SIZE, PASS_RATIO } from "@/lib/quick";
 import type { Question } from "@/lib/types";
 import { OpenAskButton } from "../ask/quick-ask";
 import { CalendarNudge } from "../calendar-nudge";
+import { playSound } from "@/lib/sound";
 import { buttonClass, cn, formatDuration } from "../ui";
 import { LessonLink } from "../lesson-player";
 
@@ -89,6 +90,7 @@ export function QuickSession({ topic, course, topicHref, lessons, next, alreadyM
         const r = await finishQuickSession(topic.id, payload);
         if ("error" in r) return router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`);
         setResult(r);
+        playSound(r.passed ? "complete" : "finish");
         setStage("result");
       } catch {
         setError("Couldn't save your result. Check your connection and try again.");
@@ -260,6 +262,7 @@ export function QuickSession({ topic, course, topicHref, lessons, next, alreadyM
           pending={pending}
           error={error}
           onChoose={(j) => {
+            playSound(j === questions[i].answer ? "correct" : "wrong");
             setChoice(j);
             setAnswers((a) => [...a, { questionId: questions[i].id, choice: j }]);
           }}
@@ -373,6 +376,7 @@ function QuestionCard({
             <div key={`${q.id}-${j}`}>
               <button
                 disabled={answered || pending}
+                data-sound="none"
                 onClick={() => onChoose(j)}
                 className={cn(
                   "press flex w-full items-center gap-3.5 rounded-2xl px-4 py-3.5 text-left text-[16px] ring-2 ring-inset",

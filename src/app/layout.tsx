@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Figtree, Nunito } from "next/font/google";
+import { SoundEffects } from "@/components/sound-effects";
 import { env } from "@/lib/env";
 import "./globals.css";
 
@@ -29,7 +30,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${figtree.variable} ${nunito.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {children}
+        <SoundEffects />
+      </body>
     </html>
   );
 }

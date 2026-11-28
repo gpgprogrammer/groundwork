@@ -19,6 +19,7 @@ export function SprintTaskToggle({ sprintId, taskId, done, step }: { sprintId: s
         })
       }
       aria-pressed={on}
+      data-sound="task"
       aria-label={on ? "Mark not done" : "Mark done"}
       className={cn(
         "press-sm group/t flex size-12 shrink-0 items-center justify-center rounded-full font-brand text-[17px] font-black",

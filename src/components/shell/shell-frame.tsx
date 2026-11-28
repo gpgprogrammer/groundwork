@@ -28,6 +28,7 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
+import { SoundToggle } from "../sound-effects";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { signOut } from "@/app/actions/auth";
@@ -484,6 +485,7 @@ function UserMenu({ data }: { data: ShellData }) {
           <MenuRow href="/settings/billing" icon={<CreditCard className="size-[18px]" />}>Plan and billing</MenuRow>
           <MenuRow href="/settings" icon={<Settings className="size-[18px]" />}>Settings</MenuRow>
           {data.isAdmin ? <MenuRow href="/admin" icon={<Shield className="size-[18px]" />}>Admin</MenuRow> : null}
+          <SoundToggle />
           <MenuDivider />
           <form action={signOut}>
             <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[14px] font-medium text-ink transition-colors hover:bg-bg-subtle">
@@ -787,7 +789,10 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
       </div>
       <div className="mx-auto max-w-6xl border-t border-line px-4 py-6 text-[12px] leading-relaxed text-muted sm:px-6 lg:px-8">
         <p>Videos play on YouTube. AP® and SAT® are trademarks of the College Board, which is not affiliated with Merit.</p>
-        <p className="mt-1">© {new Date().getFullYear()} Merit</p>
+        <div className="mt-1 flex items-center gap-3">
+          <p>© {new Date().getFullYear()} Merit</p>
+          <SoundToggle variant="icon" />
+        </div>
       </div>
     </footer>
   );

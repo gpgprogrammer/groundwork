@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { recordPractice } from "@/app/actions/practice";
 import { generateForTopic, type GeneratedQuestion } from "@/lib/mathgen";
+import { playSound } from "@/lib/sound";
 import { buttonClass, cn } from "../ui";
 
 type TopicRef = { id: string; title: string; href: string };
@@ -79,6 +80,8 @@ export function PracticeSession({ topics, courseId, timed = false, signedIn }: {
 
   function finish(list: Answer[]) {
     setDone(true);
+    const got = list.filter((a) => a.choice === a.q.answer).length;
+    playSound(list.length && got / list.length >= 0.7 ? "complete" : "finish");
     const byTopic = new Map<string, { questionId: string; choice: number }[]>();
     for (const a of list) byTopic.set(a.q.topicId, [...(byTopic.get(a.q.topicId) ?? []), { questionId: a.q.id, choice: a.choice }]);
     if (!signedIn || !byTopic.size) return;
@@ -212,6 +215,8 @@ export function PracticeSession({ topics, courseId, timed = false, signedIn }: {
     setChoice(j);
     const a: Answer = { q, choice: j, hinted: hint, seconds: Math.round((Date.now() - shownAt.current) / 1000) };
     setAnswers((xs) => [...xs, a]);
+    // Timed drills keep right/wrong secret until the end, so they only get a neutral tick.
+    playSound(timed ? "select" : j !== q.answer ? "wrong" : streak + 1 >= 3 ? "streak" : "correct");
     if (j === q.answer) {
       setStreak((s) => {
         setBest((b) => Math.max(b, s + 1));
@@ -277,6 +282,7 @@ export function PracticeSession({ topics, courseId, timed = false, signedIn }: {
             <div key={`${q.id}-${j}`}>
               <button
                 disabled={answered}
+                data-sound="none"
                 onClick={() => pick(j)}
                 className={cn(
                   "press flex w-full items-center gap-3.5 rounded-2xl px-4 py-3.5 text-left text-[16px] ring-2 ring-inset",
